@@ -8,7 +8,10 @@ import glob
 import os
 import neukrill_net.utils as utils
 
-def main():
+def parse_data():
+    """
+    Parse training data and rescale
+    """
 
     settings = utils.parse_settings('settings.json')
 
@@ -21,7 +24,8 @@ def main():
         train_data_file_names.update({class_name: image_names})
 
     # as images are different sizes rescale all images to 25x25 when reading into matrix
-    train_data = {}
+    train_data = []
+    train_labels = []
     class_index = 0
     for class_name in train_data_file_names.keys():
         print("class: {0} of 120: {1}".format(class_index, class_name))
@@ -34,9 +38,20 @@ def main():
             resized_image = skimage.transform.resize(image, (25,25))
             image_vector = resized_image.ravel()
             image_array[index,] = image_vector
-
+            array_labels = num_image * [class_name]
         class_index += 1
-        train_data.update({class_name: image_array})
+        train_data.append(image_array)
+        train_labels = train_labels + array_labels
+
+    X_train = np.vstack(train_data)
+    y_train = np.array(train_labels)
+
+    return X_train, y_train
+
+
+def main():
+    X, y = parse_data()
+
 
 
 if __name__=='__main__':
