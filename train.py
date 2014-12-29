@@ -2,6 +2,7 @@
 
 import skimage.io
 import skimage.transform
+import pickle
 import sklearn
 import numpy as np
 import glob
@@ -121,7 +122,10 @@ def main():
 
     print(results)
 
-    joblib.dump(clf, 'model.pkl')
+    joblib.dump(clf, 'model.pkl', compress=3)
+
+    with open('class_labels.pkl', 'w') as labels_fh:
+        pickle.dump(label_encoder, labels_fh)
 
 if __name__=='__main__':
     main()
