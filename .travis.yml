@@ -7,8 +7,10 @@ before_install:
     - ./miniconda.sh -b
     - export PATH=/home/travis/miniconda/bin:$PATH
     - conda update --yes conda
-
+    - conda create --yes -n condaenv python=$TRAVIS_PYTHON_VERSION
+    - conda install --yes -n condaenv pip numpy scipy six
+    - source activate condaenv
 install:
-     - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy six
-     - conda install --file conda_requirements.txt
+    - pip install -e .
+    - pip install -r requirements.txt
 script: python setup.py test
