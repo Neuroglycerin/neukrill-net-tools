@@ -10,5 +10,5 @@ before_install:
 
 install:
      - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy six
-     - pip install -r requirements.txt
+     - conda install --file requirements.txt
 script: python setup.py test
