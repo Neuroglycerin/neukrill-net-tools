@@ -1,5 +1,9 @@
 language: python
 python:
     - "3.4"
-install: "./install.sh"
+virtualenv:
+      system_site_packages: true
+before_install:
+    - sudo apt-get install -qq python-numpy python-scipy python-six
+install: "pip install -r requirements.txt"
 script: "py.test"
