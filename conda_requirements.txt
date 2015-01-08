@@ -1,0 +1,8 @@
+numpy
+pytest
+scikit-image
+scikit-learn
+scipy
+six
+tox
+virtualenv
