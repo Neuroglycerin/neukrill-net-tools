@@ -33,6 +33,7 @@ pip install -r requirements.txt
 This may fail unless you explictly install numpy first: on the travis
 deployment the following packages are installed before the rest of the
 requirments:
+
     * pip 
     * numpy 
     * scipy 
