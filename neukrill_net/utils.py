@@ -8,6 +8,8 @@ import io
 import json
 import os
 import sys
+import skimage.io
+import skimage.transform
 
 def parse_settings(settings_file):
     """
@@ -73,8 +75,8 @@ def load_images(image_fname_dict, processing=None, verbose=False):
         * data - list of image vectors
         * labels - list of labels"""
     if not processing and verbose:
-        print("Warning: no processing applied, it will 
-        not be possible to stack these images due to
+        print("Warning: no processing applied, it will \
+        not be possible to stack these images due to \
         varying sizes.")
 
     # initialise lists
