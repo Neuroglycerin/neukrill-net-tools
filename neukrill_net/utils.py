@@ -18,14 +18,13 @@ class Settings:
         """
         Initialise settings object
         """
-        required_settings = ['data_dir']
+        self.required_settings = ['data_dir']
 
         # read the provided settings json (or stringIO)
         parsed_settings = self.parse_settings(settings_file)
 
         # check all required options have been set
-        self.user_input = self.check_mandatory_fields(parsed_settings,
-                                                      required_settings)
+        self.user_input = self.check_mandatory_fields(parsed_settings)
 
         # check the data dir options and find the correct one
         self.data_dir = self.check_data_dir(self.user_input['data_dir'])
@@ -189,11 +188,11 @@ class Settings:
         return settings
 
 
-    def check_mandatory_fields(self, parsed_user_input, required_settings):
+    def check_mandatory_fields(self, parsed_user_input):
         """
         Ensure all the mandatory settings are present
         """
-        for entry in required_settings:
+        for entry in self.required_settings:
             if entry not in parsed_user_input:
                 raise ValueError('data_dir must be defined')
 
