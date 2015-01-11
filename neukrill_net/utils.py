@@ -6,8 +6,9 @@ import glob
 import io
 import json
 import os
-import skimage.io
-import skimage.transform
+import numpy as np
+
+import neukrill_net.image_processing as image_processing
 
 class Settings:
     """
@@ -247,7 +248,7 @@ class Settings:
                                                'train',
                                                '*',
                                                '')):
-                split_name = name.split('/')
+                split_name = name.split(os.path.sep)
                 class_name = split_name[-2]
                 image_names = glob.glob(os.path.join(name, '*.jpg'))
                 train_fnames.update({class_name: image_names})
@@ -268,19 +269,21 @@ class Settings:
         return self._image_fnames
 
 
+def load_data(image_fname_dict, classes=None,
+              processing=None, verbose=False):
+    """
+    Loads training or test data using image_processing.load_images func
+    which applies the supplied processing function as required
 
+    If the classes kwarg is not none assumed to be loading labelled train
+    data and returns two np objs:
+        * data - image matrix
+        * labels - vector of labels
 
-def load_images(image_fname_dict, processing=None, verbose=False):
-    """Loads images and applies a processing
-    function if supplied one.
-
-    Processing function is expected to take a
-    single argument, the image as a numpy array,
-    and process it.
-
-    Returns two lists:
+    if classes kwarg is none, data will be loaded as test data and just return
         * data - list of image vectors
-        * labels - list of labels"""
+    """
+
     if not processing and verbose:
         print("Warning: no processing applied, it will \
         not be possible to stack these images due to \
@@ -288,31 +291,31 @@ def load_images(image_fname_dict, processing=None, verbose=False):
 
     # initialise lists
     data = []
-    labels = []
-    class_label_list = []
-    for class_index, class_name in enumerate(image_fname_dict.keys()):
-        if verbose:
-            print("class: {0} of 120: {1}".format(class_index, class_name))
-        image_fpaths = image_fname_dict[class_name]
-        num_image = len(image_fpaths)
-        #image_array = np.zeros((num_image, 625))
 
-        class_label_list.append(class_name)
-        for index in range(num_image):
-            # read the image into a numpy array
-            image = skimage.io.imread(image_fpaths[index])
+    # e.g. labelled training data
+    if classes:
+        labels = []
 
-            if processing:
-                resized_image = processing(image)
-                image_vector = resized_image.ravel()
-            else:
-                image_vector = image.ravel()
+        for class_index, class_name in enumerate(classes):
+            if verbose:
+                print("class: {0} of 120: {1}".format(class_index, class_name))
 
-            #image_array[index,] = image_vector
-            data.append(image_vector)
+            image_fpaths = image_fname_dict['train'][class_name]
+            num_images = len(image_fpaths)
+            data_subset = image_processing.load_images(image_fpaths,
+                                                          processing,
+                                                          verbose)
+            data.append(data_subset)
+            # generate the class labels and add them to the list
+            array_labels = num_images * [class_name]
+            labels = labels + array_labels
+        return np.vstack(data), np.array(labels)
 
-        # generate the class labels and add them to the list
-        array_labels = num_image * [class_name]
-        labels = labels + array_labels
+    # e.g. test data
+    else:
+        data = image_processing.load_images(image_fname_dict['test'],
+                                            processing,
+                                            verbose)
+        names = [os.path.basename(fpath) for fpath in image_fname_dict['test']]
+        return np.vstack(data), names
 
-    return data, labels
