@@ -3,7 +3,6 @@
 Unit tests for utility functions
 """
 import os
-import glob
 import shutil
 import io
 import numpy as np

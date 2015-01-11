@@ -2,11 +2,6 @@
 """
 Unit tests for image processing functions
 """
-import os
-import glob
-import shutil
-import io
-import numpy as np
 import skimage.io
 import skimage.transform
 from neukrill_net.tests.base import BaseTestCase
