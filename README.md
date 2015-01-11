@@ -58,3 +58,14 @@ Then, you should be ready to run the tests:
 python setup.py test
 ```
 
+BLAS Requirements
+=================
+
+Most of the neural net packages are going to require BLAS.
+You could follow the [Caffe install page][ci] and install
+ATLAS.
+
+Continuing with vanilla [BLAS for Arch Linux][ab] for now.
+
+[ci]: http://caffe.berkeleyvision.org/installation.html
+[ab]: http://www.netlib.org/lapack/
