@@ -6,6 +6,7 @@ import glob
 import io
 import json
 import os
+import gzip
 import numpy as np
 
 import neukrill_net.image_processing as image_processing
@@ -232,9 +233,9 @@ class Settings:
         """
 
         if not self._image_fnames:
-            test_fnames = tuple(glob.glob(os.path.join(self.data_dir,
+            test_fnames = tuple(sorted(glob.glob(os.path.join(self.data_dir,
                                                        'test',
-                                                       '*.jpg')))
+                                                       '*.jpg'))))
 
             # check there are the correct number of images
             num_test_images = len(test_fnames)
@@ -244,13 +245,13 @@ class Settings:
 
             train_fnames = {}
 
-            for name in glob.glob(os.path.join(self.data_dir,
+            for name in sorted(glob.glob(os.path.join(self.data_dir,
                                                'train',
                                                '*',
-                                               '')):
+                                               ''))):
                 split_name = name.split(os.path.sep)
                 class_name = split_name[-2]
-                image_names = glob.glob(os.path.join(name, '*.jpg'))
+                image_names = sorted(glob.glob(os.path.join(name, '*.jpg')))
                 train_fnames.update({class_name: image_names})
 
             num_train_classes = len(train_fnames.keys())
@@ -318,4 +319,5 @@ def load_data(image_fname_dict, classes=None,
                                             verbose)
         names = [os.path.basename(fpath) for fpath in image_fname_dict['test']]
         return np.vstack(data), names
+
 

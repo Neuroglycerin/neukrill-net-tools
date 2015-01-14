@@ -32,7 +32,7 @@ class TestLoadImages(BaseTestCase):
         processing = lambda image: image.min()
         images = image_processing.load_images(self.image_fpaths, processing)
         self.assertEqual(len(images), 3)
-        self.assertEqual([[int(x[0])] for x in images], [[63], [46], [5]])
+        self.assertEqual([[int(x[0])] for x in images], [[46], [63], [5]])
 
 
 class TestResize(BaseTestCase):
