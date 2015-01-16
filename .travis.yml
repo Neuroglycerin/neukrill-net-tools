@@ -11,4 +11,4 @@ before_install:
 install:
     - conda install --yes -n condaenv --file requirements.txt
     - source activate condaenv
-script: python setup.py test
+script: py.test
