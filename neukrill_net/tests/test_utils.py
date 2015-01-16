@@ -300,3 +300,43 @@ class TestLoadData(BaseTestCase):
         self.assertIs(int(data[1][0]), 63)
         self.assertIs(int(data[2][0]), 5)
 
+class TestOutputFunctions(BaseTestCase):
+    """
+    Unit tests for output functions generating a gzip compressed submission csv
+    """
+
+    def setUp(self):
+        if not os.path.exists('testoutput'):
+            os.mkdir('testoutput')
+            os.mkdir(os.path.join('testoutput', 'train'))
+            os.mkdir(os.path.join('testoutput', 'test'))
+
+        string_settings = io.StringIO('{"data_dir": ["testoutput"]}')
+        self.settings = utils.Settings(string_settings)
+        self.settings.classes = unittest.mock.MagicMock(return_value=['class1',
+                                                                      'class2',
+                                                                      'class3'])
+
+
+        self.fname = "test.csv"
+        self.names = ['a.jpg', 'b.jpg', 'c.jpg']
+        self.prob_matrix = np.array([0, 1, 0.5], [1, 0, 1], [0.1, 0.2, 0.3])
+
+
+    def test_write_output(self):
+        utils.write_output(self.fname, self.names, self.prob_matrix,
+                           self.settings, compress=False)
+
+        self.assertTrue(os.path.exists(fname))
+
+        with open(fname, 'w') as csv_fh:
+            output = csv.fh.readlines()
+
+        self.assertEqual('blah', 'output')
+
+
+    def test_file_compression(self):
+        self.fail()
+
+
+
