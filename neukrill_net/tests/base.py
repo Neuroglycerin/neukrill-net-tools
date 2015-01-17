@@ -19,12 +19,12 @@ class BaseTestCase(unittest.TestCase):
                         'artifacts_edge',
                         'fecal_pellet')
 
-        self.image_fname_dict = {'test': glob.glob(os.path.join(self.test_dir,
-                                                       'test', '*.jpg')),
-                        'train': {class_dir: glob.glob(os.path.join(self.test_dir,
+        self.image_fname_dict = {'test': sorted(glob.glob(os.path.join(self.test_dir,
+                                                       'test', '*.jpg'))),
+                        'train': {class_dir: sorted(glob.glob(os.path.join(self.test_dir,
                                                                     'train',
                                                                     class_dir,
-                                                                    '*.jpg')) \
+                                                                    '*.jpg'))) \
                                                     for class_dir in self.classes}}
 
 
