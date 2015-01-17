@@ -263,11 +263,9 @@ class TestLoadData(BaseTestCase):
                          ['artifacts_edge'] * 4 + \
                          ['fecal_pellet'], list(labels))
         self.assertEqual(data.shape, (10, 1))
-        self.assertEqual([[int(x[0])] for x in data], [[65], [51], [73], [35],
-                                                       [37], [0], [0], [0],
-                                                       [202], [158]])
-
-
+        self.assertEqual([[int(x[0])] for x in data], [[51], [73], [65], [35],
+                                                       [37], [202], [0], [0],
+                                                       [0], [158]])
     def test_load_test_fails_without_processing(self):
         """
         Make sure load_data fails to stack training data without processing
@@ -283,7 +281,7 @@ class TestLoadData(BaseTestCase):
         data, names = utils.load_data(self.image_fname_dict,
                                       processing=self.processing)
 
-        self.assertEqual(['81949.jpg', '136177.jpg', '27712.jpg'], names)
+        self.assertEqual(names, ['136177.jpg', '81949.jpg', '27712.jpg'])
         self.assertEqual(data.shape, (3, 100))
 
     def test_load_test_data_name_correspondence_is_correct(self):
@@ -295,8 +293,8 @@ class TestLoadData(BaseTestCase):
         data, names = utils.load_data(self.image_fname_dict,
                                       processing=single_val_processing)
 
-        self.assertEqual(['81949.jpg', '136177.jpg', '27712.jpg'], names)
-        self.assertIs(int(data[0][0]), 46)
-        self.assertIs(int(data[1][0]), 63)
+        self.assertEqual(names, ['136177.jpg', '81949.jpg', '27712.jpg'])
+        self.assertIs(int(data[0][0]), 63)
+        self.assertIs(int(data[1][0]), 46)
         self.assertIs(int(data[2][0]), 5)
 
