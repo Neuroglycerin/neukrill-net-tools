@@ -19,7 +19,6 @@ def load_images(image_fpaths, processing, verbose=False):
     data_subset = []
     num_images = len(image_fpaths)
 
-
     for index in range(num_images):
         # read the image into a numpy array
         image = skimage.io.imread(image_fpaths[index])
@@ -28,12 +27,17 @@ def load_images(image_fpaths, processing, verbose=False):
             print('image read: {0} of {1}'.format(index, num_images))
 
         if processing:
-            resized_image = processing(image)
-            image_vector = resized_image.ravel()
+            # make sure that what we get out is a list
+            # even if it's a single image
+            resized_images = processing(image)
+            if type(resized_images) is not list:
+                resized_images = [resized_images]
+            image_vectors = list(map(lambda image: image.ravel(),
+                                            resized_images))
         else:
-            image_vector = image.ravel()
+            image_vectors = [image.ravel()]
 
-        data_subset.append(image_vector)
+        data_subset += image_vectors
 
     return data_subset
 

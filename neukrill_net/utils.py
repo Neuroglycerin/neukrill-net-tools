@@ -183,11 +183,11 @@ def load_data(image_fname_dict, classes=None,
                 print("class: {0} of 120: {1}".format(class_index, class_name))
 
             image_fpaths = image_fname_dict['train'][class_name]
-            num_images = len(image_fpaths)
             data_subset = image_processing.load_images(image_fpaths,
                                                           processing,
                                                           verbose)
             data.append(data_subset)
+            num_images = len(data_subset)
             # generate the class labels and add them to the list
             array_labels = num_images * [class_name]
             labels = labels + array_labels
