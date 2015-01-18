@@ -6,6 +6,7 @@ are here.
 """
 
 import neukrill_net.image_processing as image_processing
+import numpy as np
 
 def augmentation_wrapper(augment_settings):
     """
@@ -18,7 +19,7 @@ def augmentation_wrapper(augment_settings):
     if "resize" in augment_settings:
         # apply our resize
         resize = lambda image: image_processing.resize_image(image,
-                                        augment_settings['resize']))
+                                        augment_settings['resize'])
     else:
         resize = lambda image: image
 
@@ -42,7 +43,7 @@ def rotations(image, augment_settings):
     """
     Returns a number of rotations depending on the settings.
     """
-    rotations = lambda image: [image_processing.rotate_image(angle) 
-        for angle in np.linspace(0,2*np.pi,augment_settings['rotate'])]
-    return rotations
+    rotations = lambda image: [image_processing.rotate_image(image,angle) 
+        for angle in np.linspace(0,360,augment_settings['rotate'])]
+    return rotations(image)
 
