@@ -54,3 +54,41 @@ class TestResize(BaseTestCase):
                 image_processing.resize_image(self.image, (2000,2000)).shape,
                          (2000,2000))
 
+    def check_images_are_equal(self, image, flipped_image,
+                               flip_x=False, flip_y=False):
+        """
+        Checks whether the values in the two images are equal
+        Can check for indices flipped around either axis
+        """
+        for x in range(image.shape[0]):
+            rev_x = x if not flip_y else image.shape[0] - x - 1
+            for y in range(image.shape[1]):
+                rev_y = y if not flip_x else image.shape[1] - y - 1
+                self.assertEqual(image[x, y], flipped_image[rev_x, rev_y])
+
+    def test_flip(self):
+        """
+        Ensure flipping works
+        """
+        # Check when flipped in no axes
+        flipped_image_x = image_processing.flip_image(self.image)
+
+        self.check_images_are_equal(self.image, flipped_image_x)
+
+        # Check when flipped in X-axis
+        flipped_image_x = image_processing.flip_image(self.image, flip_x=True)
+
+        self.check_images_are_equal(self.image, flipped_image_x, flip_x=True)
+
+        # Check when flipped in Y-axis
+        flipped_image_y = image_processing.flip_image(self.image, flip_y=True)
+
+        self.check_images_are_equal(self.image, flipped_image_y, flip_y=True)
+
+        # Check when flipped in X- & Y-axes
+        flipped_image_xy = \
+                image_processing.flip_image(self.image,
+                                            flip_x=True,
+                                            flip_y=True)
+
+        self.check_images_are_equal(self.image, flipped_image_xy, flip_x=True, flip_y=True)
