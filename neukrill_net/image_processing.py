@@ -37,7 +37,7 @@ def load_images(image_fpaths, processing, verbose=False):
 
     return data_subset
 
-def resize(image, size):
+def resize_image(image, size):
     """
     resize images to a pixel*pixel defined in a tuple
     input: image
