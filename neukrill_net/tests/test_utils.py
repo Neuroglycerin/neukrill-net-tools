@@ -127,6 +127,25 @@ class TestLoadData(BaseTestCase):
                          ['fecal_pellet'], list(labels))
         self.assertEqual(data.shape, (10, 100))
 
+    def test_loading_train_with_augmentation(self):
+        """
+        Use a custom processing function that returns multiple images
+        and test to make sure the image and data arrays still match.
+        """
+        # will return a list of 4 zero arrays
+        dummy_augment = lambda image: [np.zeros((10,10)) for i in range(4)]
+
+        data, labels = utils.load_data(self.image_fname_dict,
+                                       classes=self.classes,
+                                       processing=dummy_augment)
+
+        self.assertIs(len(labels), 40)
+        self.assertEqual(['acantharia_protist'] * 12 + \
+                         ['acantharia_protist_halo'] * 8 + \
+                         ['artifacts_edge'] * 16 + \
+                         ['fecal_pellet']*4, list(labels))
+        self.assertEqual(data.shape, (40, 100))
+
     def test_load_train_data_name_correspondence_is_correct(self):
         """
         Ensure the correspondence of labels to data is maintained
