@@ -6,6 +6,7 @@ Module for all image processing tools
 import skimage.transform
 import skimage.io
 import skimage.util
+import numpy as np
 
 def load_images(image_fpaths, processing, verbose=False):
     """
@@ -117,3 +118,11 @@ def rotate_image(image, angle):
     """
     rotated_image = skimage.transform.rotate(image, angle, mode='nearest')
     return rotated_image
+
+def mean_subtraction(image):
+    """
+    Sometimes useful to remove the per example mean:
+    http://ufldl.stanford.edu/wiki/index.php/Data_Preprocessing
+    """
+    # for some reason, thought this would take more code
+    return image - np.mean(image)
