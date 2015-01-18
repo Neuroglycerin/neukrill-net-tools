@@ -48,6 +48,9 @@ class TestResize(BaseTestCase):
         """
         Ensure resizing works
         """
-        self.assertEqual(image_processing.resize_image(self.image, (5,5)).shape, (5,5))
-        self.assertEqual(image_processing.resize_image(self.image, (2000,2000)).shape, (2000,2000))
+        self.assertEqual(
+                image_processing.resize_image(self.image, (5,5)).shape, (5,5))
+        self.assertEqual(
+                image_processing.resize_image(self.image, (2000,2000)).shape,
+                         (2000,2000))
 
