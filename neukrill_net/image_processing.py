@@ -46,3 +46,27 @@ def resize(image, size):
     """
     resized_image = skimage.transform.resize(image, size)
     return resized_image
+
+def flip_image(image, flip_x=False, flip_y=False):
+    """
+    Flips 2D images in either X or Y axis or both axes.
+    Non-destructive: returns a copy of the input image
+    input:  image  - input image
+            flip_x - whether to flip image in X axis
+            flip_y - whether to flip image in Y axis
+    output: flipped_image - a new, transformed image
+    """
+    if len(image.shape) != 2:
+        raise ValueError('Image must be 2-dimensional')
+
+    flipped_image = image.copy()
+
+    if flip_x:
+        for row in range(flipped_image.shape[0]):
+            flipped_image[row] = flipped_image[row][::-1]
+
+    if flip_y:
+        for column in range(flipped_image.shape[1]):
+            flipped_image[:,column] = flipped_image[:,column][::-1]
+
+    return flipped_image
