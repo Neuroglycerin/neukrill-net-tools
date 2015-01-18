@@ -54,6 +54,17 @@ class TestResize(BaseTestCase):
                 image_processing.resize_image(self.image, (2000,2000)).shape,
                          (2000,2000))
 
+class TestFlip(BaseTestCase):
+    """
+    Unit tests for image flipping
+    """
+    def setUp(self):
+        """
+        Read the first of the images using skimage
+        """
+        self.image = skimage.io.imread(self.image_fname_dict['test'][0])
+
+
     def check_images_are_equal(self, image, flipped_image,
                                flip_x=False, flip_y=False):
         """
