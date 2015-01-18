@@ -70,3 +70,15 @@ def flip_image(image, flip_x=False, flip_y=False):
             flipped_image[:,column] = flipped_image[:,column][::-1]
 
     return flipped_image
+
+def rotate_image(image, angle):
+    """
+    Rotates images by a given angle around its center. Points outside of the
+    boundaries of the image are filled with value of the nearest point.
+    Non-destructive: returns a copy of the input image
+    input: image
+           angle - rotation angle in degrees in counter-clockwise direction
+    output: rotated_image - a new, transformed image
+    """
+    rotated_image = skimage.transform.rotate(image, angle, mode='nearest')
+    return rotated_image
