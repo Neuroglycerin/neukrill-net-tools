@@ -17,6 +17,13 @@ else_ and make a venv directory:
 pyvenv my/new/venv/dir
 ```
 
+On machines __where python 2 is default__ (Ubuntu and DICE machines) you should
+run:
+
+```
+pyvenv-3.4 my/new/venv/dir
+```
+
 When you want to work on the project, source it:
 
 ```
@@ -34,10 +41,10 @@ This may fail unless you explictly install numpy first: on the travis
 deployment the following packages are installed before the rest of the
 requirments:
 
-    * pip 
-    * numpy 
-    * scipy 
-    * six
+* pip 
+* numpy 
+* scipy 
+* six
 
 Once all the requirements are installed you can development install (means we don't
 have to keep reinstalling the module each time we make a change to the code)
