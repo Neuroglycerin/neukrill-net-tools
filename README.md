@@ -98,7 +98,17 @@ Most of the neural net packages are going to require BLAS.
 You could follow the [Caffe install page][ci] and install
 ATLAS.
 
-Continuing with vanilla [BLAS for Arch Linux][ab] for now.
+For Arch Linux
+--------------
+
+Was not seeing any speedup on multiple cores with default [BLAS for Arch Linux][ab].
+Installed OpenBLAS through the linuxfr repository (installed to get yaourt) and
+immediately saw massive speedup. Would recommend installing this on Arch.
+
+Ubuntu
+------
+
+You may want to install OpenBLAS or ATLAS through apt-get.
 
 [ci]: http://caffe.berkeleyvision.org/installation.html
 [ab]: http://www.netlib.org/lapack/
