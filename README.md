@@ -37,7 +37,7 @@ using to your virtual environment:
 pip install -r requirements.txt
 ```
 
-This may fail unless you explictly install numpy first: on the travis
+This may fail unless you explictly install numpy and six first: on the travis
 deployment the following packages are installed before the rest of the
 requirments:
 
