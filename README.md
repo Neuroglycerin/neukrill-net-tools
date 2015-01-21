@@ -24,6 +24,28 @@ run:
 pyvenv-3.4 my/new/venv/dir
 ```
 
+__Ubuntu 14.04__ comes with a [broken pyenv](http://askubuntu.com/questions/488529/pyvenv-3-4-error-returned-non-zero-exit-status-1). We can install a Pyenv without pip, then manually install pip. 
+
+```
+# need this as we're using Python 3
+sudo apt-get install python3.4-dev
+pyvenv-3.4 --without-pip venv
+
+# source the new venv
+source ./venv/bin/activate
+wget https://pypi.python.org/packages/source/s/setuptools/setuptools-12.0.4.tar.gz
+tar -vzxf setuptools-12.0.4.tar.gz 
+cd setuptools-12.0.4/
+python setup.py install
+cd ..
+wget https://pypi.python.org/packages/source/p/pip/pip-6.0.6.tar.gz
+tar -vzxf pip-6.0.6.tar.gz
+cd pip-6.0.6/
+python setup.py install
+cd ..
+deactivate
+```
+
 When you want to work on the project, source it:
 
 ```
@@ -34,12 +56,15 @@ Then, _in this repository_ install all the libraries we're
 using to your virtual environment:
 
 ```
+# to prevent failure, install these two first
+pip install numpy
+pip install six
+
 pip install -r requirements.txt
 ```
 
-This may fail unless you explictly install numpy and six first: on the travis
-deployment the following packages are installed before the rest of the
-requirments:
+On the travis deployment the following packages are installed before the rest of the
+requirements:
 
 * pip 
 * numpy 
