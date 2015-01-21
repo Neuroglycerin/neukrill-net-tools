@@ -29,6 +29,7 @@ __Ubuntu 14.04__ comes with a [broken pyenv](http://askubuntu.com/questions/4885
 ```
 # need this as we're using Python 3
 sudo apt-get install python3.4-dev
+sudo apt-get install python3.4-venv
 pyvenv-3.4 --without-pip venv
 
 # source the new venv
