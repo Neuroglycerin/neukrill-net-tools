@@ -305,19 +305,16 @@ class MLP_sk_interface(object):
         # get dimensionality of input
         d_in = int(numpy.sqrt(X.shape[1]))
         d_out = len(set(y))
-        print(d_in)
-        print(d_out)
         
-        # Break up X matrix into test, train and validation
-        split = sklearn.cross_validation.StratifiedKFold(y, n_folds=3)
+        # Shuffle X and y
+        X,y = sklearn.utils.shuffle(X,y,random_state=random_state)
+        split = int(X.shape[0]/3)
 
         # take stratified splits for test, train and validation
-        _,inds = next(iter(split))
-        train_set_x,train_set_y = self.shared_dataset(X[inds],y[inds])
-        _,inds = next(iter(split))
-        valid_set_x,valid_set_y = self.shared_dataset(X[inds],y[inds])
-        _,inds = next(iter(split))
-        test_set_x,test_set_y = self.shared_dataset(X[inds],y[inds])
+        train_set_x,train_set_y = self.shared_dataset(X[:split],y[:split])
+        valid_set_x,valid_set_y = self.shared_dataset(X[split:2*split],
+                                                        y[split:2*split])
+        test_set_x,test_set_y = self.shared_dataset(X[2*split:],y[2*split:])
 
         # compute number of minibatches for training, validation and testing
         n_train_batches = train_set_x.get_value(borrow=True).shape[0]/self.batch_size
@@ -347,8 +344,8 @@ class MLP_sk_interface(object):
         # the model plus the regularization terms (L1 and L2); cost is expressed
         # here symbolically
         cost = (classifier.negative_log_likelihood(y)
-            + L1_reg * classifier.L1
-            + L2_reg * classifier.L2_sqr)
+            + self.L1_reg * classifier.L1
+            + self.L2_reg * classifier.L2_sqr)
 
         # compiling a Theano function that computes the mistakes that are made
         # by the model on a minibatch
@@ -362,14 +359,14 @@ class MLP_sk_interface(object):
         # start-snippet-5
         # compute the gradient of cost with respect to theta (sotred in params)
         # the resulting gradients will be stored in a list gparams
-        gparams = [t.grad(cost, param) for param in classifier.params]
+        gparams = [T.grad(cost, param) for param in classifier.params]
 
         # given two list the zip A = [a1, a2, a3, a4] and B = [b1, b2, b3, b4] of
         # same length, zip generates a list C of same size, where each element
         # is a pair formed from the two lists :
         #    C = [(a1, b1), (a2, b2), (a3, b3), (a4, b4)]
         updates = [
-            (param, param - learning_rate * gparam)
+            (param, param - self.learning_rate * gparam)
             for param, gparam in zip(classifier.params, gparams)
         ]
 
@@ -404,7 +401,7 @@ class MLP_sk_interface(object):
                                       # on the validation set; in this case we
                                       # check every epoch
         best_validation_loss = numpy.inf
-        best_iter = 0
+        best_i = 0
         test_score = 0.
 
         epoch = 0
@@ -416,9 +413,9 @@ class MLP_sk_interface(object):
 
                 minibatch_avg_cost = train_model(minibatch_index)
                 # iteration number
-                iter = (epoch - 1) * n_train_batches + minibatch_index
+                i = (epoch - 1) * n_train_batches + minibatch_index
 
-                if (iter + 1) % validation_frequency == 0:
+                if (i + 1) % validation_frequency == 0:
                     # compute zero-one loss on validation set
                     validation_losses = [validate_model(i) for i
                                          in range(int(n_valid_batches))]
@@ -440,10 +437,10 @@ class MLP_sk_interface(object):
                             this_validation_loss < best_validation_loss *
                             improvement_threshold
                         ):
-                            patience = max(patience, iter * patience_increase)
+                            patience = max(patience, i * patience_increase)
 
                         best_validation_loss = this_validation_loss
-                        best_iter = iter
+                        best_i = i
 
                         # test it on the test set
                         test_losses = [test_model(i) for i
@@ -455,13 +452,13 @@ class MLP_sk_interface(object):
                                   (epoch, minibatch_index + 1, n_train_batches,
                                    test_score * 100.))
 
-                if patience <= iter:
+                if patience <= i:
                     done_looping = True
                     break
         if self.verbose:
             print(('Optimization complete. Best validation score of %f %% '
-                   'obtained at iteration %i, with test performance %f %%') %
-                  (best_validation_loss * 100., best_iter + 1, test_score * 100.))
+                   'obtained at iation %i, with test performance %f %%') %
+                  (best_validation_loss * 100., best_i + 1, test_score * 100.))
 
     def score(self,X,y):
         """
@@ -482,7 +479,7 @@ class MLP_sk_interface(object):
 
 
 
-    def shared_dataset(data_x, data_y, borrow=True):
+    def shared_dataset(self, data_x, data_y, borrow=True):
         """ Function that loads the dataset into shared variables
 
         The reason we store our dataset in shared variables is to allow
@@ -507,72 +504,5 @@ class MLP_sk_interface(object):
         # lets ous get around this issue
         return shared_x, T.cast(shared_y, 'int32')
 
-
-
-        
-
-
-# this should probably go in utils
-def load_data():
-    ''' Loads the dataset
-
-    :type dataset: string
-    :param dataset: the path to the dataset (here MNIST)
-    '''
-
-    #############
-    # LOAD DATA #
-    #############
-
-    # Load the dataset
-    train = numpy.load("/home/gavin/Documents/ndsb/mnist_train.npz")
-    test = numpy.load("/home/gavin/Documents/ndsb/mnist_train.npz")
-
-    split = int(test['arr_0'].shape[0]/2)
-
-    train_set_x,train_set_y = train['arr_0'],train['arr_1']
-    valid_set_x,valid_set_y = test['arr_0'][:split,:],test['arr_1'][:split]
-    test_set_x,test_set_y = test['arr_0'][split:,:],test['arr_1'][split:]
-
-    #train_set, valid_set, test_set format: tuple(input, target)
-    #input is an numpy.ndarray of 2 dimensions (a matrix)
-    #whose rows correspond to an example. target is a
-    #numpy.ndarray of 1 dimensions (vector)) that have the same length as
-    #the number of rows in the input. It should give the target
-    #target to the example with the same index in the input.
-
-    def shared_dataset(data_x, data_y, borrow=True):
-        """ Function that loads the dataset into shared variables
-
-        The reason we store our dataset in shared variables is to allow
-        Theano to copy it into the GPU memory (when code is run on GPU).
-        Since copying data into the GPU is slow, copying a minibatch everytime
-        is needed (the default behaviour if the data is not in a shared
-        variable) would lead to a large decrease in performance.
-        """
-        
-        shared_x = theano.shared(numpy.asarray(data_x,
-                                               dtype=theano.config.floatX),
-                                 borrow=borrow)
-        shared_y = theano.shared(numpy.asarray(data_y,
-                                               dtype=theano.config.floatX),
-                                 borrow=borrow)
-        # When storing data on the GPU it has to be stored as floats
-        # therefore we will store the labels as ``floatX`` as well
-        # (``shared_y`` does exactly that). But during our computations
-        # we need them as ints (we use labels as index, and if they are
-        # floats it doesn't make sense) therefore instead of returning
-        # ``shared_y`` we will have to cast it to int. This little hack
-        # lets ous get around this issue
-        print(shared_x.get_value().shape,shared_y.get_value().shape)
-        return shared_x, T.cast(shared_y, 'int32')
-
-    # flat is better than nested
-    test_set_x, test_set_y = shared_dataset(test_set_x,test_set_y)
-    valid_set_x, valid_set_y = shared_dataset(valid_set_x,valid_set_y)
-    train_set_x, train_set_y = shared_dataset(train_set_x,train_set_y)
-
-    return (test_set_x, test_set_y, 
-            valid_set_x, valid_set_y, train_set_x, train_set_y)
 
 
