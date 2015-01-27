@@ -116,7 +116,15 @@ def rotate_image(image, angle):
            angle - rotation angle in degrees in counter-clockwise direction
     output: rotated_image - a new, transformed image
     """
-    rotated_image = skimage.transform.rotate(image, angle, mode='nearest')
+    if (angle % 90) == 0:
+        # Lossless cardinal rotation
+        # Make sure we have a positive number of rotations
+        angle = angle % 360
+        # Rotate by 90 the correct number of times
+        rotated_image = np.rot90(image, angle/90)
+    else:
+        # Use lossy rotation from skimage
+        rotated_image = skimage.transform.rotate(image, angle, mode='nearest')
     return rotated_image
 
 def mean_subtraction(image):
