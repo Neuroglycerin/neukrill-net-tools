@@ -55,6 +55,40 @@ class TestResize(BaseTestCase):
                 image_processing.resize_image(self.image, (2000,2000)).shape,
                          (2000,2000))
 
+class TestRotate(BaseTestCase):
+    """
+    Unit tests for image rotation
+    """
+    def setUp(self):
+        """
+        Read the first of the images using skimage
+        """
+        self.image = skimage.io.imread(self.image_fname_dict['test'][0])
+    
+    def test_rotate_lossless(self):
+        """
+        Ensure rotation is lossless for cardinal rotations
+        """
+        # Rotation should be the same, mod 360
+        self.assertTrue(np.array_equal(
+            image_processing.rotate_image(self.image, 90), image_processing.rotate_image(self.image, -270)))
+        # Rotation should be the same, mod 360
+        self.assertTrue(np.array_equal(
+            image_processing.rotate_image(self.image, 180), image_processing.rotate_image(self.image, -180)))
+        # Rotation of 360 should not change image
+        self.assertTrue(np.array_equal(
+            self.image, image_processing.rotate_image(self.image, 360)))
+        # Rotation should stack 90+90=180
+        self.assertTrue(np.array_equal(
+            image_processing.rotate_image(self.image, 180), image_processing.rotate_image(image_processing.rotate_image(self.image, 90), 90)))
+        # Rotation of 90+270=360 should not change image
+        self.assertTrue(np.array_equal(
+            self.image, image_processing.rotate_image(image_processing.rotate_image(self.image, 90), 270)))
+        # Rotation of 180+180=360 should not change image
+        self.assertTrue(np.array_equal(
+            self.image, image_processing.rotate_image(image_processing.rotate_image(self.image, 180), 180)))
+        
+        
 class TestFlip(BaseTestCase):
     """
     Unit tests for image flipping
