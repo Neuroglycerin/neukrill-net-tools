@@ -4,6 +4,7 @@ Unit tests for image processing functions
 """
 import skimage.io
 import skimage.transform
+import numpy as np
 from neukrill_net.tests.base import BaseTestCase
 import neukrill_net.image_processing as image_processing
 
@@ -90,12 +91,22 @@ class TestFlip(BaseTestCase):
         flipped_image_x = image_processing.flip_image(self.image, flip_x=True)
 
         self.check_images_are_equal(self.image, flipped_image_x, flip_x=True)
+        
+        # Check X flipping is reversible
+        self.assertTrue(np.array_equal(
+            self.image,
+            image_processing.flip_image(flipped_image_x, flip_x=True)))
 
         # Check when flipped in Y-axis
         flipped_image_y = image_processing.flip_image(self.image, flip_y=True)
-
+        
         self.check_images_are_equal(self.image, flipped_image_y, flip_y=True)
-
+        
+        # Check Y flipping is reversible
+        self.assertTrue(np.array_equal(
+            self.image,
+            image_processing.flip_image(flipped_image_y, flip_y=True)))
+        
         # Check when flipped in X- & Y-axes
         flipped_image_xy = \
                 image_processing.flip_image(self.image,
@@ -103,3 +114,9 @@ class TestFlip(BaseTestCase):
                                             flip_y=True)
 
         self.check_images_are_equal(self.image, flipped_image_xy, flip_x=True, flip_y=True)
+        
+        # Check X & Y flipping is reversible
+        self.assertTrue(np.array_equal(
+            self.image,
+            image_processing.flip_image(flipped_image_xy, flip_x=True, flip_y=True)))
+        
