@@ -36,6 +36,9 @@ class TestAugmentImages(BaseTestCase):
     def test_rotations(self):
         self.assertEqual(len(augment.rotations(self.image, 5)), 5)
         
+    def test_allcrops(self):
+        self.assertEqual(len(augment.allcrops(self.image)), 4)
+        
     def test_augmentation_counts(self):
         """
         Ensure each of the augmentations give the correct number of output images
@@ -47,30 +50,36 @@ class TestAugmentImages(BaseTestCase):
         
         # Test with resizing
         augment_settings = {'resize':(48,48)}
-        processing = augment.augmentation_wrapper(augment_settings)
-        procImages = image_processing.load_images(self.image_fpaths, processing)
+        procImages = image_processing.load_images(self.image_fpaths, 
+                        augment.augmentation_wrapper(augment_settings))
         self.assertEqual(len(procImages), num_images)
         
         # Test with rotation
         augment_settings = {'rotate':8}
-        processing = augment.augmentation_wrapper(augment_settings)
-        procImages = image_processing.load_images(self.image_fpaths, processing)
+        procImages = image_processing.load_images(self.image_fpaths, 
+                        augment.augmentation_wrapper(augment_settings))
         self.assertEqual(len(procImages), num_images*8)
         
         # Test with reflection
         augment_settings = {'flip':True}
-        processing = augment.augmentation_wrapper(augment_settings)
-        procImages = image_processing.load_images(self.image_fpaths, processing)
+        procImages = image_processing.load_images(self.image_fpaths, 
+                        augment.augmentation_wrapper(augment_settings))
         self.assertEqual(len(procImages), num_images*2)
         # Test without reflection
         augment_settings = {'flip':False}
-        processing = augment.augmentation_wrapper(augment_settings)
-        procImages = image_processing.load_images(self.image_fpaths, processing)
+        procImages = image_processing.load_images(self.image_fpaths, 
+                        augment.augmentation_wrapper(augment_settings))
         self.assertEqual(len(procImages), num_images)
         
+        # Test with crop
+        augment_settings = {'crop':True}
+        procImages = image_processing.load_images(self.image_fpaths, 
+                        augment.augmentation_wrapper(augment_settings))
+        self.assertEqual(len(procImages), num_images*5)
+        
         # Test with all
-        augment_settings = {'resize':(48,48), 'rotate':5, 'flip':True}
-        processing = augment.augmentation_wrapper(augment_settings)
-        procImages = image_processing.load_images(self.image_fpaths, processing)
-        self.assertEqual(len(procImages), num_images*10)
+        augment_settings = {'resize':(48,48), 'rotate':5, 'flip':True, 'crop':True}
+        procImages = image_processing.load_images(self.image_fpaths, 
+                        augment.augmentation_wrapper(augment_settings))
+        self.assertEqual(len(procImages), num_images*50)
 
