@@ -78,6 +78,11 @@ the neukrill-net-tools module by running one of the following when in the tools 
 
 ```
 pip install -e .  
+```
+
+__or__
+
+```
 python setup.py develop
 ```
 
