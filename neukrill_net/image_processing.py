@@ -116,7 +116,7 @@ def rotate_image(image, angle):
            angle - rotation angle in degrees in counter-clockwise direction
     output: rotated_image - a new, transformed image
     """
-    if (angle % 90) == 0:
+    if abs(((angle+45) % 90)-45) < 1e-05:
         # Lossless cardinal rotation
         # Make sure we have a positive number of rotations
         angle = angle % 360
