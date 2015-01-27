@@ -43,7 +43,7 @@ class TestSettings(BaseTestCase):
         """
         Ensure a valid dict is created from a correct json io.String during init
         """
-        string_settings = io.StringIO('{"data_dir": ["TestSettingsParserDir"]}')
+        string_settings = io.StringIO(u'{"data_dir": ["TestSettingsParserDir"]}')
         settings = utils.Settings(string_settings)
         self.assertIs(settings.user_input.__class__, dict)
         self.assertTrue(len(settings.user_input) > 0)
@@ -59,7 +59,7 @@ class TestSettings(BaseTestCase):
         """
         Ensure error is thrown if a required setting is omitted
         """
-        setting_string_without_required = io.StringIO('{"foo": 5, "bar": "duck"}')
+        setting_string_without_required = io.StringIO(u'{"foo": 5, "bar": "duck"}')
         with self.assertRaises(ValueError):
             utils.Settings(setting_string_without_required)
 
@@ -67,7 +67,7 @@ class TestSettings(BaseTestCase):
         """
         Make sure settings parser resolves to dir containing test and train dirs
         """
-        settings_string_with_2_dirs = io.StringIO('{"data_dir": ["fake", "TestSettingsParserDir"]}')
+        settings_string_with_2_dirs = io.StringIO(u'{"data_dir": ["fake", "TestSettingsParserDir"]}')
         settings = utils.Settings(settings_string_with_2_dirs)
         self.assertEqual(settings.data_dir, os.path.abspath(self.data_dir))
 
