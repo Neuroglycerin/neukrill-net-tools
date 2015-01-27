@@ -9,7 +9,8 @@ import numpy as np
 from neukrill_net.tests.base import BaseTestCase
 import neukrill_net.utils as utils
 import neukrill_net.utils as constants
-import unittest.mock
+# appears we were not using this?
+#import unittest.mock
 
 class TestSettings(BaseTestCase):
     """
