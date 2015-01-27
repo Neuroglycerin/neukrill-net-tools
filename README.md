@@ -24,7 +24,7 @@ run:
 pyvenv-3.4 my/new/venv/dir
 ```
 
-__Ubuntu 14.04__ comes with a [broken pyenv](http://askubuntu.com/questions/488529/pyvenv-3-4-error-returned-non-zero-exit-status-1). We can install a Pyenv without pip, then manually install pip. 
+__Ubuntu 14.04__ comes with a [broken pyvenv](http://askubuntu.com/questions/488529/pyvenv-3-4-error-returned-non-zero-exit-status-1). We can install a Pyenv without pip, then manually install pip. 
 
 ```
 # need this as we're using Python 3
