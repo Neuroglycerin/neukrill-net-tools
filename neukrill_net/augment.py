@@ -45,6 +45,14 @@ def augmentation_wrapper(augment_settings):
     else:
         flip = lambda images: images
     
+    # Crop (every side or not at all)
+    if 'crop' in augment_settings and augment_settings['crop']:
+        crop = lambda images: images + [croppedImage for image in images
+                                            for croppedImage in
+                                            allcrops(image)]
+    else:
+        crop = lambda images: images
+    
     # Stack all our functions together
     # Order matters here:
     # - Rotate first because then it has higher accuracy
@@ -53,7 +61,7 @@ def augmentation_wrapper(augment_settings):
     # - Crop
     # - Flip
     # - Resize last because it is lossy
-    processing = lambda image: resize(flip(rotate([image])))
+    processing = lambda image: resize(crop(flip(rotate([image]))))
     
     return processing
 
@@ -63,4 +71,11 @@ def rotations(image, num_rotations):
     """
     return [image_processing.rotate_image(image,angle) 
         for angle in np.linspace(0,360,num_rotations)]
+        
+def allcrops(image):
+    """
+    Returns a number of cropped copies of an image
+    """
+    return [image_processing.crop_image(image,side_id)
+        for side_id in range(4)]
 
