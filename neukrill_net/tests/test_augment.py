@@ -34,12 +34,17 @@ class TestAugmentImages(BaseTestCase):
         self.assertListOfNumpyArraysEqual(images, images2)
         
     def test_rotations(self):
+        # Test numerosity
         self.assertEqual(len(augment.rotations(self.image, 5)), 5)
+        # Check if we really are using the lossless rotation
+        rotatedImages = augment.rotations(self.image, 4)
+        self.assertEqual(self.image, np.rot90(rotatedImages[-1]))
         
     def test_allcrops(self):
+        # Test numerosity
         self.assertEqual(len(augment.allcrops(self.image)), 4)
         
-    def test_augmentation_counts(self):
+    def test_augmentation_numerosity(self):
         """
         Ensure each of the augmentations give the correct number of output images
         """
@@ -77,7 +82,7 @@ class TestAugmentImages(BaseTestCase):
                         augment.augmentation_wrapper(augment_settings))
         self.assertEqual(len(procImages), num_images*5)
         
-        # Test with all
+        # Test with all enabled
         augment_settings = {'resize':(48,48), 'rotate':5, 'flip':True, 'crop':True}
         procImages = image_processing.load_images(self.image_fpaths, 
                         augment.augmentation_wrapper(augment_settings))
