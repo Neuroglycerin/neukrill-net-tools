@@ -127,6 +127,43 @@ def rotate_image(image, angle):
         rotated_image = skimage.transform.rotate(image, angle, mode='nearest')
     return rotated_image
 
+def crop_image(image, side_id, crop_proportion=0.2):
+    """
+    Crops 2D images from 
+    input:  image - input image
+            side_id - which side to crop
+                      0 right
+                      1 top
+                      2 left
+                      3 right
+            
+    output: cropped_image - a new image, smaller on one side
+    """
+    if (side_id % 2)==0:
+        # Left/right
+        sidelength = image.shape[1]
+    else:
+        # Top/bottom
+        sidelength = image.shape[0]
+    
+    croplen = np.floor(sidelength*crop_proportion)
+    
+    if side_id == 0:
+        # RHS
+        cropped_image = image[:, :-croplen]
+    elif side_id == 1:
+        # Top
+        cropped_image = image[croplen:, :]
+    elif side_id == 2:
+        # LHS
+        cropped_image = image[:, croplen:]
+    elif side_id == 3:
+        # Bottom
+        cropped_image = image[:-croplen, :]
+    else:
+        raise ValueError('Side ID was not in [0,1,2,3]')
+    return cropped_image
+    
 def mean_subtraction(image):
     """
     Sometimes useful to remove the per example mean:
