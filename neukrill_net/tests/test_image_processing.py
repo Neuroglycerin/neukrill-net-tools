@@ -155,3 +155,39 @@ class TestFlip(BaseTestCase):
             self.image,
             image_processing.flip_image(flipped_image_xy, flip_x=True, flip_y=True))
         
+class TestCrop(BaseTestCase):
+    """
+    Unit tests for image flipping
+    """
+    def setUp(self):
+        """
+        Read the first of the images using skimage
+        """
+        self.image = np.ones((100,100))
+        
+    def test_crop(self):
+        """
+        Ensure cropping works.
+        """
+        # Crop 20% from right hand side
+        croppedImage = image_processing.crop_image(self.image, 0, crop_proportion=0.2)
+        self.assertEqual(croppedImage.shape, (100,80))
+        # Crop 20% from top
+        croppedImage = image_processing.crop_image(self.image, 1, crop_proportion=0.2)
+        self.assertEqual(croppedImage.shape, (80,100))
+        # Crop 20% from left hand side
+        croppedImage = image_processing.crop_image(self.image, 2, crop_proportion=0.2)
+        self.assertEqual(croppedImage.shape, (100,80))
+        # Crop 20% from bottom
+        croppedImage = image_processing.crop_image(self.image, 3, crop_proportion=0.2)
+        self.assertEqual(croppedImage.shape, (80,100))
+        
+        # Crop 5.4% from right hand side
+        croppedImage = image_processing.crop_image(self.image, 0, crop_proportion=0.054)
+        self.assertEqual(croppedImage.shape, (100,95))
+        # Crop 5.4% from top hand side
+        croppedImage = image_processing.crop_image(self.image, 1, crop_proportion=0.054)
+        self.assertEqual(croppedImage.shape, (95,100))
+
+
+
