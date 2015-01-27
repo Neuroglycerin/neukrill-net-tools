@@ -70,7 +70,7 @@ def rotations(image, num_rotations):
     Returns a number of rotations depending on the settings.
     """
     return [image_processing.rotate_image(image,angle) 
-        for angle in np.linspace(0,360,num_rotations)]
+        for angle in np.linspace(0, 360, num_rotations, endpoint=False)]
         
 def allcrops(image):
     """
