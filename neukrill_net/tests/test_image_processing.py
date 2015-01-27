@@ -7,6 +7,7 @@ import skimage.transform
 import numpy as np
 from neukrill_net.tests.base import BaseTestCase
 import neukrill_net.image_processing as image_processing
+import neukrill_net.augment as augment
 
 class TestLoadImages(BaseTestCase):
     """
@@ -25,7 +26,12 @@ class TestLoadImages(BaseTestCase):
         """
         images = image_processing.load_images(self.image_fpaths, None)
         self.assertEqual(len(images), 3)
-
+        
+        # Test the wrapper can generate a function which does no processing
+        processing = augment.augmentation_wrapper({})
+        images2 = image_processing.load_images(self.image_fpaths, processing)
+        self.assertListOfNumpyArraysEqual(images, images2)
+        
     def test_load_images_with_min_processing(self):
         """
         Ensure a processing function works
@@ -34,6 +40,7 @@ class TestLoadImages(BaseTestCase):
         images = image_processing.load_images(self.image_fpaths, processing)
         self.assertEqual(len(images), 3)
         self.assertEqual([[int(x[0])] for x in images], [[63], [5], [46]])
+    
 
 class TestResize(BaseTestCase):
     """
@@ -127,9 +134,9 @@ class TestFlip(BaseTestCase):
         self.check_images_are_equal(self.image, flipped_image_x, flip_x=True)
         
         # Check X flipping is reversible
-        self.assertTrue(np.array_equal(
+        self.assertEqual(
             self.image,
-            image_processing.flip_image(flipped_image_x, flip_x=True)))
+            image_processing.flip_image(flipped_image_x, flip_x=True))
 
         # Check when flipped in Y-axis
         flipped_image_y = image_processing.flip_image(self.image, flip_y=True)
@@ -137,9 +144,9 @@ class TestFlip(BaseTestCase):
         self.check_images_are_equal(self.image, flipped_image_y, flip_y=True)
         
         # Check Y flipping is reversible
-        self.assertTrue(np.array_equal(
+        self.assertEqual(
             self.image,
-            image_processing.flip_image(flipped_image_y, flip_y=True)))
+            image_processing.flip_image(flipped_image_y, flip_y=True))
         
         # Check when flipped in X- & Y-axes
         flipped_image_xy = \
@@ -150,7 +157,7 @@ class TestFlip(BaseTestCase):
         self.check_images_are_equal(self.image, flipped_image_xy, flip_x=True, flip_y=True)
         
         # Check X & Y flipping is reversible
-        self.assertTrue(np.array_equal(
+        self.assertEqual(
             self.image,
-            image_processing.flip_image(flipped_image_xy, flip_x=True, flip_y=True)))
+            image_processing.flip_image(flipped_image_xy, flip_x=True, flip_y=True))
         
