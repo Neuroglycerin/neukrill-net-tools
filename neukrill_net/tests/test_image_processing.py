@@ -7,7 +7,6 @@ import skimage.transform
 import numpy as np
 from neukrill_net.tests.base import BaseTestCase
 import neukrill_net.image_processing as image_processing
-import neukrill_net.augment as augment
 
 class TestLoadImages(BaseTestCase):
     """
@@ -24,13 +23,9 @@ class TestLoadImages(BaseTestCase):
         Test load images returns list of flat images as expected
         with no processing
         """
+        # Test we can load the images without a processing function
         images = image_processing.load_images(self.image_fpaths, None)
         self.assertEqual(len(images), 3)
-        
-        # Test the wrapper can generate a function which does no processing
-        processing = augment.augmentation_wrapper({})
-        images2 = image_processing.load_images(self.image_fpaths, processing)
-        self.assertListOfNumpyArraysEqual(images, images2)
         
     def test_load_images_with_min_processing(self):
         """
@@ -41,7 +36,6 @@ class TestLoadImages(BaseTestCase):
         self.assertEqual(len(images), 3)
         self.assertEqual([[int(x[0])] for x in images], [[63], [5], [46]])
     
-
 class TestResize(BaseTestCase):
     """
     Unit tests for image resizing as this function is going to expand
