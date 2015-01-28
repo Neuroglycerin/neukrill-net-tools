@@ -15,35 +15,67 @@ def augmentation_wrapper(augment_settings):
     """
     # components of the processing pipeline
     components = []
-    # at the moment can only do resize and rotate
-    if "resize" in augment_settings:
+    
+    # Resize
+    if 'resize' in augment_settings:
         # apply our resize
-        resize = lambda image: image_processing.resize_image(image,
-                                        augment_settings['resize'])
+        resize = lambda images: [image_processing.resize_image(
+                                    image,
+                                    augment_settings['resize'])
+                                    for image in images]
     else:
-        resize = lambda image: image
-
-    if "rotate" in augment_settings:
+        resize = lambda images: images
+    
+    # Rotate
+    if 'rotate' in augment_settings:
         # apply rotate with options
         # will require a function here to call it a number of times
-        rotate = lambda image: rotations(image, augment_settings)
+        rotate = lambda images: [rotatedImage for image in images
+                                    for rotatedImage in
+                                    rotations(image, augment_settings['rotate'])]
     else:
-        rotate = lambda image: image
-
-    if "flip" in augment_settings:
-        flip = lambda image: image_processing.flip_image(image, 
-                                            augment_settings['flip'])
-        processing = lambda image: rotate(resize(image)) + [flip(resize(image))]
+        rotate = lambda images: images
+    
+    # Flip (always horizontally)
+    # All other relfections can be acheived by coupling with an appropriate reflection
+    # Flip setting should either be True or False in settings
+    if 'flip' in augment_settings and augment_settings['flip']:
+        flip = lambda images: images + [image_processing.flip_image(image, True)
+                                            for image in images]
     else:
-        processing = lambda image: rotate(resize(image))
-
+        flip = lambda images: images
+    
+    # Crop (every side or not at all)
+    if 'crop' in augment_settings and augment_settings['crop']:
+        crop = lambda images: images + [croppedImage for image in images
+                                            for croppedImage in
+                                            allcrops(image)]
+    else:
+        crop = lambda images: images
+    
+    # Stack all our functions together
+    # Order matters here:
+    # - Rotate first because then it has higher accuracy
+    #   (might want to move in pixels which would otherwise be cropped
+    #    don't want the loss of resolution caused by resize)
+    # - Crop
+    # - Flip
+    # - Resize last because it is lossy
+    processing = lambda image: resize(crop(flip(rotate([image]))))
+    
     return processing
 
-def rotations(image, augment_settings):
+def rotations(image, num_rotations):
     """
     Returns a number of rotations depending on the settings.
     """
-    rotations = lambda image: [image_processing.rotate_image(image,angle) 
-        for angle in np.linspace(0,360,augment_settings['rotate'])]
-    return rotations(image)
+    return [image_processing.rotate_image(image,angle) 
+        for angle in np.linspace(0, 360, num_rotations, endpoint=False)]
+        
+def allcrops(image):
+    """
+    Returns a number of cropped copies of an image
+    """
+    return [image_processing.crop_image(image,side_id)
+        for side_id in range(4)]
 

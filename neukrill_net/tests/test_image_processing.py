@@ -23,9 +23,10 @@ class TestLoadImages(BaseTestCase):
         Test load images returns list of flat images as expected
         with no processing
         """
+        # Test we can load the images without a processing function
         images = image_processing.load_images(self.image_fpaths, None)
         self.assertEqual(len(images), 3)
-
+        
     def test_load_images_with_min_processing(self):
         """
         Ensure a processing function works
@@ -34,7 +35,7 @@ class TestLoadImages(BaseTestCase):
         images = image_processing.load_images(self.image_fpaths, processing)
         self.assertEqual(len(images), 3)
         self.assertEqual([[int(x[0])] for x in images], [[63], [5], [46]])
-
+    
 class TestResize(BaseTestCase):
     """
     Unit tests for image resizing as this function is going to expand
@@ -127,9 +128,9 @@ class TestFlip(BaseTestCase):
         self.check_images_are_equal(self.image, flipped_image_x, flip_x=True)
         
         # Check X flipping is reversible
-        self.assertTrue(np.array_equal(
+        self.assertEqual(
             self.image,
-            image_processing.flip_image(flipped_image_x, flip_x=True)))
+            image_processing.flip_image(flipped_image_x, flip_x=True))
 
         # Check when flipped in Y-axis
         flipped_image_y = image_processing.flip_image(self.image, flip_y=True)
@@ -137,9 +138,9 @@ class TestFlip(BaseTestCase):
         self.check_images_are_equal(self.image, flipped_image_y, flip_y=True)
         
         # Check Y flipping is reversible
-        self.assertTrue(np.array_equal(
+        self.assertEqual(
             self.image,
-            image_processing.flip_image(flipped_image_y, flip_y=True)))
+            image_processing.flip_image(flipped_image_y, flip_y=True))
         
         # Check when flipped in X- & Y-axes
         flipped_image_xy = \
@@ -150,7 +151,43 @@ class TestFlip(BaseTestCase):
         self.check_images_are_equal(self.image, flipped_image_xy, flip_x=True, flip_y=True)
         
         # Check X & Y flipping is reversible
-        self.assertTrue(np.array_equal(
+        self.assertEqual(
             self.image,
-            image_processing.flip_image(flipped_image_xy, flip_x=True, flip_y=True)))
+            image_processing.flip_image(flipped_image_xy, flip_x=True, flip_y=True))
         
+class TestCrop(BaseTestCase):
+    """
+    Unit tests for image flipping
+    """
+    def setUp(self):
+        """
+        Read the first of the images using skimage
+        """
+        self.image = np.ones((100,100))
+        
+    def test_crop(self):
+        """
+        Ensure cropping works.
+        """
+        # Crop 20% from right hand side
+        croppedImage = image_processing.crop_image(self.image, 0, crop_proportion=0.2)
+        self.assertEqual(croppedImage.shape, (100,80))
+        # Crop 20% from top
+        croppedImage = image_processing.crop_image(self.image, 1, crop_proportion=0.2)
+        self.assertEqual(croppedImage.shape, (80,100))
+        # Crop 20% from left hand side
+        croppedImage = image_processing.crop_image(self.image, 2, crop_proportion=0.2)
+        self.assertEqual(croppedImage.shape, (100,80))
+        # Crop 20% from bottom
+        croppedImage = image_processing.crop_image(self.image, 3, crop_proportion=0.2)
+        self.assertEqual(croppedImage.shape, (80,100))
+        
+        # Crop 5.4% from right hand side
+        croppedImage = image_processing.crop_image(self.image, 0, crop_proportion=0.054)
+        self.assertEqual(croppedImage.shape, (100,95))
+        # Crop 5.4% from top hand side
+        croppedImage = image_processing.crop_image(self.image, 1, crop_proportion=0.054)
+        self.assertEqual(croppedImage.shape, (95,100))
+
+
+
