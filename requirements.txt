@@ -1,4 +1,3 @@
-theano
 setuptools
 pytest==2.6.4
 six==1.8.0
