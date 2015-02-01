@@ -49,6 +49,8 @@ class Settings:
         #                       'NO_SUPER_CLASS': ('unclassified')}
 
         self._image_fnames = {}
+        
+        self._class_priors = []
 
     def parse_settings(self, settings_file):
         """
@@ -149,8 +151,26 @@ class Settings:
                                   'train': train_fnames}
 
         return self._image_fnames
-
-
+    
+    
+    @property
+    def class_priors(self):
+        """
+        Get the proportion of training data in each class
+        """
+        if self._class_priors == []:
+            class_probs = np.zeros(len(self.classes))
+            for class_index, class_name in enumerate(self.classes):
+                # Tally up how many filenames are in this class
+                # Set to zero if this class is not a field
+                class_probs[class_index] = len(self.image_fnames['train'].get(class_name, 0))
+            # Normalise the classes
+            class_probs /= sum(class_probs)
+            self._class_priors = class_probs
+        
+        return self._class_priors
+        
+        
 def load_data(image_fname_dict, classes=None,
               processing=None, verbose=False):
     """
