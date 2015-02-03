@@ -61,7 +61,8 @@ def attributes_wrapper(attributes_settings):
     
     # Make a function which applies all the functions to the image
     # returning them in a list
-    return lambda image: [f(image) for f in funcvec]
+    # NB: must be a numpy array so we can "ravel" it
+    return lambda image: np.asarray([f(image) for f in funcvec])
 
 def resize_image(image, size):
     """
