@@ -164,6 +164,14 @@ def crop_image(image, side_id, crop_proportion=0.2):
     else:
         raise ValueError('Side ID was not in [0,1,2,3]')
     return cropped_image
+
+def noisify_image(image, var=0.01, seed=42):
+    """
+    Adds Gaussian noise to image
+    """
+    return skimage.util.img_as_ubyte(
+                skimage.util.random_noise(image, seed=seed, var=var)
+                )
     
 def mean_subtraction(image):
     """
