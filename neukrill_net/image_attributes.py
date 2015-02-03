@@ -46,7 +46,7 @@ def numwhite(image):
     # Input is typically uint8
     # Ensure it actually is
     image = skimage.util.img_as_ubyte(image)
-    return numpy.count_nonzero(image == 255)
+    return np.count_nonzero(image == 255)
     
 def propwhite(image):
     """The proportion of pixels in the image which are
@@ -59,7 +59,7 @@ def numnonwhite(image):
     # Input is typically uint8
     # Ensure it actually is
     image = skimage.util.img_as_ubyte(image)
-    return numpy.count_nonzero(image < 255)
+    return np.count_nonzero(image < 255)
     
 def propnonwhite(image):
     """The proportion of pixels in the image which aren't
@@ -72,7 +72,7 @@ def numblack(image):
     # Input is typically uint8
     # Ensure it actually is
     image = skimage.util.img_as_ubyte(image)
-    return numpy.count_nonzero(image == 0)
+    return np.count_nonzero(image == 0)
     
 def propblack(image):
     """The proportion of pixels in the image which are
@@ -85,7 +85,7 @@ def numbool(image):
     # Input is typically uint8
     # Ensure it actually is
     image = skimage.util.img_as_ubyte(image)
-    return numpy.count_nonzero(image > 127)
+    return np.count_nonzero(image > 127)
     
 def propbool(image):
     """The proportion of pixels in the image which are more than
