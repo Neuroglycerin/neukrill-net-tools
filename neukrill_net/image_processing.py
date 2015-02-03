@@ -8,6 +8,8 @@ import skimage.io
 import skimage.util
 import numpy as np
 
+from neukrill_net import image_attributes
+
 def load_images(image_fpaths, processing, verbose=False):
     """
     Loads images provided in a list of filepaths
@@ -41,6 +43,25 @@ def load_images(image_fpaths, processing, verbose=False):
         data_subset += image_vectors
 
     return data_subset
+
+def attributes_wrapper(attributes_settings):
+    """
+    Builds a function which, given an image, spits out
+    a vector of scalars each corresponding to the
+    attributes of the image which were requested in the
+    settings provided to this function.
+    """
+    # Make a list of functions corresponding to each of the
+    # attributes mentioned in the settings
+    funcvec = []
+    for attrfuncname in attributes_settings:
+        # From the attributes module, lookup the function
+        # bearing the target name 
+        funcvec += [getattr(image_attributes, attrfuncname)]
+    
+    # Make a function which applies all the functions to the image
+    # returning them in a list
+    return lambda image: [f(image) for f in funcvec]
 
 def resize_image(image, size):
     """
