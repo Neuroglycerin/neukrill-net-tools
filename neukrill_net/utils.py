@@ -6,6 +6,7 @@ import glob
 import io
 import json
 import os
+import csv
 import gzip
 import numpy as np
 
@@ -221,4 +222,18 @@ def load_data(image_fname_dict, classes=None,
         names = [os.path.basename(fpath) for fpath in image_fname_dict['test']]
         return np.vstack(data), names
 
+
+def write_predictions(out_fname, p, names, settings):
+    """Write probabilities to an output csv and then compress with gzip"""
+    
+    with open(out_fname, 'w') as csv_out:
+        out_writer = csv.writer(csv_out, delimiter=',')
+        out_writer.writerow(['image'] + list(settings.classes))
+        for index in range(len(names)):
+            out_writer.writerow([names[index]] + list(p[index,]))
+    
+    with open(out_fname, 'rb') as f_in:
+        f_out = gzip.open(out_fname + '.gz', 'wb')
+        f_out.writelines(f_in)
+        f_out.close()
 
