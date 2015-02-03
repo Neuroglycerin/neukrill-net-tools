@@ -129,14 +129,15 @@ def rotate_image(image, angle):
 
 def crop_image(image, side_id, crop_proportion=0.2):
     """
-    Crops 2D images from 
+    Crops a 2D image by a given amount from one of its sides.
     input:  image - input image
             side_id - which side to crop
                       0 right
                       1 top
                       2 left
                       3 right
-            
+            crop_proportion - how much to crop by (proportional to the
+                              length of this side of the image)
     output: cropped_image - a new image, smaller on one side
     """
     if (side_id % 2)==0:
