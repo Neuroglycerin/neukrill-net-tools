@@ -50,7 +50,7 @@ deactivate
 To make a __Python 2.7__ virtual environment instead of 3.4:
 
 ```
-virtualenv -p /usr/bin/python2.7 path/to/python2.7/venv
+virtualenv -p /usr/bin/python2.7 path/to/neukrill-venv-py2.7
 ```
 
 
