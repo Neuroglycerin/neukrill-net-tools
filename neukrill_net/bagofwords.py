@@ -13,7 +13,7 @@ import sklearn.cluster
 class Bow:
     """A class to handle all your Bag Of visual Words needs"""
     
-    def __init__(self, verbose=False, normalise_hist=True, **options):
+    def __init__(self, verbose=False, normalise_hist=False, **options):
         """Initialisation"""
         
         # Set parameters
@@ -137,7 +137,7 @@ class Bow:
         if self.normalise_hist:
             N /= np.sum(N)
         return N
-       
+        
     @property 
     def n_clusters(self):
         return self.cluster.cluster_centers_.shape[0]
