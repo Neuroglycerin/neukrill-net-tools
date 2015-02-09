@@ -9,6 +9,7 @@ import os
 import csv
 import gzip
 import numpy as np
+import skimage
 
 import neukrill_net.image_processing as image_processing
 import neukrill_net.constants as constants
@@ -221,6 +222,47 @@ def load_data(image_fname_dict, classes=None,
                                             verbose)
         names = [os.path.basename(fpath) for fpath in image_fname_dict['test']]
         return np.vstack(data), names
+
+
+def load_rawdata(image_fname_dict, classes=None, verbose=False):
+    """
+    Loads training or test data without appyling any processing.
+    
+    If the classes kwarg is not none assumed to be loading labelled train
+    data and returns two np objs:
+        * data - list of image matrices
+        * labels - vector of labels
+    
+    if classes kwarg is none, data will be loaded as test data and just return
+        * data - list of image matrices
+    """
+    
+    # initialise lists
+    data = []
+
+    # e.g. labelled training data
+    if classes:
+        labels = []
+
+        for class_index, class_name in enumerate(classes):
+            if verbose:
+                print("class: {0} of 120: {1}".format(class_index, class_name))
+
+            fpaths = image_fname_dict['train'][class_name]
+            
+            # Load the data and add to list
+            data += [skimage.io.imread(fpath) for fpath in fpaths]
+            
+            # generate the class labels and add them to the list
+            labels += len(fpaths) * [class_name]
+            
+        return data, np.array(labels)
+        
+    # e.g. test data
+    else:
+        data = [skimage.io.imread(fpath) for fpath in image_fname_dict['test']]
+        names = [os.path.basename(fpath) for fpath in image_fname_dict['test']]
+        return data, names
 
 
 def write_predictions(out_fname, p, names, settings):
