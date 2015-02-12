@@ -39,7 +39,6 @@ class Settings:
         self.classes = self.user_input.get('classes',
                                             constants.classes)
 
-
         # a way to encode the superclasses if we need to but don't want to complete
         # just now as it is very monotonous to copy everything
         # self.super_classes = {'FISH': ('fish classes'),
