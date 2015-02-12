@@ -8,7 +8,7 @@ import skimage.io
 import skimage.util
 import numpy as np
 
-def load_images(image_fpaths, processing, verbose=False):
+def load_images(image_fpaths, processing, ravel=True, verbose=False):
     """
     Loads images provided in a list of filepaths
     and applies a processing function if supplied one.
