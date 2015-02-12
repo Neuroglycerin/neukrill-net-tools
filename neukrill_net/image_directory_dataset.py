@@ -83,7 +83,7 @@ class ImageDirectory(Dataset):
    """
     _default_seed = (17, 2, 946)
 
-    def __init__(self, X_paths, rng=_default_seed, y=None, preprocessing_settings):
+    def __init__(self, X_paths, preprocessing_settings, rng=_default_seed, y=None):
 
         self.preprocessing_settings = preprocessing_settings
         self.X_paths = X_paths
@@ -204,7 +204,9 @@ class ImageDirectory(Dataset):
         `Dataset.__iter__`. For instance, `DenseDesignMatrix` supports a
         value of `None` for `data_specs`.
         """
-        # pop settings off the possible combinations
+        # instantiate iterator and return it
+        # THIS IS ON HOLD WHILE WORKING ON DENSE ALTERNATIVE
+
 
     def get_data(self):
         """
