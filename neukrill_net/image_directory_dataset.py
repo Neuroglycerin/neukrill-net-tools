@@ -77,15 +77,17 @@ class ImageDirectory(Dataset):
     ----------
     X_paths : a tuple of the absolute paths of the images.
     y : optional - classes for each of the paths provided, as integers.
-    preprocessing_settings : settings for the preprocessing functions. More
-        information about this TODO.
+    preprocessing_settings : settings for the preprocessing functions. 
+        This should be a dictionary of keyword strings as keys and 
+        different options for the settings as a list.
    """
     _default_seed = (17, 2, 946)
 
-    def __init__(self, X_paths, y=None, preprocessing_settings):
+    def __init__(self, X_paths, rng=_default_seed, y=None, preprocessing_settings):
 
         self.preprocessing_settings = preprocessing_settings
         self.X_paths = X_paths
+        self.rng = rng
 
         # count the classes, if we can
         if y:
@@ -100,7 +102,40 @@ class ImageDirectory(Dataset):
         for image_path in X_paths:
             images.append(skimage.io.imread(image_path))
 
-    def iterator(self, mode=None, batch_size=None, num_batches=None,
+        # make tuple of preprocessing strings
+        self.processing_strings = tuple(preprocessing_settings.keys())
+        # prepare preprocessing options
+        # could be problems with repeatability using this
+        random.seed(rng)
+        # lists of different settings
+        self.settings = [preprocessing_settings[s] for s 
+                in self.processing_strings]
+        self.datapoints = self._random_product(self.X_paths,*self.settings)
+
+    def _random_product(self,*args):
+        """
+        Simple implementation of random cartesian product sampling
+        without replacement. 
+        """
+        # make all our pools into tuples
+        pools = list(map(tuple,args))
+        # iterate over all possible datapoints
+        N_datapoints = np.prod(map(len,pools))
+        # store all datapoints
+        self._datapoint_history = []
+        n = 0
+        while n < N_datapoints:
+            n += 1
+            # propose a datapoint
+            proposal = tuple(random.choice(pool) for pool in pools)
+            # check we haven't picked it before
+            if proposal not in self._datapoint_history:
+                # store this datapoint
+                self._datapoint_history.append(proposal)
+                # and give it out
+                yield proposal
+
+    def iterator(self, batch_size=None, num_batches=None,
                  rng=None, data_specs=None, return_tuple=False):
         """
         Return an iterator for this dataset with the specified
@@ -112,6 +147,7 @@ class ImageDirectory(Dataset):
             One of 'sequential', 'random_slice', or 'random_uniform',
             *or* a class that instantiates an iterator that returns
             slices or index sequences on every call to next().
+            At the moment, will only have one mode.
         batch_size : int, optional
             The size of an individual batch. Optional if `mode` is
             'sequential' and `num_batches` is specified (batch size
@@ -131,27 +167,6 @@ class ImageDirectory(Dataset):
             through the dataset and may potentially be shared by
             multiple iterator objects simultaneously (see "Notes"
             below).
-        data_specs : (space, source) pair, optional
-            `space` must be an instance of `Space` and `source` must be
-            a string or tuple of string names such as 'features' or
-            'targets'. The source names specify where the data will come
-            from and the Space specifies its format.
-            When source is a tuple, there are some additional requirements:
-
-            * `space` must be a `CompositeSpace`, with one sub-space
-              corresponding to each source name. i.e., the specification
-              must be flat.
-            * None of the components of `space` may be a `CompositeSpace`.
-            * Each corresponding (sub-space, source name) pair must be
-              unique, but the same source name may be mapped to many
-              sub-spaces (for example if one part of the model is fully
-              connected and expects a `VectorSpace`, while another part is
-              convolutional and expects a `Conv2DSpace`).
-
-            If `data_specs` is not provided, the behaviour (which
-            sources will be present, in which order and space, or
-            whether an Exception will be raised) is not defined and may
-            depend on the implementation of each `Dataset`.
         return_tuple : bool, optional
             In case `data_specs` consists of a single space and source,
             if `return_tuple` is True, the returned iterator will return
@@ -189,8 +204,7 @@ class ImageDirectory(Dataset):
         `Dataset.__iter__`. For instance, `DenseDesignMatrix` supports a
         value of `None` for `data_specs`.
         """
-        # this is probably the hard bit
-        raise NotImplementedError()
+        # pop settings off the possible combinations
 
     def get_data(self):
         """
@@ -298,8 +312,6 @@ class ImageDirectory(Dataset):
             of numpy values, depending on the value of `include_labels`.
         """
 
-
-
     @functools.wraps(Dataset.get_num_examples)
     def get_num_examples(self):
         """
@@ -325,3 +337,4 @@ class ImageDirectory(Dataset):
 #        This is the format the data returned by `self.get_data()` will be.
 #        """
 #        return self.data_specs
+
