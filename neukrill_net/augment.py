@@ -11,7 +11,11 @@ import numpy as np
 def augmentation_wrapper(augment_settings):
     """
     Takes settings for augmentation as a dictionary
-    and produces a "processing" function to  
+    and produces a "processing" function to make more
+    training data.
+    The returned function will return a list of images
+    containing EVERY possible combinations of options
+    as given in the augmentation settings.
     """
     # components of the processing pipeline
     components = []

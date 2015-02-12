@@ -6,8 +6,10 @@ import glob
 import io
 import json
 import os
+import csv
 import gzip
 import numpy as np
+import skimage
 
 import neukrill_net.image_processing as image_processing
 import neukrill_net.constants as constants
@@ -48,6 +50,8 @@ class Settings:
         #                       'NO_SUPER_CLASS': ('unclassified')}
 
         self._image_fnames = {}
+        
+        self._class_priors = []
 
     def parse_settings(self, settings_file):
         """
@@ -148,8 +152,26 @@ class Settings:
                                   'train': train_fnames}
 
         return self._image_fnames
-
-
+    
+    
+    @property
+    def class_priors(self):
+        """
+        Get the proportion of training data in each class
+        """
+        if self._class_priors == []:
+            class_probs = np.zeros(len(self.classes))
+            for class_index, class_name in enumerate(self.classes):
+                # Tally up how many filenames are in this class
+                # Set to zero if this class is not a field
+                class_probs[class_index] = len(self.image_fnames['train'].get(class_name, 0))
+            # Normalise the classes
+            class_probs /= sum(class_probs)
+            self._class_priors = class_probs
+        
+        return self._class_priors
+        
+        
 def load_data(image_fname_dict, classes=None,
               processing=None, verbose=False):
     """
@@ -200,4 +222,59 @@ def load_data(image_fname_dict, classes=None,
         names = [os.path.basename(fpath) for fpath in image_fname_dict['test']]
         return np.vstack(data), names
 
+
+def load_rawdata(image_fname_dict, classes=None, verbose=False):
+    """
+    Loads training or test data without appyling any processing.
+    
+    If the classes kwarg is not none assumed to be loading labelled train
+    data and returns two np objs:
+        * data - list of image matrices
+        * labels - vector of labels
+    
+    if classes kwarg is none, data will be loaded as test data and just return
+        * data - list of image matrices
+    """
+    
+    # initialise lists
+    data = []
+
+    # e.g. labelled training data
+    if classes:
+        labels = []
+
+        for class_index, class_name in enumerate(classes):
+            if verbose:
+                print("class: {0} of 120: {1}".format(class_index, class_name))
+
+            fpaths = image_fname_dict['train'][class_name]
+            
+            # Load the data and add to list
+            data += [skimage.io.imread(fpath) for fpath in fpaths]
+            
+            # generate the class labels and add them to the list
+            labels += len(fpaths) * [class_name]
+            
+        return data, np.array(labels)
+        
+    # e.g. test data
+    else:
+        data = [skimage.io.imread(fpath) for fpath in image_fname_dict['test']]
+        names = [os.path.basename(fpath) for fpath in image_fname_dict['test']]
+        return data, names
+
+
+def write_predictions(out_fname, p, names, settings):
+    """Write probabilities to an output csv and then compress with gzip"""
+    
+    with open(out_fname, 'w') as csv_out:
+        out_writer = csv.writer(csv_out, delimiter=',')
+        out_writer.writerow(['image'] + list(settings.classes))
+        for index in range(len(names)):
+            out_writer.writerow([names[index]] + list(p[index,]))
+    
+    with open(out_fname, 'rb') as f_in:
+        f_out = gzip.open(out_fname + '.gz', 'wb')
+        f_out.writelines(f_in)
+        f_out.close()
 
