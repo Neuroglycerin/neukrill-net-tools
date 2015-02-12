@@ -100,7 +100,6 @@ class ImageDirectory(Dataset):
         for image_path in X_paths:
             images.append(skimage.io.imread(image_path))
 
-    # REMOVED iterator, wasn't clear it was necessary # 
     def iterator(self, mode=None, batch_size=None, num_batches=None,
                  rng=None, data_specs=None, return_tuple=False):
         """
