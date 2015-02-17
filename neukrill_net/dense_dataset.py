@@ -10,6 +10,7 @@ __license__ = "3-clause BSD"
 __maintainer__ = "Gavin Gray"
 __email__ = "gavingray1729@gmail.com"
 
+import json
 import skimage.io
 import neukrill_net.utils
 import neukrill_net.augment
@@ -43,7 +44,8 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
         # parse the settings file
         self.settings = neukrill_net.utils.Settings(settings_path)
         # get the processing settings
-        self.run_settings = run_settings
+        with open(run_settings) as f:
+            self.run_settings = json.load(f)
         processing_settings = self.run_settings["preprocessing"]
         # get a processing function from this
         processing = neukrill_net.augment.augmentation_wrapper(
