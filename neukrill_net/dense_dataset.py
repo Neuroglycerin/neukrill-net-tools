@@ -26,9 +26,20 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
     ----------
     settings_path : settings.json file path used to find images and control
         how they are loaded and processed.
+    run_settings : another json file used to control settings for individual
+        runs.
+    training_set_mode : string option controlling whether this object will be
+        for a training set, validation set or test set. Not to be confused 
+        with when we're dealing with a prediction set, where we don't know 
+        the labels (see next option). Would consider better name for this
+        variable.
+    train_or_predict : depending on whether we're training a model or 
+        predicting on the supplied test set. Currently, only supports
+        "train".
     """
     def __init__(self,settings_path="settings.json",
-            run_settings"run_settings/default.json",train_or_predict="train"):
+            run_settings="run_settings/default.json",training_set_mode="train",
+            train_or_predict="train"):
         # parse the settings file
         self.settings = neukrill_net.utils.Settings(settings_path)
         # get the processing settings
@@ -37,6 +48,37 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
         # get a processing function from this
         processing = neukrill_net.augment.augmentation_wrapper(
                                                         processing_settings)
+        # stratified split of the image paths for train, validation and test
+        # iterate over classes, removing some proportion of the elements, in a 
+        # deterministic way
+        train_split = run_settings["train_split"]
+        test_split = train_split + (1-train_split)/2
+        # assuming train split is some float between 0 and 1, and assign that
+        # proportion to train and half of the remaining to test and validation
+        for class_label in self.settings.classes:
+            # find where the break should be
+            train_break = int(train_split*len(
+                self.settings.image_fnames[train_or_predict][class_label]))
+            test_break = int(test_split*len(
+                self.settings.image_fnames[train_or_predict][class_label]))
+            if training_set_mode == "train":
+                # then everything up to train_break is what we want
+                self.settings.image_fnames[train_or_predict][class_label] \
+                        = self.settings.image_fnames\
+                        [train_or_predict][class_label][:train_break]
+            elif training_set_mode == "validation":
+                # then we want the _first_ half of everything after train_break
+                self.settings.image_fnames[train_or_predict][class_label] \
+                        = self.settings.image_fnames \
+                        [train_or_predict][class_label][train_break:test_break]
+            elif training_set_mode == "test":
+                # then we want the _second_ half of everything after train_break
+                self.settings.image_fnames[train_or_predict][class_label] \
+                        = self.settings.image_fnames \
+                        [train_or_predict][class_label][test_break:]
+            else:
+                raise ValueError("Invalid option for training set mode.")
+        
         # count the images
         self.N_images = sum(1 for class_label in self.settings.classes
                 for image_path in 
@@ -52,7 +94,6 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
         image_index = 0
         # load the images in image_fpaths, iterating and keeping track of class
         for class_label in self.settings.classes:
-            print(class_label)
             for image_path in self.settings.image_fnames[
                                                 train_or_predict][class_label]:
                 # load the image as numpy array
