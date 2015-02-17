@@ -26,9 +26,9 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
     ----------
     settings_path : settings.json file path used to find images and control
         how they are loaded and processed.
-
     """
-    def __init__(self,settings_path,run_settings,train_or_predict="train"):
+    def __init__(self,settings_path="settings.json",
+            run_settings"run_settings/default.json",train_or_predict="train"):
         # parse the settings file
         self.settings = neukrill_net.utils.Settings(settings_path)
         # get the processing settings
