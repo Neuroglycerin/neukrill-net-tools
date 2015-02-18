@@ -127,6 +127,12 @@ You may want to install OpenBLAS or ATLAS through apt-get.
 Installing pylearn2
 ===================
 
+First, make sure theano is installed using pip:
+
+```
+pip install theano
+```
+
 Clone the their [github repo][pylearn2], and do a development install, as we 
 did with our own tools repository. ie, with the virtual environment 
 activated, navigate into their repository and run:
