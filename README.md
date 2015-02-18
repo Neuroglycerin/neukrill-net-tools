@@ -13,6 +13,13 @@ the same versions (and for reproducibility). To set it up,
 use the pyvenv script (should come with Python 3). Go _somewhere
 else_ and make a venv directory:
 
+Python 3
+--------
+
+We're __moving away from Python 3__, as it seems to be easier to work with 
+Pylearn2 or Theano in Python 2.7. If you're setting up for the first time,
+skip to the next section on Python 2.
+
 ```
 pyvenv my/new/venv/dir
 ```
@@ -47,12 +54,25 @@ cd ..
 deactivate
 ```
 
-To make a __Python 2.7__ virtual environment instead of 3.4:
+Python 2.7 virtualenv
+---------------------
+
+To make a __Python 2.7__ virtual environment instead of 3.4, we can follow 
+Edinburgh University's [own instructions on this][is] 
+(_do this on any DICE machine_):
+
+```
+virtualenv --distribute --python=/usr/bin/python2.7 path/to/neukrill-venv-py2.7
+```
+
+OR:
 
 ```
 virtualenv -p /usr/bin/python2.7 path/to/neukrill-venv-py2.7
 ```
 
+Activating
+----------
 
 When you want to work on the project, source it:
 
