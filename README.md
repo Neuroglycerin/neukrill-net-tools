@@ -106,7 +106,8 @@ python setup.py test
 BLAS Requirements
 =================
 
-Most of the neural net packages are going to require BLAS.
+Most of the neural net packages are going to require BLAS. However, most of the
+machines we're working with this stuff on should already have this set up.
 
 For Arch Linux
 --------------
@@ -122,3 +123,19 @@ You may want to install OpenBLAS or ATLAS through apt-get.
 
 [ci]: http://caffe.berkeleyvision.org/installation.html
 [ab]: http://www.netlib.org/lapack/
+
+Installing pylearn2
+===================
+
+Clone the their [github repo][pylearn2], and do a development install, as we 
+did with our own tools repository. ie, with the virtual environment 
+activated, navigate into their repository and run:
+
+```
+python setup.py develop
+```
+
+It must be kept up to date manually by pulling the repository, but it probably
+won't go out of date within this project.
+
+[pylearn2]: https://github.com/lisa-lab/pylearn2
