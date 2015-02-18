@@ -107,8 +107,6 @@ BLAS Requirements
 =================
 
 Most of the neural net packages are going to require BLAS.
-You could follow the [Caffe install page][ci] and install
-ATLAS.
 
 For Arch Linux
 --------------
