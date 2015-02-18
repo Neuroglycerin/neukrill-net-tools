@@ -123,6 +123,28 @@ Then, you should be ready to run the tests:
 python setup.py test
 ```
 
+If you want to use IPython (and its notebook) in this virtualenv you'll have to 
+install it as well:
+
+```
+pip install ipython[notebook]
+```
+
+But be careful, if you run IPython in that virtualenv before installing as 
+above, you can end up working in [mixed environments][ipy], which would be
+unpleasant.
+
+And you might also want to plot things, and that's usually done using
+matplotlib so:
+
+```
+pip install matplotlib
+```
+
+That'll also install a bunch of requirements.
+
+[ipy]: https://coderwall.com/p/xdox9a/running-ipython-cleanly-inside-a-virtualenv
+
 BLAS Requirements
 =================
 
@@ -147,10 +169,25 @@ You may want to install OpenBLAS or ATLAS through apt-get.
 Installing pylearn2
 ===================
 
-First, make sure theano is installed using pip:
+First, make sure Theano and nose are installed using pip:
 
 ```
-pip install theano
+pip install nose
+```
+
+For Theano, you might have problems without the [bleeding edge version][tb]:
+
+```
+pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git
+```
+
+To be safe (I don't know if this would break it or not), run the start script
+in the work repository to set up the environment variables.
+
+```
+neukrill-net-work
+-----------------
+source start_script
 ```
 
 Clone the their [github repo][pylearn2], and do a development install, as we 
@@ -165,3 +202,4 @@ It must be kept up to date manually by pulling the repository, but it probably
 won't go out of date within this project.
 
 [pylearn2]: https://github.com/lisa-lab/pylearn2
+[tb]: http://deeplearning.net/software/theano/install.html#bleeding-edge-install-instructions
