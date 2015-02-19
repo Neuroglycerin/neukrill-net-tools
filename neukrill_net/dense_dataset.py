@@ -43,7 +43,7 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
             train_or_predict="train"):
         # parse the settings file
         self.settings = neukrill_net.utils.Settings(settings_path)
-        # get the processing settings
+        # get the urocessing settings
         with open(run_settings) as f:
             self.run_settings = json.load(f)
         processing_settings = self.run_settings["preprocessing"]
@@ -53,7 +53,7 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
         # stratified split of the image paths for train, validation and test
         # iterate over classes, removing some proportion of the elements, in a 
         # deterministic way
-        train_split = run_settings["train_split"]
+        train_split = self.run_settings["train_split"]
         test_split = train_split + (1-train_split)/2
         # assuming train split is some float between 0 and 1, and assign that
         # proportion to train and half of the remaining to test and validation
