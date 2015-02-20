@@ -115,5 +115,7 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
         # need to encode labels numerically
         self.label_encoder = sklearn.preprocessing.LabelEncoder()
         y = self.label_encoder.fit_transform(y)
+        # make it 2D column vector
+        y = y[np.newaxis].T
         # now run inherited initialisation
         super(self.__class__,self).__init__(topo_view=X,y=y,y_labels=N_y_labels)
