@@ -278,3 +278,39 @@ def write_predictions(out_fname, p, names, settings):
         f_out.writelines(f_in)
         f_out.close()
 
+def load_run_settings(run_settings_path, settings, settings_path="settings.json"):
+    """
+    Loads the run settings and adds settings to dictionary, along
+    with:
+    * filename - the filename minus ".json" of the run settings file, for
+        saving results, pickles, etc.
+    * run_settings_path - abspath to the run settings file, is handed
+        to the Dataset class for Pylearn2
+    * settings_path - abspath to the settings file, assumed to be in the usual 
+        cwd
+    * modeldir - directory in which to save models
+    * pickle abspath - abspath where _this_ run will save its pickle file
+    """
+
+    with open(run_settings_path) as rf:
+        run_settings = json.load(rf)
+    # shoehorn run_settings filename into its own dictionary (for later)
+    run_settings['filename'] = os.path.split(
+                                        run_settings_path)[-1].split(".")[0]
+    # and the full run settings path
+    run_settings['run_settings_path'] = os.path.abspath(run_settings_path)
+    # also put the settings in there
+    run_settings['settings'] = settings
+    # and the settings path, while we're at it
+    run_settings['settings_path'] = os.path.abspath(settings_path)
+    # add the models directory for this run
+    # before saving model check there is somewhere for it to save to
+    modeldir = os.path.join(settings.data_dir,"models")
+    if not os.path.exists(modeldir):
+        os.mkdir(modeldir)
+    run_settings['modeldir'] = modeldir
+
+    # save the pickle name here, so it's less likely to get garbled between train and test
+    run_settings['pickle abspath'] = os.path.join(modeldir,run_settings['filename']+".pkl")
+
+    return run_settings
