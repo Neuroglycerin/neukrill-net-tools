@@ -313,4 +313,10 @@ def load_run_settings(run_settings_path, settings, settings_path="settings.json"
     # save the pickle name here, so it's less likely to get garbled between train and test
     run_settings['pickle abspath'] = os.path.join(modeldir,run_settings['filename']+".pkl")
 
+    submissionsdir = os.path.join(settings.data_dir,"submissions")
+    if not os.path.exists(submissionsdir):
+        os.mkdir(submissionsdir)
+
+    run_settings['submissions abspath'] = submissionsdir
+
     return run_settings
