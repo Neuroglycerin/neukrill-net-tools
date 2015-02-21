@@ -32,7 +32,8 @@ class BaseTestCase(unittest.TestCase):
     
     def __init__(self, *args, **kw):
         """Add test for numpy type"""
-        super().__init__(*args, **kw)
+        # super(self).__init__(*args, **kw) # Only works on Python3
+        super(BaseTestCase, self).__init__(*args, **kw) # Works on Python2
         self.addTypeEqualityFunc(np.ndarray, self.assertNumpyEqual)
         
         
