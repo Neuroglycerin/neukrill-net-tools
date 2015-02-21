@@ -43,11 +43,23 @@ class BaseTestCase(unittest.TestCase):
     
     def assertNumpyEqual(self, x, y, msg=None):
         if not self.IsNumpy(x) or not self.IsNumpy(y):
-            self.failureException("This isn't a numpy array." + msg)
-        if x.shape != y.shape:
-            self.failureException("Shapes don't match." + msg)
+            # This is how you are supposed to do it
+            # but does not work for me in Python 2.7
+            self.failureException("This isn't a numpy array. %s" % msg)
+            # This always works
+            self.fail("This isn't a numpy array. %s" % msg)
+        if not x.shape == y.shape:
+            # This is how you are supposed to do it
+            # but does not work for me in Python 2.7
+            self.failureException("Shapes don't match. %s" % msg)
+            # This always works
+            self.fail("Shapes don't match. %s" % msg)
         if not np.allclose(x, y):
-            self.failureException("Elements don't match." + msg)
+            # This is how you are supposed to do it
+            # but does not work for me in Python 2.7
+            self.failureException("Elements don't match. %s" % msg)
+            # This always works
+            self.fail("Elements don't match. %s" % msg)
     
     def assertListOfNumpyArraysEqual(self, x, y):
         if len(x) != len(y):
