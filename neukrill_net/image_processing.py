@@ -344,7 +344,7 @@ def shape_fix(image, shape):
     return image
 
 
-def noisify_image(image, var=0.01, seed=42):
+def noisify_image(image, var=0.01, seed=None):
     """
     Adds Gaussian noise to image
     """
