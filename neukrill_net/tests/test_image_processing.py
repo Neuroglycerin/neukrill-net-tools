@@ -8,6 +8,7 @@ import numpy as np
 from neukrill_net.tests.base import BaseTestCase
 import neukrill_net.image_processing as image_processing
 
+
 class TestLoadImages(BaseTestCase):
     """
     Unit tests for LoadImage function
@@ -35,7 +36,30 @@ class TestLoadImages(BaseTestCase):
         images = image_processing.load_images(self.image_fpaths, processing)
         self.assertEqual(len(images), 3)
         self.assertEqual([[int(x[0])] for x in images], [[63], [5], [46]])
+
+
+class TestLandscapise(BaseTestCase):
+    """
+    Unit tests for ensuring image is landscape
+    """
+    def setUp(self):
+        """
+        Make a dummy image
+        """
+        self.image = np.zeros((50,75), dtype=np.float64)
+        self.v1 = np.array([[.1,.2,.3,.4]], dtype=np.float64)
+        self.v0 = np.transpose(self.v1)
+        self.image255 = np.array([[200,12,128],[42,64,196]], dtype=np.uint8)
     
+    def test_landscapise(self):
+        """
+        Test landscapise
+        """
+        self.assertEqual(self.v1, image_processing.landscapise_image(self.v1))
+        self.assertEqual(self.v1, image_processing.landscapise_image(self.v0))
+        with self.assertRaises(ValueError):
+            image_processing.landscapise_image(np.array([0,1]))
+
 class TestResize(BaseTestCase):
     """
     Unit tests for image resizing as this function is going to expand
@@ -55,6 +79,7 @@ class TestResize(BaseTestCase):
         self.assertEqual(
                 image_processing.resize_image(self.image, (2000,2000)).shape,
                          (2000,2000))
+
 
 class TestRotate(BaseTestCase):
     """
@@ -160,6 +185,7 @@ class TestFlip(BaseTestCase):
         self.assertEqual(
             self.image,
             image_processing.flip_image(flipped_image_xy, flip_x=True, flip_y=True))
+
         
 class TestCrop(BaseTestCase):
     """
@@ -239,7 +265,8 @@ class TestPadShift(BaseTestCase):
                     [255,255,255,255,255]
                 ], dtype=np.uint8)
             )
-    
+
+
 class TestShapeFix(BaseTestCase):
     """
     Unit tests for shape_fix
