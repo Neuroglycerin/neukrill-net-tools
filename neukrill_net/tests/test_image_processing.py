@@ -161,7 +161,7 @@ class TestCrop(BaseTestCase):
     """
     def setUp(self):
         """
-        Read the first of the images using skimage
+        Make a dummy image
         """
         self.image = np.ones((100,100))
         
@@ -190,4 +190,63 @@ class TestCrop(BaseTestCase):
         self.assertEqual(croppedImage.shape, (95,100))
 
 
+class TestShapeFix(BaseTestCase):
+    """
+    Unit tests for 
+    """
+    def setUp(self):
+        """
+        Make a dummy image
+        """
+        self.image = np.ones((50,75))
+        self.v1 = np.array([[1,2,3,4]])
+        self.v0 = np.transpose(self.v1)
+    
+    def test_shapefix(self):
+        """
+        Ensure shape fixing works.
+        """
+        # Reshape to same shape as original
+        # Should be left unchanged
+        reshapedImage = image_processing.shape_fix(self.image, self.image.shape)
+        self.assertEqual(reshapedImage.shape, self.image.shape)
+        self.assertEqual(reshapedImage, self.image)
+        # Test reducing dim-0 only
+        reshapedImage = image_processing.shape_fix(np.ones((75,50)), (50,50))
+        self.assertEqual(reshapedImage, np.ones((50,50)))
+        # Test reducing dim-1 only
+        reshapedImage = image_processing.shape_fix(np.ones((40,80)), (40,20))
+        self.assertEqual(reshapedImage, np.ones((40,20)))
+        # Test reducing dim-0 and dim-1
+        reshapedImage = image_processing.shape_fix(np.ones((20,40)), (19,19))
+        self.assertEqual(reshapedImage, np.ones((19,19)))
+        # Test expanding dim-0 only
+        reshapedImage = image_processing.shape_fix(np.zeros((30,50)), (50,50))
+        self.assertEqual(reshapedImage, np.zeros((50,50)))
+        # Test expanding dim-1 only
+        reshapedImage = image_processing.shape_fix(np.zeros((40,20)), (30,30))
+        self.assertEqual(reshapedImage, np.zeros((30,30)))
+        # Test expanding dim-0 and dim-1
+        reshapedImage = image_processing.shape_fix(np.zeros((10,14)), (16,16))
+        self.assertEqual(reshapedImage, np.zeros((16,16)))
+        # Test crop is centred for dim-0
+        reshapedVect = image_processing.shape_fix(self.v0, (2,1))
+        self.assertEqual(reshapedVect, np.array([[2],[3]]))
+        # Test crop is centred for dim-1
+        reshapedVect = image_processing.shape_fix(self.v1, (1,2))
+        self.assertEqual(reshapedVect, np.array([[2,3]]))
+        # Test pad is centred for dim-0
+        reshapedVect = image_processing.shape_fix(self.v0, (6,1))
+        self.assertEqual(reshapedVect, np.array([[0],[1],[2],[3],[4],[0]]))
+        # Test pad is centred for dim-1
+        reshapedVect = image_processing.shape_fix(self.v1, (1,6))
+        self.assertEqual(reshapedVect, np.array([[0,1,2,3,4,0]]))
+        # Test pad and crop works correctly
+        reshapedImage = image_processing.shape_fix(self.v1, (3,2))
+        self.assertEqual(reshapedImage, np.array([[0,0],[2,3],[0,0]]))
+        # Test crop and padworks correctly
+        reshapedImage = image_processing.shape_fix(self.v0, (2,3))
+        self.assertEqual(reshapedImage, np.array([[0,2,0],[0,3,0]]))
+        
+        
 
