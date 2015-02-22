@@ -3,12 +3,45 @@
 Module for all image processing tools
 """
 
-import skimage.transform
-import skimage.io
-import skimage.util
+import skimage
 import numpy as np
 
 from neukrill_net import image_attributes
+
+
+def img_as_dtype(image, dt):
+    """
+    Convert an image to the target datatype.
+    Serves as a wrapper for skimage.img_as_ubyte and
+    skimage.img_as_float, but can be called to change
+    datatype to dynamic target.
+    """
+    if dt == image.dtype:
+        # Apparently they have the same type already
+        return image
+        
+    elif dt == np.dtype(np.uint8):
+        # (0, 255)
+        return skimage.util.img_as_ubyte(image)
+        
+    elif dt == np.dtype(np.float64):
+        # (0, 1)
+        return skimage.util.img_as_float(image)
+        
+    elif dt == np.dtype(np.uint16):
+        # (0, 65535)
+        return skimage.util.img_as_uint(image)
+        
+    elif dt == np.dtype(np.int16):
+        # (0, 32767)
+        return skimage.util.img_as_int(image)
+        
+    elif dt == np.dtype(np.bool):
+        # (False, True)
+        return skimage.util.img_as_bool(image)
+        
+    else:
+        raise ValueError('Unfathomable target datatype: %s' % dt)
 
 
 def load_images(image_fpaths, processing, verbose=False):
@@ -141,8 +174,18 @@ def rotate_image(image, angle, resizable=True):
     Non-destructive: returns a copy of the input image
     input: image
            angle - rotation angle in degrees in counter-clockwise direction
-    output: rotated_image - a new, transformed image
+    output: rotated_image - a new, transformed image.
+            The datatype of the output will always match the input.
+    
+    NB. Rotations through 90 degree multiples are lossless. However, rotation
+        through other angles requires interpolation. Skimage converts the
+        image to float64 to have more accurate values, however this extra
+        precision is lost if the input is uint8, since the output precision
+        is reduced to match that of the input.
     """
+    # Note down the original type
+    original_dtype = image.dtype
+    
     if abs(((angle+45) % 90)-45) < 1e-05:
         # Lossless cardinal rotation
         # Make sure we have a positive number of rotations
@@ -151,8 +194,18 @@ def rotate_image(image, angle, resizable=True):
         rotated_image = np.rot90(image, np.round(angle/90))
     else:
         # Use lossy rotation from skimage
-        rotated_image = skimage.transform.rotate(image, angle,
-                            resize=resizable, mode='constant', cval=1.0)
+        # We pad with white because that is the background
+        rotated_image = skimage.transform.rotate(
+                            image, angle,
+                            resize=resizable,
+                            mode='constant', cval=1.0)
+        # NB: The output of the skimage rotation is always
+        # a float, not ubyte
+    
+    # Preserve the datatype
+    # Ensure output matches input
+    rotated_image = img_as_dtype(rotated_image, original_dtype)
+    
     return rotated_image
 
 
@@ -199,11 +252,15 @@ def shape_fix(image, shape):
     """
     Makes all images the same size without resizing them.
     Crops large images down to their central SHAPE elements.
-    Pads smaller images with white (=1.0) so the whole thing is sized SHAPE.
+    Pads smaller images with white so the whole thing is sized SHAPE.
+    The pixel value of "white" is determined from the datatype of
+    the input.
     """
-    # First, ensure image is floats <1, not uint8
-    if np.amax(image) > 1:
-        raise ValueError('Image should be float <=1. This has max=%s' % np.amax(image))
+    # First, use skimage to check what value white should be
+    whiteVal = skimage.dtype_limits(image)[1]
+    # We will pad with 1.0 if input is float, 
+    # or pad with 255 if input is ubyte
+    
     # First do dim-0
     if image.shape[0] > shape[0]:
         # Too big; crop down
@@ -212,10 +269,11 @@ def shape_fix(image, shape):
     elif image.shape[0] < shape[0]:
         # Too small; pad up
         len0 = np.floor( (shape[0] - image.shape[0])/2 )
-        pad0 = np.ones( (len0, image.shape[1]) )
+        pad0 = whiteVal * np.ones( (len0, image.shape[1]) )
         len1 = shape[0] - image.shape[0] - len0
-        pad1 = np.ones( (len1, image.shape[1]) )
+        pad1 = whiteVal * np.ones( (len1, image.shape[1]) )
         image = np.concatenate( (pad0,image,pad1), axis=0 )
+    
     # Now do dim-1
     if image.shape[1] > shape[1]:
         # Too big; crop down
@@ -224,10 +282,11 @@ def shape_fix(image, shape):
     else:
         # Too small; pad up
         len0 = np.floor( (shape[1] - image.shape[1])/2 )
-        pad0 = np.ones( (image.shape[0], len0) )
+        pad0 = whiteVal * np.ones( (image.shape[0], len0) )
         len1 = shape[1] - image.shape[1] - len0
-        pad1 = np.ones( (image.shape[0], len1) )
+        pad1 = whiteVal * np.ones( (image.shape[0], len1) )
         image = np.concatenate( (pad0,image,pad1), axis=1 )
+    
     return image
 
 
@@ -235,10 +294,19 @@ def noisify_image(image, var=0.01, seed=42):
     """
     Adds Gaussian noise to image
     """
-    return skimage.util.img_as_ubyte(
-                skimage.util.random_noise(image, seed=seed, var=var)
-                )
-
+    # Note down the original type
+    original_dtype = image.dtype
+    
+    # Apply Gaussian noise
+    # NB: Output of skimage is always float64
+    image = skimage.util.random_noise(image, seed=seed, var=var)
+    
+    # Preserve the image datatype
+    # This will involve rounding pixels if the input was not float64
+    image = img_as_dtype(image, original_dtype)
+    
+    return image
+    
 
 def mean_subtraction(image):
     """
@@ -247,3 +315,4 @@ def mean_subtraction(image):
     """
     # for some reason, thought this would take more code
     return image - np.mean(image)
+
