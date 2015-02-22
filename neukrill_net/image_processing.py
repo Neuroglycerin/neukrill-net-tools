@@ -10,6 +10,7 @@ import numpy as np
 
 from neukrill_net import image_attributes
 
+
 def load_images(image_fpaths, processing, verbose=False):
     """
     Loads images provided in a list of filepaths
@@ -44,6 +45,7 @@ def load_images(image_fpaths, processing, verbose=False):
 
     return data_subset
 
+
 def attributes_wrapper(attributes_settings):
     """
     Builds a function which, given an image, spits out
@@ -63,6 +65,7 @@ def attributes_wrapper(attributes_settings):
     # returning them in a list
     # NB: must be a numpy array so we can "ravel" it
     return lambda image: np.asarray([f(image) for f in funcvec])
+
 
 def resize_image(image, size):
     """
@@ -105,6 +108,7 @@ def resize_image(image, size):
 
     return resized_image
 
+
 def flip_image(image, flip_x=False, flip_y=False):
     """
     Flips 2D images in either X or Y axis or both axes.
@@ -129,6 +133,7 @@ def flip_image(image, flip_x=False, flip_y=False):
 
     return flipped_image
 
+
 def rotate_image(image, angle):
     """
     Rotates images by a given angle around its center. Points outside of the
@@ -148,6 +153,7 @@ def rotate_image(image, angle):
         # Use lossy rotation from skimage
         rotated_image = skimage.transform.rotate(image, angle, mode='nearest')
     return rotated_image
+
 
 def crop_image(image, side_id, crop_proportion=0.2):
     """
@@ -187,6 +193,40 @@ def crop_image(image, side_id, crop_proportion=0.2):
         raise ValueError('Side ID was not in [0,1,2,3]')
     return cropped_image
 
+
+def shape_fix(image, shape):
+    """
+    Makes all images the same size without resizing them.
+    Crops large images down to their central SHAPE elements.
+    Pads smaller images with zeros so the whole thing is sized SHAPE.
+    """
+    # First do dim-0
+    if image.shape[0] > shape[0]:
+        # Too big; crop down
+        start = np.floor( (image.shape[0] - shape[0])/2 )
+        image = image[ start:(start+shape[0]) , : ]
+    elif image.shape[0] < shape[0]:
+        # Too small; pad up
+        len0 = np.floor( (shape[0] - image.shape[0])/2 )
+        pad0 = np.zeros( (len0, image.shape[1]) )
+        len1 = shape[0] - image.shape[0] - len0
+        pad1 = np.zeros( (len1, image.shape[1]) )
+        image = np.concatenate( (pad0,image,pad1), axis=0 )
+    # Now do dim-1
+    if image.shape[1] > shape[1]:
+        # Too big; crop down
+        start = np.floor( (image.shape[1] - shape[1])/2 )
+        image = image[ : , start:(start+shape[1]) ]
+    else:
+        # Too small; pad up
+        len0 = np.floor( (shape[1] - image.shape[1])/2 )
+        pad0 = np.zeros( (image.shape[0], len0) )
+        len1 = shape[1] - image.shape[1] - len0
+        pad1 = np.zeros( (image.shape[0], len1) )
+        image = np.concatenate( (pad0,image,pad1), axis=1 )
+    return image
+
+
 def noisify_image(image, var=0.01, seed=42):
     """
     Adds Gaussian noise to image
@@ -194,7 +234,8 @@ def noisify_image(image, var=0.01, seed=42):
     return skimage.util.img_as_ubyte(
                 skimage.util.random_noise(image, seed=seed, var=var)
                 )
-    
+
+
 def mean_subtraction(image):
     """
     Sometimes useful to remove the per example mean:
