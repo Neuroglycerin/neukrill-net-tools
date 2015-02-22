@@ -3,7 +3,9 @@
 Module for all image processing tools
 """
 
-import skimage
+import skimage.io
+import skimage.transform
+import skimage.util
 import numpy as np
 
 from neukrill_net import image_attributes
