@@ -31,6 +31,7 @@ def augmentation_wrapper(augment_settings):
     else:
         shapefix = lambda images: images
         
+    
     # Resize
     if 'resize' in augment_settings:
         # apply our resize
@@ -40,6 +41,16 @@ def augmentation_wrapper(augment_settings):
                                     for image in images]
     else:
         resize = lambda images: images
+    
+    
+    # Landscapise
+    # Set to True if you want to ensure all the images are landscape
+    if 'landscapise' in augment_settings and augment_settings['landscapise']:
+        landscapise = lambda images: [image_processing.landscapise_image(image)
+                                        for image in images]
+    else:
+        landscapise = lambda images: images
+    
     
     # Rotate
     if 'rotate' in augment_settings:
@@ -55,6 +66,7 @@ def augmentation_wrapper(augment_settings):
     else:
         rotate = lambda images: images
     
+    
     # Flip (always horizontally)
     # All other relfections can be acheived by coupling with an appropriate reflection
     # Flip setting should either be True or False in settings
@@ -64,6 +76,7 @@ def augmentation_wrapper(augment_settings):
     else:
         flip = lambda images: images
     
+    
     # Crop (every side or not at all)
     if 'crop' in augment_settings and augment_settings['crop']:
         crop = lambda images: images + [croppedImage for image in images
@@ -71,6 +84,7 @@ def augmentation_wrapper(augment_settings):
                                             allcrops(image)]
     else:
         crop = lambda images: images
+    
     
     # Pad to translate within shape_fix window
     if 'traslations' in augment_settings:
@@ -80,6 +94,7 @@ def augmentation_wrapper(augment_settings):
     else:
         pad = lambda images: images
     
+    
     # Add pixel noise
     if 'noise' in augment_settings:
         noisify = lambda images: [image_processing.noisify_image(image, augment_settings['noise'])
@@ -87,9 +102,11 @@ def augmentation_wrapper(augment_settings):
     else:
         noisify = lambda images: images
     
+    
     # Stack all our functions together
     # Order matters here:
-    # - Rotate first because then it has higher accuracy
+    # - Landscapise first because we don't want to undo rotations
+    # - Rotate before anything else because then it has higher accuracy
     #   (might want to move in pixels which would otherwise be cropped
     #    don't want the loss of resolution caused by resize)
     # - Flip
@@ -98,7 +115,7 @@ def augmentation_wrapper(augment_settings):
     # - Align shape window
     # - Resize last because it is lossy
     # - Add noise independent for all output pixels
-    processing = lambda image: noisify( resize( shapefix( pad( crop( flip( rotate( [image] )))))))
+    processing = lambda image: noisify( resize( shapefix( pad( crop( flip( rotate( landscapise( [image] ))))))))
     
     return processing
 
