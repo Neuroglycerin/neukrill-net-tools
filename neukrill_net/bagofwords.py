@@ -9,9 +9,35 @@ import numpy as np
 import cv2
 import sklearn.cluster
 
+from neukrill_net import image_attributes
+
+
+def attributes_wrapper(attributes_settings):
+    """
+    Builds a function which, given an image, spits out
+    a vector of scalars each corresponding to the
+    attributes of the image which were requested in the
+    settings provided to this function.
+    """
+    # Make a list of functions corresponding to each of the
+    # attributes mentioned in the settings
+    funcvec = []
+    for attrfuncname in attributes_settings:
+        # From the attributes module, lookup the function
+        # bearing the target name 
+        funcvec += [getattr(image_attributes, attrfuncname)]
+    
+    # Make a function which applies all the functions to the image
+    # returning them in a list
+    # NB: must be a numpy array so we can "ravel" it
+    return lambda image: np.asarray([f(image) for f in funcvec])
+
 
 class Bow:
-    """A class to handle all your Bag Of visual Words needs"""
+    """
+    A class for traditional Bag Of visual Words using a histogram of
+    the clusters (words) within which local features fall.
+    """
     
     def __init__(self, verbose=False, normalise_hist=False, **options):
         """Initialisation"""
