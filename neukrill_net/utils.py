@@ -267,16 +267,21 @@ def load_rawdata(image_fname_dict, classes=None, verbose=False):
 def write_predictions(out_fname, p, names, settings):
     """Write probabilities to an output csv and then compress with gzip"""
     
+    # Write the probabilites as a CSV
     with open(out_fname, 'w') as csv_out:
         out_writer = csv.writer(csv_out, delimiter=',')
         out_writer.writerow(['image'] + list(settings.classes))
         for index in range(len(names)):
             out_writer.writerow([names[index]] + list(p[index,]))
     
+    # Compress with gzip
     with open(out_fname, 'rb') as f_in:
         f_out = gzip.open(out_fname + '.gz', 'wb')
         f_out.writelines(f_in)
         f_out.close()
+    
+    # Delete the uncompressed CSV
+    os.unlink(out_fname)
 
 def load_run_settings(run_settings_path, settings, settings_path="settings.json"):
     """
