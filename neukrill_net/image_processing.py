@@ -110,8 +110,12 @@ def resize_image(image, size):
     does this by padding to make the image square, then
     resizing
     """
+    # First, use skimage to check what value white should be
+    whiteVal = skimage.dtype_limits(image)[1]
+    
     # find out how much we have to pad
     diff = abs(image.shape[1]-image.shape[0])
+    
     # check if difference is divisible by two
     if diff%2 > 0:
         # not divisible, add extra pixel to one side
@@ -121,24 +125,27 @@ def resize_image(image, size):
     else:
         extra = 0
         d = int(diff/2)
+    
     # which side to pad?
     if image.shape[1] > image.shape[0]:
         # more columns than rows, pad the rows
         padded_image = skimage.util.pad(image, ((d,d+extra),(0,0)),
-                                            'edge')
+                                        'constant', constant_values=whiteVal)
     else:
         # more rows than columns, pad the columns
         padded_image = skimage.util.pad(image, ((0,0),(d+extra,d)),
-                                            'edge')
+                                        'constant', constant_values=whiteVal)
+    
+    # Double-check we did make the image square
     if padded_image.shape[0] != padded_image.shape[1]:
         raise ValueError("Padded image is not square"
                             "Raise an issue about this."
                             "print rows: {0}, columns:{1}".format(
                         padded_image.shape[0],padded_image.shape[1]))
 
-    # now resize to specified size
+    # Now resize to specified size
     resized_image = skimage.transform.resize(padded_image, size)
-
+    
     return resized_image
 
 
