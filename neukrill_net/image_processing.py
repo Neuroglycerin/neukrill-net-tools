@@ -134,7 +134,7 @@ def flip_image(image, flip_x=False, flip_y=False):
     return flipped_image
 
 
-def rotate_image(image, angle):
+def rotate_image(image, angle, resizable=True):
     """
     Rotates images by a given angle around its center. Points outside of the
     boundaries of the image are filled with value of the nearest point.
@@ -148,10 +148,11 @@ def rotate_image(image, angle):
         # Make sure we have a positive number of rotations
         angle = angle % 360
         # Rotate by 90 the correct number of times
-        rotated_image = np.rot90(image, angle/90)
+        rotated_image = np.rot90(image, np.round(angle/90))
     else:
         # Use lossy rotation from skimage
-        rotated_image = skimage.transform.rotate(image, angle, mode='nearest')
+        rotated_image = skimage.transform.rotate(image, angle,
+                            resize=resizable, mode='constant', cval=1.0)
     return rotated_image
 
 
