@@ -79,6 +79,22 @@ def load_images(image_fpaths, processing, verbose=False):
     return data_subset
 
 
+def landscapise_image(image):
+    """
+    Makes sure the image is landscape.
+    Takes the transpose of an image if it is portrait.
+    In this case, landscape means dim1>=dim0
+    """
+    if len(image.shape) != 2:
+        raise ValueError('Image does not have two dims')
+    
+    if image.shape[1] < image.shape[0]:
+        return np.transpose(image)
+        
+    else:
+        return image
+    
+
 def resize_image(image, size):
     """
     resize images to a pixel*pixel defined in a tuple
