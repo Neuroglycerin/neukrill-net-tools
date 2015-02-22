@@ -198,8 +198,11 @@ def shape_fix(image, shape):
     """
     Makes all images the same size without resizing them.
     Crops large images down to their central SHAPE elements.
-    Pads smaller images with zeros so the whole thing is sized SHAPE.
+    Pads smaller images with white (=1.0) so the whole thing is sized SHAPE.
     """
+    # First, ensure image is floats <1, not uint8
+    if np.amax(image) > 1:
+        raise ValueError('Image should be float <=1. This has max=%s' % np.amax(image))
     # First do dim-0
     if image.shape[0] > shape[0]:
         # Too big; crop down
@@ -208,9 +211,9 @@ def shape_fix(image, shape):
     elif image.shape[0] < shape[0]:
         # Too small; pad up
         len0 = np.floor( (shape[0] - image.shape[0])/2 )
-        pad0 = np.zeros( (len0, image.shape[1]) )
+        pad0 = np.ones( (len0, image.shape[1]) )
         len1 = shape[0] - image.shape[0] - len0
-        pad1 = np.zeros( (len1, image.shape[1]) )
+        pad1 = np.ones( (len1, image.shape[1]) )
         image = np.concatenate( (pad0,image,pad1), axis=0 )
     # Now do dim-1
     if image.shape[1] > shape[1]:
@@ -220,9 +223,9 @@ def shape_fix(image, shape):
     else:
         # Too small; pad up
         len0 = np.floor( (shape[1] - image.shape[1])/2 )
-        pad0 = np.zeros( (image.shape[0], len0) )
+        pad0 = np.ones( (image.shape[0], len0) )
         len1 = shape[1] - image.shape[1] - len0
-        pad1 = np.zeros( (image.shape[0], len1) )
+        pad1 = np.ones( (image.shape[0], len1) )
         image = np.concatenate( (pad0,image,pad1), axis=1 )
     return image
 
