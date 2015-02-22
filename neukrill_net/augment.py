@@ -7,6 +7,7 @@ are here.
 
 import neukrill_net.image_processing as image_processing
 import numpy as np
+import itertools
 
 def augmentation_wrapper(augment_settings):
     """
@@ -20,6 +21,16 @@ def augmentation_wrapper(augment_settings):
     # components of the processing pipeline
     components = []
     
+    # Shape-fixing without resizing
+    if 'shape' in augment_settings:
+        # 
+        shapefix = lambda images: [image_processing.shape_fix(
+                                    image,
+                                    augment_settings['shape'])
+                                    for image in images]
+    else:
+        shapefix = lambda images: images
+        
     # Resize
     if 'resize' in augment_settings:
         # apply our resize
@@ -61,6 +72,14 @@ def augmentation_wrapper(augment_settings):
     else:
         crop = lambda images: images
     
+    # Pad to translate within shape_fix window
+    if 'traslations' in augment_settings:
+        pad = lambda images: [paddedImage for image in images
+                                            for paddedImage in
+                                            allpads(image, augment_settings['traslations'])]
+    else:
+        pad = lambda images: images
+    
     # Stack all our functions together
     # Order matters here:
     # - Rotate first because then it has higher accuracy
@@ -69,7 +88,7 @@ def augmentation_wrapper(augment_settings):
     # - Crop
     # - Flip
     # - Resize last because it is lossy
-    processing = lambda image: resize(crop(flip(rotate([image]))))
+    processing = lambda image: resize( shapefix( pad( crop( flip( rotate( [image] ))))))
     
     return processing
 
@@ -87,3 +106,16 @@ def allcrops(image):
     return [image_processing.crop_image(image,side_id)
         for side_id in range(4)]
 
+def allpads(image, pad_amounts):
+    """
+    Returns a list of padded images, with centre shift amounts 
+    specified by pad_amounts
+    """
+    # Can go in all four directions, so include +ve and -ve
+    pad_amounts = np.array(pad_amounts)
+    pad_amounts = np.union1d(-pad_amounts, pad_amounts)
+    
+    # Make permutations of all x and y shifts
+    return [image_processing.padshift_image(image, shift)
+        for shift in itertools.permutations(pad_amounts, 2)]
+    
