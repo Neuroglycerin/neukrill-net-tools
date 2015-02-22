@@ -255,6 +255,51 @@ def crop_image(image, side_id, crop_proportion=0.2):
     return cropped_image
 
 
+def padshift_image(image, centre_shift):
+    """
+    Pads an image so the centre shifts by the translation
+    specified.
+    input: image - input image
+           centre_shift - amount to shift centre by
+                          a two-element tuple of signed integers
+    output: image - padded image with centre shifted by
+                    centre_shift. This means the image is padded
+                    with twice the abs of centre_shift on one/two
+                    sides.
+    """
+    # First, use skimage to check what value white should be
+    whiteVal = skimage.dtype_limits(image)[1]
+    
+    if centre_shift[0] < 0:
+        # Negative shift of first dim
+        # Move up by padding bottom
+        padlen = -2 * centre_shift[0]
+        pad = whiteVal * np.ones( (padlen, image.shape[1]) )
+        image = np.concatenate( (image,pad), axis=0 )
+        
+    elif centre_shift[0] > 0:
+        # Positive shift of first dim
+        # Move down by padding top
+        padlen = 2 * centre_shift[0]
+        pad = whiteVal * np.ones( (padlen, image.shape[1]) )
+        image = np.concatenate( (pad,image), axis=0 )
+
+    if centre_shift[1] < 0:
+        # Negative shift of second dim
+        # Move left by padding afterward
+        padlen = -2 * centre_shift[1]
+        pad = whiteVal * np.ones( (image.shape[0], padlen) )
+        image = np.concatenate( (image,pad), axis=1 )
+        
+    elif centre_shift[1] > 0:
+        # Positive shift of second dim
+        # Move right by padding before
+        padlen = 2 * centre_shift[1]
+        pad = whiteVal * np.ones( (image.shape[0], padlen) )
+        image = np.concatenate( (pad,image), axis=1 )
+    
+    return image
+
 def shape_fix(image, shape):
     """
     Makes all images the same size without resizing them.
