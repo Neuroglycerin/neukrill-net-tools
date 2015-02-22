@@ -36,7 +36,11 @@ def augmentation_wrapper(augment_settings):
         # will require a function here to call it a number of times
         rotate = lambda images: [rotatedImage for image in images
                                     for rotatedImage in
-                                    rotations(image, augment_settings['rotate'])]
+                                    rotations(image,
+                                        augment_settings['rotate'],
+                                        augment_settings['rotate_is_resizable']
+                                    )
+                                ]
     else:
         rotate = lambda images: images
     
@@ -69,11 +73,11 @@ def augmentation_wrapper(augment_settings):
     
     return processing
 
-def rotations(image, num_rotations):
+def rotations(image, num_rotations, resizable):
     """
     Returns a number of rotations depending on the settings.
     """
-    return [image_processing.rotate_image(image,angle) 
+    return [image_processing.rotate_image(image, angle, resizable)
         for angle in np.linspace(0, 360, num_rotations, endpoint=False)]
         
 def allcrops(image):
