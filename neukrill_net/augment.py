@@ -80,15 +80,25 @@ def augmentation_wrapper(augment_settings):
     else:
         pad = lambda images: images
     
+    # Add pixel noise
+    if 'noise' in augment_settings:
+        noisify = lambda images: [image_processing.noisify_image(image, augment_settings['noise'])
+                                    for image in images]
+    else:
+        noisify = lambda images: images
+    
     # Stack all our functions together
     # Order matters here:
     # - Rotate first because then it has higher accuracy
     #   (might want to move in pixels which would otherwise be cropped
     #    don't want the loss of resolution caused by resize)
-    # - Crop
     # - Flip
+    # - Crop
+    # - Pad
+    # - Align shape window
     # - Resize last because it is lossy
-    processing = lambda image: resize( shapefix( pad( crop( flip( rotate( [image] ))))))
+    # - Add noise independent for all output pixels
+    processing = lambda image: noisify( resize( shapefix( pad( crop( flip( rotate( [image] )))))))
     
     return processing
 
