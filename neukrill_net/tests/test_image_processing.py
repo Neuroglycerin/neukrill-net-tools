@@ -196,9 +196,53 @@ class TestCrop(BaseTestCase):
         self.assertEqual(croppedImage.shape, (95,100))
 
 
+class TestPadShift(BaseTestCase):
+    """
+    Unit tests for image padding to shift centre around
+    """
+    def setUp(self):
+        """
+        Make a dummy image
+        """
+        self.image = np.zeros((50,75), dtype=np.float64)
+        self.v1 = np.array([[.1,.2,.3,.4]], dtype=np.float64)
+        self.v0 = np.transpose(self.v1)
+        self.image255 = np.array([[200,12,128],[42,64,196]], dtype=np.uint8)
+        
+    def test_pad(self):
+        """
+        Ensure padding happens
+        """
+        # Ensure we return the same without padding
+        paddedImage = image_processing.padshift_image(self.image255, (0,0))
+        self.assertEqual(paddedImage, self.image255)
+        # Test for shift upwards
+        paddedImage = image_processing.padshift_image(self.v0, (-1,0))
+        self.assertEqual(paddedImage, np.array([[.1],[.2],[.3],[.4],[1],[1]], dtype=np.float64))
+        # Test for shift downwards
+        paddedImage = image_processing.padshift_image(self.v0, (1,0))
+        self.assertEqual(paddedImage, np.array([[1],[1],[.1],[.2],[.3],[.4]], dtype=np.float64))
+        # Test for shift leftwards
+        paddedImage = image_processing.padshift_image(self.v1, (0,-1))
+        self.assertEqual(paddedImage, np.array([[.1,.2,.3,.4,1,1]], dtype=np.float64))
+        # Test for shift rightwards
+        paddedImage = image_processing.padshift_image(self.v1, (0,1))
+        self.assertEqual(paddedImage, np.array([[1,1,.1,.2,.3,.4]], dtype=np.float64))
+        # Test for uint8
+        paddedImage = image_processing.padshift_image(self.image255, (-1,1))
+        self.assertEqual(
+            paddedImage,
+            np.array([
+                    [255,255,200, 12,128],
+                    [255,255, 42, 64,196],
+                    [255,255,255,255,255],
+                    [255,255,255,255,255]
+                ], dtype=np.uint8)
+            )
+    
 class TestShapeFix(BaseTestCase):
     """
-    Unit tests for 
+    Unit tests for shape_fix
     """
     def setUp(self):
         """
@@ -263,4 +307,18 @@ class TestShapeFix(BaseTestCase):
         # again
         reshapedImage = image_processing.shape_fix(self.image255, (2,5))
         self.assertEqual(reshapedImage, np.array([[255,200,12,128,255],[255,42,64,196,255]], dtype=np.uint8))
-
+    
+    def test_padded_shapefix(self):
+        """
+        Ensure we get the appropriate output when combining with padding to move image within window.
+        """
+        paddedImage = image_processing.padshift_image(self.image255, (-1,1))
+        reshapedImage = image_processing.shape_fix(paddedImage, (2,3))
+        self.assertEqual(
+            reshapedImage,
+            np.array([
+                    [255, 42, 64],
+                    [255,255,255],
+                ], dtype=np.uint8)
+            )
+        
