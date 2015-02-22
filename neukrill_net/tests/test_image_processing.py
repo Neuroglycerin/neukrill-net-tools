@@ -71,23 +71,29 @@ class TestRotate(BaseTestCase):
         Ensure rotation is lossless for cardinal rotations
         """
         # Rotation should be the same, mod 360
-        self.assertTrue(np.array_equal(
-            image_processing.rotate_image(self.image, 90), image_processing.rotate_image(self.image, -270)))
+        self.assertEqual(
+            image_processing.rotate_image(self.image, 90),
+            image_processing.rotate_image(self.image, -270))
         # Rotation should be the same, mod 360
-        self.assertTrue(np.array_equal(
-            image_processing.rotate_image(self.image, 180), image_processing.rotate_image(self.image, -180)))
+        self.assertEqual(
+            image_processing.rotate_image(self.image, 180),
+            image_processing.rotate_image(self.image, -180))
         # Rotation of 360 should not change image
-        self.assertTrue(np.array_equal(
-            self.image, image_processing.rotate_image(self.image, 360)))
+        self.assertEqual(
+            self.image,
+            image_processing.rotate_image(self.image, 360))
         # Rotation should stack 90+90=180
-        self.assertTrue(np.array_equal(
-            image_processing.rotate_image(self.image, 180), image_processing.rotate_image(image_processing.rotate_image(self.image, 90), 90)))
+        self.assertEqual(
+            image_processing.rotate_image(self.image, 180),
+            image_processing.rotate_image(image_processing.rotate_image(self.image, 90), 90))
         # Rotation of 90+270=360 should not change image
-        self.assertTrue(np.array_equal(
-            self.image, image_processing.rotate_image(image_processing.rotate_image(self.image, 90), 270)))
+        self.assertEqual(
+            self.image,
+            image_processing.rotate_image(image_processing.rotate_image(self.image, 90), 270))
         # Rotation of 180+180=360 should not change image
-        self.assertTrue(np.array_equal(
-            self.image, image_processing.rotate_image(image_processing.rotate_image(self.image, 180), 180)))
+        self.assertEqual(
+            self.image,
+            image_processing.rotate_image(image_processing.rotate_image(self.image, 180), 180))
         
         
 class TestFlip(BaseTestCase):
@@ -198,9 +204,10 @@ class TestShapeFix(BaseTestCase):
         """
         Make a dummy image
         """
-        self.image = np.zeros((50,75))
-        self.v1 = np.array([[.1,.2,.3,.4]])
+        self.image = np.zeros((50,75), dtype=np.float64)
+        self.v1 = np.array([[.1,.2,.3,.4]], dtype=np.float64)
         self.v0 = np.transpose(self.v1)
+        self.image255 = np.array([[200,12,128],[42,64,196]], dtype=np.uint8)
     
     def test_shapefix(self):
         """
@@ -212,43 +219,48 @@ class TestShapeFix(BaseTestCase):
         self.assertEqual(reshapedImage.shape, self.image.shape)
         self.assertEqual(reshapedImage, self.image)
         # Test reducing dim-0 only
-        reshapedImage = image_processing.shape_fix(np.ones((75,50)), (50,50))
-        self.assertEqual(reshapedImage, np.ones((50,50)))
+        reshapedImage = image_processing.shape_fix(np.ones((75,50), dtype=np.float64), (50,50))
+        self.assertEqual(reshapedImage, np.ones((50,50), dtype=np.float64))
         # Test reducing dim-1 only
-        reshapedImage = image_processing.shape_fix(np.ones((40,80)), (40,20))
-        self.assertEqual(reshapedImage, np.ones((40,20)))
+        reshapedImage = image_processing.shape_fix(np.ones((40,80), dtype=np.float64), (40,20))
+        self.assertEqual(reshapedImage, np.ones((40,20), dtype=np.float64))
         # Test reducing dim-0 and dim-1
-        reshapedImage = image_processing.shape_fix(np.ones((20,40)), (19,19))
-        self.assertEqual(reshapedImage, np.ones((19,19)))
+        reshapedImage = image_processing.shape_fix(np.ones((20,40), dtype=np.float64), (19,19))
+        self.assertEqual(reshapedImage, np.ones((19,19), dtype=np.float64))
         # Test expanding dim-0 only
-        reshapedImage = image_processing.shape_fix(np.ones((30,50)), (50,50))
-        self.assertEqual(reshapedImage, np.ones((50,50)))
+        reshapedImage = image_processing.shape_fix(np.ones((30,50), dtype=np.float64), (50,50))
+        self.assertEqual(reshapedImage, np.ones((50,50), dtype=np.float64))
         # Test expanding dim-1 only
-        reshapedImage = image_processing.shape_fix(np.ones((40,20)), (30,30))
-        self.assertEqual(reshapedImage, np.ones((30,30)))
+        reshapedImage = image_processing.shape_fix(np.ones((40,20), dtype=np.float64), (30,30))
+        self.assertEqual(reshapedImage, np.ones((30,30), dtype=np.float64))
         # Test expanding dim-0 and dim-1
-        reshapedImage = image_processing.shape_fix(np.ones((10,14)), (16,16))
-        self.assertEqual(reshapedImage, np.ones((16,16)))
+        reshapedImage = image_processing.shape_fix(np.ones((10,14), dtype=np.float64), (16,16))
+        self.assertEqual(reshapedImage, np.ones((16,16), dtype=np.float64))
         # Test crop is centred for dim-0
         reshapedVect = image_processing.shape_fix(self.v0, (2,1))
-        self.assertEqual(reshapedVect, np.array([[.2],[.3]]))
+        self.assertEqual(reshapedVect, np.array([[.2],[.3]], dtype=np.float64))
         # Test crop is centred for dim-1
         reshapedVect = image_processing.shape_fix(self.v1, (1,2))
-        self.assertEqual(reshapedVect, np.array([[.2,.3]]))
+        self.assertEqual(reshapedVect, np.array([[.2,.3]], dtype=np.float64))
         # Test pad is centred for dim-0
         reshapedVect = image_processing.shape_fix(self.v0, (6,1))
-        self.assertEqual(reshapedVect, np.array([[1],[.1],[.2],[.3],[.4],[1]]))
+        self.assertEqual(reshapedVect, np.array([[1],[.1],[.2],[.3],[.4],[1]], dtype=np.float64))
         # Test pad is centred for dim-1
         reshapedVect = image_processing.shape_fix(self.v1, (1,6))
-        self.assertEqual(reshapedVect, np.array([[1,.1,.2,.3,.4,1]]))
+        self.assertEqual(reshapedVect, np.array([[1,.1,.2,.3,.4,1]], dtype=np.float64))
         # Test pad and crop works correctly
         reshapedImage = image_processing.shape_fix(self.v1, (3,2))
-        self.assertEqual(reshapedImage, np.array([[1,1],[.2,.3],[1,1]]))
+        self.assertEqual(reshapedImage, np.array([[1,1],[.2,.3],[1,1]], dtype=np.float64))
         # Test crop and padworks correctly
         reshapedImage = image_processing.shape_fix(self.v0, (2,3))
-        self.assertEqual(reshapedImage, np.array([[1,.2,1],[1,.3,1]]))
-        # Make sure we error if a uint8 image is provided
-        with self.assertRaises(ValueError):
-            image_processing.shape_fix(np.array([[255,128],[0,196]]), (2,4))
-        
+        self.assertEqual(reshapedImage, np.array([[1,.2,1],[1,.3,1]], dtype=np.float64))
+        # Make sure output is correct for uint8 image too
+        reshapedImage = image_processing.shape_fix(self.image255, (4,3))
+        self.assertEqual(reshapedImage, np.array([[255,255,255],[200,12,128],[42,64,196],[255,255,255]], dtype=np.uint8))
+        # again
+        reshapedImage = image_processing.shape_fix(self.image255, (2,1))
+        self.assertEqual(reshapedImage, np.array([[12],[64]], dtype=np.uint8))
+        # again
+        reshapedImage = image_processing.shape_fix(self.image255, (2,5))
+        self.assertEqual(reshapedImage, np.array([[255,200,12,128,255],[255,42,64,196,255]], dtype=np.uint8))
 
