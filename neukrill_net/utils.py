@@ -264,13 +264,24 @@ def load_rawdata(image_fname_dict, classes=None, verbose=False):
         return data, names
 
 
-def write_predictions(out_fname, p, names, settings):
-    """Write probabilities to an output csv and then compress with gzip"""
+def write_predictions(out_fname, p, names, classes):
+    """
+    Write probabilities to an output csv which is compressed with gzip.
+    input:  out_fname - name of the output file.
+                       Append .csv if you like. Do not append with .gz.
+            p - probability matrix.
+                dim-0 specifies the file predicitons are of
+                dim-1 specifies which class the prediciton is for
+            names - names of the things which are being classified
+            classes - the classes predictions are placed into
+    output: None
+            writes a gzip compressed csv file to `out_fname`.gz on disk
+    """
     
     # Write the probabilites as a CSV
     with open(out_fname, 'w') as csv_out:
         out_writer = csv.writer(csv_out, delimiter=',')
-        out_writer.writerow(['image'] + list(settings.classes))
+        out_writer.writerow(['image'] + list(classes))
         for index in range(len(names)):
             out_writer.writerow([names[index]] + list(p[index,]))
     
