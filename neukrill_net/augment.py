@@ -7,11 +7,12 @@ are here.
 
 import neukrill_net.image_processing as image_processing
 import numpy as np
+import skimage.util
 import itertools
 
-def augmentation_wrapper(augment_settings):
+def augmentation_wrapper(units='float64', **augment_settings):
     """
-    Takes settings for augmentation as a dictionary
+    Takes settings for augmentation as **kwargs
     and produces a "processing" function to make more
     training data.
     The returned function will return a list of images
@@ -20,6 +21,23 @@ def augmentation_wrapper(augment_settings):
     """
     # components of the processing pipeline
     components = []
+    
+    # Datatype unit conversion
+    # We very probably want this to be float throughout
+    if units == 'float64' or units == 'float':
+        unitconvert = lambda images: [skimage.util.img_as_float(image)
+                                        for image in images]
+        
+    elif units == 'uint8':
+        unitconvert = lambda images: [skimage.util.img_as_ubyte(image)
+                                        for image in images]
+    
+    elif units == None or units == 'auto':
+        unitconvert = lambda images: images
+    
+    else:
+        raise ValueError('Unrecognised output units: {}'.format(
+                            augment_settings['units']))
     
     # Shape-fixing without resizing
     if 'shape' in augment_settings:
@@ -115,7 +133,25 @@ def augmentation_wrapper(augment_settings):
     # - Align shape window
     # - Resize last because it is lossy
     # - Add noise independent for all output pixels
-    processing = lambda image: noisify( resize( shapefix( pad( crop( flip( rotate( landscapise( [image] ))))))))
+    processing=lambda image:noisify(
+                                resize(
+                                    shapefix(
+                                        pad(
+                                            crop(
+                                                flip(
+                                                    rotate(
+                                                        landscapise(
+                                                            unitconvert(
+                                                                [ image ]
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
     
     return processing
 
