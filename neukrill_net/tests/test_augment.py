@@ -44,6 +44,16 @@ class TestAugmentImages(BaseTestCase):
         # Test numerosity
         self.assertEqual(len(augment.allcrops(self.image)), 4)
         
+    def test_allpads(self):
+        # Test numerosity with no padding
+        self.assertEqual(len(augment.allpads(self.image, [0])), 1)
+        # Test numerosity with always padded the same absolute amount
+        self.assertEqual(len(augment.allpads(self.image, [5])), 4)
+        # Test numerosity with 0 or single pad
+        self.assertEqual(len(augment.allpads(self.image, [0,5])), 9)
+        # Test numerosity with two possible pads
+        self.assertEqual(len(augment.allpads(self.image, [2,6])), 16)
+        
     def test_augmentation_numerosity(self):
         """
         Ensure each of the augmentations give the correct number of output images
@@ -82,9 +92,35 @@ class TestAugmentImages(BaseTestCase):
                         augment.augmentation_wrapper(**augment_settings))
         self.assertEqual(len(procImages), num_images*5)
         
-        # Test with all enabled
+        # Test with all so far enabled
         augment_settings = {'resize':(48,48), 'rotate':5, 'rotate_is_resizable':True, 'flip':True, 'crop':True}
         procImages = image_processing.load_images(self.image_fpaths, 
                         augment.augmentation_wrapper(**augment_settings))
         self.assertEqual(len(procImages), num_images*50)
-
+        
+        # Test with shape-fixing
+        augment_settings = {'shape':(48,48)}
+        procImages = image_processing.load_images(self.image_fpaths, 
+                        augment.augmentation_wrapper(**augment_settings))
+        self.assertEqual(len(procImages), num_images)
+        
+        # Test with landscapise
+        augment_settings = {'landscapise':True}
+        procImages = image_processing.load_images(self.image_fpaths, 
+                        augment.augmentation_wrapper(**augment_settings))
+        self.assertEqual(len(procImages), num_images)
+        
+        # Test with traslation
+        augment_settings = {'translations':[0,5]}
+        procImages = image_processing.load_images(self.image_fpaths, 
+                        augment.augmentation_wrapper(**augment_settings))
+        self.assertEqual(len(procImages), num_images*9)
+        
+        # Test with noisify
+        augment_settings = {'noisify':True}
+        procImages = image_processing.load_images(self.image_fpaths, 
+                        augment.augmentation_wrapper(**augment_settings))
+        self.assertEqual(len(procImages), num_images)
+        
+        
+        
