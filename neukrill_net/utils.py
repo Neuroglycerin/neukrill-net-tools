@@ -328,6 +328,11 @@ def load_run_settings(run_settings_path, settings, settings_path="settings.json"
 
     # save the pickle name here, so it's less likely to get garbled between train and test
     run_settings['pickle abspath'] = os.path.join(modeldir,run_settings['filename']+".pkl")
+    # check if the pickle already exists - and don't allow overwriting if so
+    if os.path.exists(run_settings['pickle abspath']):
+        # not sure what type of error this is
+        raise Exception("Run will overwrite model pickle file, delete or move"
+                        " file to continue.")
 
     submissionsdir = os.path.join(settings.data_dir,"submissions")
     if not os.path.exists(submissionsdir):
