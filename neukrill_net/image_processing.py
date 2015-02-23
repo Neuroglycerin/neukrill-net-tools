@@ -105,6 +105,9 @@ def resize_image(image, size):
     does this by padding to make the image square, then
     resizing
     """
+    # Note down the original type
+    original_dtype = image.dtype
+    
     # First, use skimage to check what value white should be
     whiteVal = skimage.dtype_limits(image)[1]
     
@@ -140,6 +143,10 @@ def resize_image(image, size):
 
     # Now resize to specified size
     resized_image = skimage.transform.resize(padded_image, size)
+    
+    # Preserve the datatype
+    # Ensure output matches input
+    resized_image = img_as_dtype(resized_image, original_dtype)
     
     return resized_image
 
