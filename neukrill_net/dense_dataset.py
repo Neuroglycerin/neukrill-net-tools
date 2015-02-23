@@ -49,7 +49,7 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
         processing_settings = self.run_settings["preprocessing"]
         # get a processing function from this
         processing = neukrill_net.augment.augmentation_wrapper(
-                                                        processing_settings)
+                                                        **processing_settings)
 
         # super simple if statements for predict/train
         if train_or_predict == "train":
