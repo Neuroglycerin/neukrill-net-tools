@@ -61,6 +61,15 @@ def augmentation_wrapper(units='float64', **augment_settings):
         resize = lambda images: images
     
     
+    # Rescale
+    if 'scale' in augment_settings and not augment_settings['scale']==None:
+        scale = lambda images: [image_processing.scale_image(image, sf)
+                                for sf in augment_settings['scale']
+                                for image in images]
+    else:
+        scale = lambda images: images
+    
+    
     # Landscapise
     # Set to True if you want to ensure all the images are landscape
     if 'landscapise' in augment_settings and augment_settings['landscapise']:
@@ -71,7 +80,7 @@ def augmentation_wrapper(units='float64', **augment_settings):
     
     
     # Rotate
-    if 'rotate' in augment_settings:
+    if 'rotate' in augment_settings and not augment_settings['rotate']==None:
         # apply rotate with options
         # will require a function here to call it a number of times
         rotate = lambda images: [rotatedImage for image in images
@@ -105,16 +114,16 @@ def augmentation_wrapper(units='float64', **augment_settings):
     
     
     # Pad to translate within shape_fix window
-    if 'traslations' in augment_settings:
+    if 'translations' in augment_settings and not augment_settings['translations']==None:
         pad = lambda images: [paddedImage for image in images
                                             for paddedImage in
-                                            allpads(image, augment_settings['traslations'])]
+                                            allpads(image, augment_settings['translations'])]
     else:
         pad = lambda images: images
     
     
     # Add pixel noise
-    if 'noise' in augment_settings:
+    if 'noise' in augment_settings and not augment_settings['noise']==None:
         noisify = lambda images: [image_processing.noisify_image(image, augment_settings['noise'])
                                     for image in images]
     else:
@@ -180,5 +189,5 @@ def allpads(image, pad_amounts):
     
     # Make permutations of all x and y shifts
     return [image_processing.padshift_image(image, shift)
-        for shift in itertools.permutations(pad_amounts, 2)]
-    
+        for shift in itertools.product(pad_amounts, repeat=2)]
+
