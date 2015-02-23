@@ -81,6 +81,34 @@ class TestResize(BaseTestCase):
                          (2000,2000))
 
 
+class TestRescale(BaseTestCase):
+    """
+    Unit tests for image scaling
+    """
+    def setUp(self):
+        """
+        Read the first of the images using skimage
+        """
+        self.image  = skimage.io.imread(self.image_fname_dict['test'][0])
+        self.image2 = np.ones((100,100), dtype=np.float64)
+    
+    def test_rescale(self):
+        # Check we maintain exactly the same matrix if scale factor is 1.0
+        self.assertEqual(
+            self.image, image_processing.scale_image(self.image, 1.0)
+            )
+        self.assertEqual(
+            self.image2, image_processing.scale_image(self.image2, 1.0)
+            )
+        # Check image doubles in size
+        self.assertEqual(
+            (200,200), image_processing.scale_image(self.image2, 2.0).shape
+            )
+        # Check image halves in size
+        self.assertEqual(
+            (50,50), image_processing.scale_image(self.image2, 0.5).shape
+            )
+
 class TestRotate(BaseTestCase):
     """
     Unit tests for image rotation
