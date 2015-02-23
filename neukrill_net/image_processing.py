@@ -210,6 +210,35 @@ def rotate_image(image, angle, resizable=True):
     
     return rotated_image
 
+    
+def scale_image(image, scalefactor):
+    """
+    Rescale image by some scale factor.
+    Rescaling is done by interpolation, so this function should be
+    used when the scale factor is in the range 0.5 < sf < 2.
+    For greater rescaling than this, the skimage function
+    downscale_local_mean should be implemented instead.
+    
+    input: image - the image to rescale
+           scalefactor - the scale factor to apply
+    output: image - the rescaled image
+    """
+    # Note down the original type
+    original_dtype = image.dtype
+    
+    # First, use skimage to check what value white should be
+    whiteVal = skimage.dtype_limits(image)[1]
+    
+    # Now rescale
+    image = skimage.transform.rescale(image, scalefactor, order=1,
+                                    mode='constant', cval=whiteVal)
+                                
+    # Preserve the datatype
+    # Ensure output matches input
+    image = img_as_dtype(image, original_dtype)
+        
+    return image
+
 
 def crop_image(image, side_id, crop_proportion=0.2):
     """
