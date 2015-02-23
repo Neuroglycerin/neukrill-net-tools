@@ -10,6 +10,7 @@ __license__ = "3-clause BSD"
 __maintainer__ = "Gavin Gray"
 __email__ = "gavingray1729@gmail.com"
 
+import os
 import json
 import skimage.io
 import neukrill_net.utils
@@ -121,7 +122,8 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                     X[image_index,:,:,0] = image
                     image_index += 1
             # store the names in this dataset object
-            self.names = [os.path.basename(fpath) for fpath in image_fname_dict['test']]
+            self.names = [os.path.basename(fpath) for fpath in 
+                    self.settings.image_fnames[train_or_predict]]
 
             # now run inherited initialisation
             super(self.__class__,self).__init__(topo_view=X)
