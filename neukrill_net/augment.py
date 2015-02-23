@@ -93,6 +93,13 @@ def augmentation_wrapper(units='float64', **augment_settings):
     else:
         rotate = lambda images: images
     
+    # Shear
+    if 'shear' in augment_settings and not augment_settings['shear']==None:
+        shear = lambda images: [image_processing.shear_image(image, this_shear)
+                                for this_shear in augment_settings['shear']
+                                for image in images]
+    else:
+        shear = lambda images: images
     
     # Flip (always horizontally)
     # All other relfections can be acheived by coupling with an appropriate reflection
@@ -147,11 +154,13 @@ def augmentation_wrapper(units='float64', **augment_settings):
                                     shapefix(
                                         pad(
                                             crop(
-                                                flip(
-                                                    rotate(
-                                                        landscapise(
-                                                            unitconvert(
-                                                                [ image ]
+                                                shear(
+                                                    flip(
+                                                        rotate(
+                                                            landscapise(
+                                                                unitconvert(
+                                                                    [ image ]
+                                                                )
                                                             )
                                                         )
                                                     )
