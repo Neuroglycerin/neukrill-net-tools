@@ -10,7 +10,7 @@ import numpy as np
 import skimage.util
 import itertools
 
-def augmentation_wrapper(units='float64', **augment_settings):
+def augmentation_wrapper(**augment_settings):
     """
     Takes settings for augmentation as **kwargs
     and produces a "processing" function to make more
@@ -19,6 +19,10 @@ def augmentation_wrapper(units='float64', **augment_settings):
     containing EVERY possible combinations of options
     as given in the augmentation settings.
     """
+    if "units" not in augment_settings:
+        units='float64'
+    else:
+        units=augment_settings["units"]
     # components of the processing pipeline
     components = []
     
