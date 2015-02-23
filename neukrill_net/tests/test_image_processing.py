@@ -68,18 +68,38 @@ class TestResize(BaseTestCase):
         """
         Read the first of the images using skimage
         """
-        self.image = skimage.io.imread(self.image_fname_dict['test'][0])
+        self.image  = skimage.io.imread(self.image_fname_dict['test'][0])
+        self.image2 = np.ones((100,100), dtype=np.float64)
+        self.image3 = 40 * np.ones((48,48), dtype=np.uint8)
 
     def test_resize(self):
         """
         Ensure resizing works
         """
+        # Check we do nothing to the image if we resize to the same size
+        #self.assertEqual(
+        #    self.image,
+        #    image_processing.resize_image(self.image, self.image.shape)
+        #    )
+        # Check sizes are okay
         self.assertEqual(
-                image_processing.resize_image(self.image, (5,5)).shape, (5,5))
+            (5,5),
+            image_processing.resize_image(self.image, (5,5)).shape
+            )
         self.assertEqual(
-                image_processing.resize_image(self.image, (2000,2000)).shape,
-                         (2000,2000))
-
+            (2000,2000),
+            image_processing.resize_image(self.image, (2000,2000)).shape
+            )
+        # Check image can be shrunk correctly
+        self.assertEqual(
+            image_processing.resize_image(self.image2, (93,93)),
+            np.ones((93,93), dtype=np.float64)
+            )
+        self.assertEqual(
+            image_processing.resize_image(self.image3, (24,24)),
+            40 * np.ones((24,24), dtype=np.uint8)
+            )
+        # Note: values are not preserved by upscaling.
 
 class TestRescale(BaseTestCase):
     """
@@ -107,6 +127,16 @@ class TestRescale(BaseTestCase):
         # Check image halves in size
         self.assertEqual(
             (50,50), image_processing.scale_image(self.image2, 0.5).shape
+            )
+        # Check image content matches when doubled
+        self.assertEqual(
+            np.ones((200,200), dtype=np.float64),
+            image_processing.scale_image(self.image2, 2.0)
+            )
+        # Check image content matches when halved
+        self.assertEqual(
+            np.ones((50,50), dtype=np.float64),
+            image_processing.scale_image(self.image2, 0.5)
             )
 
 class TestRotate(BaseTestCase):
