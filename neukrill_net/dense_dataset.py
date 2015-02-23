@@ -16,7 +16,6 @@ import neukrill_net.utils
 import neukrill_net.augment
 import pylearn2.datasets
 import numpy as np
-import sklearn.preprocessing
 
 class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
     """
@@ -88,12 +87,12 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
             y = np.array(y)
             # count the y labels
             N_y_labels = len(list(set(y)))
-            # need to encode labels numerically
-            self.label_encoder = sklearn.preprocessing.LabelEncoder()
-            # make sure this is always the same
-            self.label_encoder.classes_ = np.array(settings.classes)
+            # build dictionary to encode labels numerically
+            class_dictionary = {}
+            for i,c in enumerate(settings.classes):
+                class_dictionary[c] = i
             # map to integers
-            y = self.label_encoder.transform(y)
+            y = np.array(map(lambda c: class_dictionary[c], y))
             # make it 2D column vector
             y = y[np.newaxis].T
             # now run inherited initialisation
