@@ -58,8 +58,8 @@ Python 2.7 virtualenv
 ---------------------
 
 To make a __Python 2.7__ virtual environment instead of 3.4, we can follow 
-Edinburgh University's [own instructions on this][is] 
-(_do this on any DICE machine_):
+Edinburgh University's [own instructions on this][is]  (_do this on any 
+DICE machine_):
 
 ```
 virtualenv --distribute --python=/usr/bin/python2.7 path/to/neukrill-venv-py2.7
@@ -70,6 +70,8 @@ OR:
 ```
 virtualenv -p /usr/bin/python2.7 path/to/neukrill-venv-py2.7
 ```
+
+[is]: http://computing.help.inf.ed.ac.uk/python
 
 Activating
 ----------
