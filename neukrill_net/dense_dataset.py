@@ -36,7 +36,7 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
         variable.
     train_or_predict : depending on whether we're training a model or 
         predicting on the supplied test set. Currently, only supports
-        "train".
+        "train". At the risk of confusion, for prediction use keystring: "test"
     """
     def __init__(self,settings_path="settings.json",
             run_settings="run_settings/default.json",training_set_mode="train",
@@ -51,48 +51,75 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
         processing = neukrill_net.augment.augmentation_wrapper(
                                                         processing_settings)
 
-        # split the dataset based on training_set_mode option:
-        self.settings.image_fnames[train_or_predict] = \
-                self.train_test_split(train_or_predict, training_set_mode)
-        
-        # count the images
-        self.N_images = sum(1 for class_label in self.settings.classes
-                for image_path in 
-                self.settings.image_fnames[train_or_predict][class_label])
-        # multiply that count by augmentation factor
-        self.N_images = int(self.N_images*
-                self.run_settings["augmentation_factor"])
-        # initialise y vector
-        y = []
-        # initialise array
-        X = np.zeros((self.N_images,self.run_settings["final_shape"][0],
-            self.run_settings["final_shape"][1],1))
-        image_index = 0
-        # load the images in image_fpaths, iterating and keeping track of class
-        for class_label in self.settings.classes:
-            for image_path in self.settings.image_fnames[
-                                                train_or_predict][class_label]:
+        # super simple if statements for predict/train
+        if train_or_predict == "train":
+            # split the dataset based on training_set_mode option:
+            self.settings.image_fnames[train_or_predict] = \
+                    self.train_test_split(train_or_predict, training_set_mode)
+
+            # count the images
+            self.N_images = sum(1 for class_label in self.settings.classes
+                    for image_path in 
+                    self.settings.image_fnames[train_or_predict][class_label])
+            # multiply that count by augmentation factor
+            self.N_images = int(self.N_images*
+                    self.run_settings["augmentation_factor"])
+            # initialise y vector
+            y = []
+            # initialise array
+            X = np.zeros((self.N_images,self.run_settings["final_shape"][0],
+                self.run_settings["final_shape"][1],1))
+            image_index = 0
+            # load the images in image_fpaths, iterating and keeping track of class
+            for class_label in self.settings.classes:
+                for image_path in self.settings.image_fnames[
+                                                    train_or_predict][class_label]:
+                    # load the image as numpy array
+                    image = skimage.io.imread(image_path)
+                    # apply processing function (get back multiple images)
+                    images = processing(image)
+                    # for each image store a class label
+                    y += [class_label]*len(images)
+                    # then broadcast each of these images into the empty X array
+                    for image in images:
+                        X[image_index,:,:,0] = image
+                        image_index += 1
+            # make sure y is an array
+            y = np.array(y)
+            # count the y labels
+            N_y_labels = len(list(set(y)))
+            # need to encode labels numerically
+            self.label_encoder = sklearn.preprocessing.LabelEncoder()
+            y = self.label_encoder.fit_transform(y)
+            # make it 2D column vector
+            y = y[np.newaxis].T
+            # now run inherited initialisation
+            super(self.__class__,self).__init__(topo_view=X,y=y,y_labels=N_y_labels)
+
+        elif train_or_predict == "predict":
+            # test is just a big list of image paths
+            # how many?
+            self.N_images = sum(1 for image_path in 
+                    self.settings.image_fnames[train_or_predict])
+
+            # more boilerplate code, but it's going to be easier than making a
+            # function that can deal with the above as well
+            # initialise array
+            X = np.zeros((self.N_images,self.run_settings["final_shape"][0],
+                self.run_settings["final_shape"][1],1))
+            image_index = 0
+            # loop over all the images, in order
+            for image_path in self.settings.image_fnames[train_or_predict]:
                 # load the image as numpy array
                 image = skimage.io.imread(image_path)
                 # apply processing function (get back multiple images)
                 images = processing(image)
-                # for each image store a class label
-                y += [class_label]*len(images)
                 # then broadcast each of these images into the empty X array
                 for image in images:
                     X[image_index,:,:,0] = image
                     image_index += 1
-        # make sure y is an array
-        y = np.array(y)
-        # count the y labels
-        N_y_labels = len(list(set(y)))
-        # need to encode labels numerically
-        self.label_encoder = sklearn.preprocessing.LabelEncoder()
-        y = self.label_encoder.fit_transform(y)
-        # make it 2D column vector
-        y = y[np.newaxis].T
-        # now run inherited initialisation
-        super(self.__class__,self).__init__(topo_view=X,y=y,y_labels=N_y_labels)
+            # now run inherited initialisation
+            super(self.__class__,self).__init__(topo_view=X)
 
 
     def train_test_split(self, train_or_predict, training_set_mode):
