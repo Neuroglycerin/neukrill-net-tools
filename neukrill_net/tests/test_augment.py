@@ -122,5 +122,10 @@ class TestAugmentImages(BaseTestCase):
                         augment.augmentation_wrapper(**augment_settings))
         self.assertEqual(len(procImages), num_images)
         
+        # Test with shear
+        augment_settings = {'shear':[0,5,30]}
+        procImages = image_processing.load_images(self.image_fpaths, 
+                        augment.augmentation_wrapper(**augment_settings))
+        self.assertEqual(len(procImages), num_images*3)
         
         
