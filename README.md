@@ -21,14 +21,14 @@ Pylearn2 or Theano in Python 2.7. If you're setting up for the first time,
 skip to the next section on Python 2.
 
 ```
-pyvenv my/new/venv/dir
+pyvenv path/to/neukrill-venv
 ```
 
 On machines __where python 2 is default__ (Ubuntu and DICE machines) you should
 run:
 
 ```
-pyvenv-3.4 my/new/venv/dir
+pyvenv-3.4 path/to/neukrill-venv
 ```
 
 __Ubuntu 14.04__ comes with a [broken pyvenv](http://askubuntu.com/questions/488529/pyvenv-3-4-error-returned-non-zero-exit-status-1). We can install a Pyenv without pip, then manually install pip. 
@@ -37,21 +37,21 @@ __Ubuntu 14.04__ comes with a [broken pyvenv](http://askubuntu.com/questions/488
 # need this as we're using Python 3
 sudo apt-get install python3.4-dev
 sudo apt-get install python3.4-venv
-pyvenv-3.4 --without-pip venv
+pyvenv-3.4 --without-pip path/to/neukrill-venv
 
 # source the new venv
-source ./venv/bin/activate
-wget https://pypi.python.org/packages/source/s/setuptools/setuptools-12.0.4.tar.gz
-tar -vzxf setuptools-12.0.4.tar.gz 
+source path/to/neukrill-venv/bin/activate
+wget -qO - https://pypi.python.org/packages/source/s/setuptools/setuptools-12.0.4.tar.gz | tar xvz
 cd setuptools-12.0.4/
 python setup.py install
 cd ..
-wget https://pypi.python.org/packages/source/p/pip/pip-6.0.6.tar.gz
-tar -vzxf pip-6.0.6.tar.gz
+wget -qO - https://pypi.python.org/packages/source/p/pip/pip-6.0.6.tar.gz | tar xvz
 cd pip-6.0.6/
 python setup.py install
 cd ..
 deactivate
+rm -r setuptools-12.0.4
+rm -r cd pip-6.0.6
 ```
 
 Python 2.7 virtualenv
@@ -77,11 +77,14 @@ Activating
 When you want to work on the project, source it:
 
 ```
-source my/new/venv/dir/bin/activate
+source path/to/neukrill-venv/bin/activate
 ```
 
 Then, _in this repository_ install all the libraries we're 
 using to your virtual environment:
+```
+cd path/to/neukrill-net-tools
+```
 
 ```
 # to prevent failure, install these two first
@@ -104,7 +107,7 @@ have to keep reinstalling the module each time we make a change to the code)
 the neukrill-net-tools module by running one of the following when in the tools repo:
 
 ```
-pip install -e .  
+pip install -e .
 ```
 
 __or__
@@ -166,7 +169,7 @@ You may want to install OpenBLAS or ATLAS through apt-get.
 [ci]: http://caffe.berkeleyvision.org/installation.html
 [ab]: http://www.netlib.org/lapack/
 
-Installing pylearn2
+Installing Pylearn2
 ===================
 
 First, make sure Theano and nose are installed using pip:
@@ -185,17 +188,19 @@ To be safe (I don't know if this would break it or not), run the start script
 in the work repository to set up the environment variables.
 
 ```
-neukrill-net-work
------------------
+cd ../neukrill-net-work/
 source start_script
 ```
 
-Clone the their [github repo][pylearn2], and do a development install, as we 
-did with our own tools repository. ie, with the virtual environment 
-activated, navigate into their repository and run:
+We now clone the their [github repo][pylearn2], and do a development install, as we 
+did with our own tools repository (still inside the virtual environment).
 
 ```
+cd ..
+git clone https://github.com/lisa-lab/pylearn2.git
+cd pylearn2
 python setup.py develop
+cd ..
 ```
 
 It must be kept up to date manually by pulling the repository, but it probably
@@ -203,3 +208,71 @@ won't go out of date within this project.
 
 [pylearn2]: https://github.com/lisa-lab/pylearn2
 [tb]: http://deeplearning.net/software/theano/install.html#bleeding-edge-install-instructions
+
+Installing OpenCV
+===================
+
+
+You will need >1GB free space to install OpenCV. When the process is finished, it will take up about 300MB.
+
+First, you need to install `cmake` if you don't have it already. Do this without being in the virtual environment.
+
+On Debian:
+```
+sudo apt-get install cmake
+```
+On CentOS:
+```
+yum install cmake
+```
+
+Now lets set a variable for the path your venv is at, and source it. Make sure it is an absolute path, not a relative path.
+This is just for the purposes of making the install process easier.
+```
+$VIRTUAL_ENV = '/absolute/path/to/neukrill-venv'
+```
+
+Download version 3-beta of OpenCV.
+```
+wget -qO - https://github.com/Itseez/opencv/archive/3.0.0-beta.tar.gz | tar xvz
+cd opencv-3.0.0-beta
+mkdir build
+cd build
+```
+
+Should source the virtual environment now.
+```
+source $VIRTUAL_ENV/bin/activate
+```
+
+For a Python 3.4 venv, do the following:
+```
+cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=$VIRTUAL_ENV/ -D PYTHON_EXECUTABLE=$VIRTUAL_ENV/bin/python3.4 -D PYTHON_PACKAGES_PATH=$VIRTUAL_ENV/lib/python3.4/site-packages -D BUILD_NEW_PYTHON_SUPPORT=ON -D INSTALL_PYTHON_EXAMPLES=ON -D BUILD_EXAMPLES=ON ..
+```
+
+Alternatively, to install on a Python 2.7 venv:
+```
+cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=$VIRTUAL_ENV/local/ -D PYTHON_EXECUTABLE=$VIRTUAL_ENV/bin/python -D PYTHON_PACKAGES_PATH=$VIRTUAL_ENV/lib/python2.7/site-packages -D BUILD_NEW_PYTHON_SUPPORT=ON -D INSTALL_PYTHON_EXAMPLES=ON -D BUILD_EXAMPLES=ON ..
+```
+
+After doing `cmake` for either Python 2.7 or 3.4, scroll up and check that the directories are correct and point at the venv in the Python 2/3 section, and that `Python (for build)` correctly points to the venv as well.
+
+Finish:
+```
+make -j
+make install
+```
+Note: The `make` step may take about half an hour when using only a single core. The above code uses all available cores.
+
+Now let's try it out and check it is working:
+```
+python
+import cv2
+```
+This should import without error.
+
+If this is successful, you can now remove the copy of OpenCV you downloaded.
+```
+cd ../../
+rm -r opencv-3.0.0-beta
+```
