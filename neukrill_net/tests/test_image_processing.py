@@ -156,29 +156,58 @@ class TestRotate(BaseTestCase):
         # Rotation should be the same, mod 360
         self.assertEqual(
             image_processing.rotate_image(self.image, 90),
-            image_processing.rotate_image(self.image, -270))
+            image_processing.rotate_image(self.image, -270)
+            )
         # Rotation should be the same, mod 360
         self.assertEqual(
             image_processing.rotate_image(self.image, 180),
-            image_processing.rotate_image(self.image, -180))
+            image_processing.rotate_image(self.image, -180)
+            )
         # Rotation of 360 should not change image
         self.assertEqual(
             self.image,
-            image_processing.rotate_image(self.image, 360))
+            image_processing.rotate_image(self.image, 360)
+            )
         # Rotation should stack 90+90=180
         self.assertEqual(
             image_processing.rotate_image(self.image, 180),
-            image_processing.rotate_image(image_processing.rotate_image(self.image, 90), 90))
+            image_processing.rotate_image(image_processing.rotate_image(self.image, 90), 90)
+            )
         # Rotation of 90+270=360 should not change image
         self.assertEqual(
             self.image,
-            image_processing.rotate_image(image_processing.rotate_image(self.image, 90), 270))
+            image_processing.rotate_image(image_processing.rotate_image(self.image, 90), 270)
+            )
         # Rotation of 180+180=360 should not change image
         self.assertEqual(
             self.image,
-            image_processing.rotate_image(image_processing.rotate_image(self.image, 180), 180))
+            image_processing.rotate_image(image_processing.rotate_image(self.image, 180), 180)
+            )
         
+
+class TestShear(BaseTestCase):
+    """
+    Unit tests for shearing
+    """
+    def setUp(self):
+        """
+        Read the first of the images using skimage
+        """
+        self.image  = skimage.io.imread(self.image_fname_dict['test'][0])
+        self.image2 = np.ones((100,100), dtype=np.float64)
+    
+    def test_shear(self):
+        # Check image remains the same with shear=0
+        self.assertEqual(
+            self.image,
+            image_processing.shear_image(self.image, 0)
+            )
+        self.assertEqual(
+            self.image2,
+            image_processing.shear_image(self.image2, 0)
+            )
         
+    
 class TestFlip(BaseTestCase):
     """
     Unit tests for image flipping
