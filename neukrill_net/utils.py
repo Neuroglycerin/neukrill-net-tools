@@ -338,6 +338,6 @@ def load_run_settings(run_settings_path, settings, settings_path="settings.json"
     if not os.path.exists(submissionsdir):
         os.mkdir(submissionsdir)
 
-    run_settings['submissions abspath'] = submissionsdir
+    run_settings['submissions abspath'] = os.path.join(submissionsdir, run_settings['filename'] + ".csv")
 
     return run_settings

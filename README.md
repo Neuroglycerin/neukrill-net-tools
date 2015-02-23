@@ -57,6 +57,12 @@ rm -r cd pip-6.0.6
 Python 2.7 virtualenv
 ---------------------
 
+For Ubuntu, install _virtualenv_ using:
+
+```
+sudo apt-get install python-virtualenv
+```
+
 To make a __Python 2.7__ virtual environment instead of 3.4, we can follow 
 Edinburgh University's [own instructions on this][is]  (_do this on any 
 DICE machine_):
