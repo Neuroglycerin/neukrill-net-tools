@@ -96,7 +96,7 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
             # now run inherited initialisation
             super(self.__class__,self).__init__(topo_view=X,y=y,y_labels=N_y_labels)
 
-        elif train_or_predict == "predict":
+        elif train_or_predict == "test":
             # test is just a big list of image paths
             # how many?
             self.N_images = sum(1 for image_path in 
@@ -120,6 +120,10 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                     image_index += 1
             # now run inherited initialisation
             super(self.__class__,self).__init__(topo_view=X)
+        else:
+            raise ValueError('Invalid option: should be either "train" for'
+                             'training or "test" for prediction (I know '
+                             ' that is annoying).')
 
 
     def train_test_split(self, train_or_predict, training_set_mode):
