@@ -118,6 +118,9 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                 for image in images:
                     X[image_index,:,:,0] = image
                     image_index += 1
+            # store the names in this dataset object
+            self.names = [os.path.basename(fpath) for fpath in image_fname_dict['test']]
+
             # now run inherited initialisation
             super(self.__class__,self).__init__(topo_view=X)
         else:
