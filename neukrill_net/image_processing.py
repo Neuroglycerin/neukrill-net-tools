@@ -217,6 +217,31 @@ def rotate_image(image, angle, resizable=True):
     
     return rotated_image
 
+
+def shear_image(image, shear):
+    """
+    Apply a shear to an image
+    input: image - the image to shear
+           shear - the angle in degrees to shear by
+    output: image - the sheared image
+    """
+    # Note down the original type
+    original_dtype = image.dtype
+    
+    shear_radians = shear*np.pi/180
+    
+    # Create Affine transform with shear
+    aft = skimage.transform.AffineTransform(shear=shear_radians)
+    
+    # Apply transform to image data
+    image = skimage.transform.warp(image, aft)
+     
+    # Preserve the datatype
+    # Ensure output matches input
+    image = img_as_dtype(image, original_dtype)
+    
+    return image
+    
     
 def scale_image(image, scalefactor):
     """
@@ -243,7 +268,7 @@ def scale_image(image, scalefactor):
     # Preserve the datatype
     # Ensure output matches input
     image = img_as_dtype(image, original_dtype)
-        
+    
     return image
 
 
