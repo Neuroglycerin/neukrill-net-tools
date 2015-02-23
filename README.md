@@ -107,7 +107,7 @@ have to keep reinstalling the module each time we make a change to the code)
 the neukrill-net-tools module by running one of the following when in the tools repo:
 
 ```
-pip install -e .  
+pip install -e .
 ```
 
 __or__
@@ -169,7 +169,7 @@ You may want to install OpenBLAS or ATLAS through apt-get.
 [ci]: http://caffe.berkeleyvision.org/installation.html
 [ab]: http://www.netlib.org/lapack/
 
-Installing pylearn2
+Installing Pylearn2
 ===================
 
 First, make sure Theano and nose are installed using pip:
@@ -188,17 +188,19 @@ To be safe (I don't know if this would break it or not), run the start script
 in the work repository to set up the environment variables.
 
 ```
-neukrill-net-work
------------------
+cd ../neukrill-net-work/
 source start_script
 ```
 
-Clone the their [github repo][pylearn2], and do a development install, as we 
-did with our own tools repository. ie, with the virtual environment 
-activated, navigate into their repository and run:
+We now clone the their [github repo][pylearn2], and do a development install, as we 
+did with our own tools repository (still inside the virtual environment).
 
 ```
+cd ..
+git clone https://github.com/lisa-lab/pylearn2.git
+cd pylearn2
 python setup.py develop
+cd ..
 ```
 
 It must be kept up to date manually by pulling the repository, but it probably
