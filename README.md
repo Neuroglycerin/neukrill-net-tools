@@ -226,7 +226,13 @@ On CentOS:
 yum install cmake
 ```
 
-Setup:
+Now lets set a variable for the path your venv is at, and source it. Make sure it is an absolute path, not a relative path.
+This is just for the purposes of making the install process easier.
+```
+$VIRTUAL_ENV = '/absolute/path/to/neukrill-venv'
+```
+
+Download version 3-beta of OpenCV.
 ```
 wget -qO - https://github.com/Itseez/opencv/archive/3.0.0-beta.tar.gz | tar xvz
 cd opencv-3.0.0-beta
@@ -234,10 +240,8 @@ mkdir build
 cd build
 ```
 
-Now set a variable for the path your venv is at, and source it. Make sure it is an absolute path, not a relative path.
-This is just for the purposes of making the install process easier.
+Should source the virtual environment now.
 ```
-$VIRTUAL_ENV = '/absolute/path/to/neukrill-venv'
 source $VIRTUAL_ENV/bin/activate
 ```
 
