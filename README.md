@@ -240,7 +240,7 @@ This is just for the purposes of making the install process easier.
 VIRTUAL_ENV="/absolute/path/to/neukrill-venv"
 ```
 
-Download version 2.4.10 of OpenCV.
+Download version 2.4.10.1 of OpenCV.
 ```
 wget -qO - https://github.com/Itseez/opencv/archive/2.4.10.1.tar.gz | tar xvz
 cd opencv-2.4.10.1
