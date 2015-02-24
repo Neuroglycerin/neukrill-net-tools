@@ -237,13 +237,13 @@ yum install cmake
 Now lets set a variable for the path your venv is at, and source it. Make sure it is an absolute path, not a relative path.
 This is just for the purposes of making the install process easier.
 ```
-$VIRTUAL_ENV = '/absolute/path/to/neukrill-venv'
+VIRTUAL_ENV="/absolute/path/to/neukrill-venv"
 ```
 
-Download version 3-beta of OpenCV.
+Download version 2.4.10 of OpenCV.
 ```
-wget -qO - https://github.com/Itseez/opencv/archive/3.0.0-beta.tar.gz | tar xvz
-cd opencv-3.0.0-beta
+wget -qO - https://github.com/Itseez/opencv/archive/2.4.10.1.tar.gz | tar xvz
+cd opencv-2.4.10.1
 mkdir build
 cd build
 ```
@@ -260,14 +260,14 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=$VIRTUAL_ENV/ -D PYTHO
 
 Alternatively, to install on a Python 2.7 venv:
 ```
-cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=$VIRTUAL_ENV/local/ -D PYTHON_EXECUTABLE=$VIRTUAL_ENV/bin/python -D PYTHON_PACKAGES_PATH=$VIRTUAL_ENV/lib/python2.7/site-packages -D BUILD_NEW_PYTHON_SUPPORT=ON -D INSTALL_PYTHON_EXAMPLES=ON -D BUILD_EXAMPLES=ON ..
+cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=$VIRTUAL_ENV/local/ -D WITH_TBB=ON -D PYTHON_EXECUTABLE=$VIRTUAL_ENV/bin/python -D PYTHON_PACKAGES_PATH=$VIRTUAL_ENV/lib/python2.7/site-packages -D BUILD_NEW_PYTHON_SUPPORT=ON -D INSTALL_PYTHON_EXAMPLES=ON -D BUILD_EXAMPLES=ON ..
 ```
 
 After doing `cmake` for either Python 2.7 or 3.4, scroll up and check that the directories are correct and point at the venv in the Python 2/3 section, and that `Python (for build)` correctly points to the venv as well.
 
 Finish:
 ```
-make -j
+make -j $(nproc)
 make install
 ```
 Note: The `make` step may take about half an hour when using only a single core. The above code uses all available cores.
