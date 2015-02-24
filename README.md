@@ -265,6 +265,13 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=$VIRTUAL_ENV/local/ -D
 
 After doing `cmake` for either Python 2.7 or 3.4, scroll up and check that the directories are correct and point at the venv in the Python 2/3 section, and that `Python (for build)` correctly points to the venv as well.
 
+If you are on DICE, your version of cmake is not up to date and can't handle MD5 hashes for some reason.
+You must now manually open up this file and edit it:
+```
+gedit ../cmake/cl2cpp.cmake
+```
+Comment out all of line 50.
+
 Finish:
 ```
 make -j $(nproc)
