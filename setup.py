@@ -25,6 +25,7 @@ setup(name='neukrill-net',
                         'pytest==2.6.4',
                         'Pillow==2.7.0',
                         'scikit-image==0.10.1',
-                        'scikit-learn==0.15.2'],
+                        'scikit-learn==0.15.2',
+                        'mahotas==1.2.4'],
       cmdclass={'test': PyTest},
 )

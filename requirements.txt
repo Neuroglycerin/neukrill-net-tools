@@ -6,3 +6,4 @@ scipy==0.14.0
 Pillow==2.7.0
 scikit-image==0.10.1
 scikit-learn==0.15.2
+mahotas==1.2.4
