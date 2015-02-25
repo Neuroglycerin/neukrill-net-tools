@@ -193,11 +193,12 @@ pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git
 ```
 
 To be safe (I don't know if this would break it or not), run the start script
-in the work repository to set up the environment variables.
+in the work repository to set up the environment variables. You need to indicate
+the core with a number (here 1).
 
 ```
 cd ../neukrill-net-work/
-source start_script
+source start_script.sh 1
 ```
 
 We now clone the their [github repo][pylearn2], and do a development install, as we 
