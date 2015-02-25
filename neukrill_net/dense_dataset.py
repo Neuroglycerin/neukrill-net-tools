@@ -84,6 +84,11 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                     for image in images:
                         X[image_index,:,:,0] = image
                         image_index += 1
+            # if we're normalising
+            if processing_settings.get("normalise",0):
+                # then call the normalise function
+                X,run_settings = neukrill_net.image_processing.normalise(X,
+                                                                run_settings)
             # make sure y is an array
             y = np.array(y)
             # count the y labels
