@@ -248,7 +248,13 @@ mkdir build
 cd build
 ```
 
-Should source the virtual environment now.
+If you are on DICE, your version of cmake is not up to date and can't handle MD5 hashes for some reason.
+You need to run this line to comment out line 50 of the config file so it doesn't try to use MD5.
+```
+sed -i '50 s/^/#/' ../cmake/cl2cpp.cmake
+```
+
+Should source the virtual environment now if you haven't already.
 ```
 source $VIRTUAL_ENV/bin/activate
 ```
@@ -265,12 +271,6 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=$VIRTUAL_ENV/local/ -D
 ```
 
 After doing `cmake` for either Python 2.7 or 3.4, scroll up and check that the directories are correct and point at the venv in the Python section.
-
-If you are on DICE, your version of cmake is not up to date and can't handle MD5 hashes for some reason.
-You need to run this line to comment out line 50 of the config file so it doesn't try to use MD5.
-```
-sed -i '50 s/^/#/' cmake/cl2cpp.cmake
-```
 
 Finish:
 ```
