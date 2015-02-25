@@ -294,7 +294,8 @@ def write_predictions(out_fname, p, names, classes):
     # Delete the uncompressed CSV
     os.unlink(out_fname)
 
-def load_run_settings(run_settings_path, settings, settings_path="settings.json"):
+def load_run_settings(run_settings_path, settings,
+        settings_path="settings.json", verbose=False, force=False):
     """
     Loads the run settings and adds settings to dictionary, along
     with:
@@ -328,6 +329,11 @@ def load_run_settings(run_settings_path, settings, settings_path="settings.json"
 
     # save the pickle name here, so it's less likely to get garbled between train and test
     run_settings['pickle abspath'] = os.path.join(modeldir,run_settings['filename']+".pkl")
+    # check if the pickle already exists - and don't allow overwriting if so
+    if os.path.exists(run_settings['pickle abspath']) and not force:
+        # not sure what type of error this should be
+        raise Exception("Run will overwrite model pickle file, delete or move"
+                        " file to continue.")
 
     submissionsdir = os.path.join(settings.data_dir,"submissions")
     if not os.path.exists(submissionsdir):
