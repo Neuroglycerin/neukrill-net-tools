@@ -341,6 +341,10 @@ def load_run_settings(run_settings_path, settings,
                                         run_settings_path)[-1].split(".")[0]
     # and the full run settings path
     run_settings['run_settings_path'] = os.path.abspath(run_settings_path)
+    # if shuffling is specified and it's 1
+    if run_settings.get('shuffle',0):
+        # shuffle the dataset and apply seed if we have one
+        settings.shuffle(run_settings.get('random seed',None))
     # also put the settings in there
     run_settings['settings'] = settings
     # and the settings path, while we're at it
