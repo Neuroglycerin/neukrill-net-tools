@@ -51,7 +51,7 @@ class Bow:
         # NB: the edge threshold controls how much of the image must be ignored from
         #     each edge. This needs to be set to something very low,
         #     otherwise it will ignore all of the smaller (21x30) images.
-        self.detector = cv2.ORB_create(
+        self.detector = cv2.ORB(
             nfeatures = options['n_features_max'],
             patchSize = options['patch_size'],
             edgeThreshold = 0)
