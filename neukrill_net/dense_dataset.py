@@ -95,7 +95,7 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
             N_y_labels = len(list(set(y)))
             # build dictionary to encode labels numerically
             class_dictionary = {}
-            for i,c in enumerate(settings.classes):
+            for i,c in enumerate(self.settings.classes):
                 class_dictionary[c] = i
             # map to integers
             y = np.array(map(lambda c: class_dictionary[c], y))
