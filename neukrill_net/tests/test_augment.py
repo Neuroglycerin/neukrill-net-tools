@@ -8,6 +8,7 @@ import numpy as np
 from neukrill_net.tests.base import BaseTestCase
 import neukrill_net.image_processing as image_processing
 import neukrill_net.augment as augment
+import neukrill_net.utils as utils
 
 
 class TestAugmentImages(BaseTestCase):
@@ -58,9 +59,12 @@ class TestAugmentImages(BaseTestCase):
         """
         Ensure each of the augmentations give the correct number of output images
         """
+        # dummy dictionary
+        image_fdict = {}
+        image_fdict["test"] = self.image_fpaths
         # Load up the images to run the test on
         num_images = len(self.image_fpaths)
-        images = image_processing.load_images(self.image_fpaths, None)
+        images,_ = utils.load_rawdata(image_fdict)
         self.assertEqual(len(images), num_images)
         
         # Test with resizing
