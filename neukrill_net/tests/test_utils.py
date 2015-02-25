@@ -109,7 +109,7 @@ class TestLoadData(BaseTestCase):
         """
         Check load_data fails stacking training data without a processing step
         """
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             _, _ = utils.load_data(self.image_fname_dict,
                                    classes=self.classes)
 
