@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Unit tests for image processing functions
 """
@@ -35,7 +34,7 @@ class TestLoadImages(BaseTestCase):
         processing = lambda image: image.min()
         images = image_processing.load_images(self.image_fpaths, processing)
         self.assertEqual(len(images), 3)
-        self.assertEqual([[int(x[0])] for x in images], [[63], [5], [46]])
+        self.assertEqual([[int(x)] for x in images], [[63], [5], [46]])
 
 
 class TestLandscapise(BaseTestCase):
