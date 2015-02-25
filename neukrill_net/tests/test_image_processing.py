@@ -19,14 +19,14 @@ class TestLoadImages(BaseTestCase):
         """
         self.image_fpaths = self.image_fname_dict['test']
 
-    def test_load_images_without_processing(self):
-        """
-        Test load images returns list of flat images as expected
-        with no processing
-        """
-        # Test we can load the images without a processing function
-        images = image_processing.load_images(self.image_fpaths, None)
-        self.assertEqual(len(images), 3)
+    #def test_load_images_without_processing(self):
+    #    """
+    #    Test load images returns list of flat images as expected
+    #    with no processing
+    #    """
+    #    # Test we can load the images without a processing function
+    #    images = image_processing.load_images(self.image_fpaths, None)
+    #    self.assertEqual(len(images), 3)
         
     def test_load_images_with_min_processing(self):
         """
