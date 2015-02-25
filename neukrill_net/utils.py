@@ -201,7 +201,10 @@ def load_data(image_fname_dict, classes=None,
               processing=None, verbose=False):
     """
     Loads training or test data using image_processing.load_images func
-    which applies the supplied processing function as required
+    which applies the supplied processing function as required.
+
+    This function is rapidly becoming a hack and will probably be replace with
+    Scott's HighLevelFeatures idea.
 
     If the classes kwarg is not none assumed to be loading labelled train
     data and returns two np objs:
@@ -218,26 +221,32 @@ def load_data(image_fname_dict, classes=None,
         varying sizes.")
 
     # initialise lists
-    data = []
+    #data = []
+    # check augmentation factor
+    dummy_images = processing(np.zeros((100,100)))
+    augmentation_factor = len(dummy_images)
 
     # e.g. labelled training data
     if classes:
         labels = []
+        
+        image_fpaths = []
 
         for class_index, class_name in enumerate(classes):
             if verbose:
                 print("class: {0} of 120: {1}".format(class_index, class_name))
 
-            image_fpaths = image_fname_dict['train'][class_name]
-            data_subset = image_processing.load_images(image_fpaths,
-                                                          processing,
-                                                          verbose)
-            data.append(data_subset)
-            num_images = len(data_subset)
+            image_fpaths += image_fname_dict['train'][class_name]
+            #data_subset = image_processing.load_images(image_fpaths,
+            #                                              processing,
+            #                                              verbose)
+            #data.append(data_subset)
+            #num_images = len(data_subset)
             # generate the class labels and add them to the list
-            array_labels = num_images * [class_name]
+            array_labels = augmentation_factor * [class_name]
             labels = labels + array_labels
-        return np.vstack(data), np.array(labels)
+        data = image_processing.load_images(image_fpaths)
+        return data, np.array(labels)
 
     # e.g. test data
     else:

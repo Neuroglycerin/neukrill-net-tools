@@ -49,13 +49,23 @@ def load_images(image_fpaths, processing, verbose=False):
     Loads images provided in a list of filepaths
     and applies a processing function if supplied one.
 
+    Adds the images loaded to the image array, at the 
+    index supplied in image_index.
+
     Processing function is expected to take a
     single argument, the image as a numpy array,
     and process it.
     """
-    data_subset = []
     num_images = len(image_fpaths)
+    # check how big our array is going to be
+    dummy_images = processing(np.zeros((100,100)))
+    augmentation_factor = len(dummy_images)
+    # preallocate the array
+    imarray_shape = [int(num_images*augmentation_factor)] + \
+                    list(dummy_images[0].shape)
+    image_array = np.zeros(imarray_shape)
 
+    array_index = 0
     for index in range(num_images):
         # read the image into a numpy array
         image = skimage.io.imread(image_fpaths[index])
@@ -69,14 +79,20 @@ def load_images(image_fpaths, processing, verbose=False):
             resized_images = processing(image)
             if type(resized_images) is not list:
                 resized_images = [resized_images]
-            image_vectors = list(map(lambda image: image.ravel(),
-                                            resized_images))
+            for image in resized_images:
+                # push this image into the array
+                image_array[array_index,:,:] = image
+                # add to the index
+                array_index += 1
+            #image_vectors = list(map(lambda image: image.ravel(),
+            #                                resized_images))
         else:
             image_vectors = [image.ravel()]
 
-        data_subset += image_vectors
-
-    return data_subset
+    # reshape to 2D, collapsing the images
+    # maybe another function should do this?
+    image_array = image_array.reshape(image_array.shape[0],-1)
+    return image_array
 
 
 def landscapise_image(image):
