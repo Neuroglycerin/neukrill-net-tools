@@ -173,7 +173,7 @@ class TestLoadData(BaseTestCase):
         """
         Make sure load_data fails to stack training data without processing
         """
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             _, _ = utils.load_data(self.image_fname_dict)
 
     def test_loading_test_data_with_processing(self):
