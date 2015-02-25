@@ -245,7 +245,7 @@ def load_data(image_fname_dict, classes=None,
             # generate the class labels and add them to the list
             array_labels = augmentation_factor * [class_name]
             labels = labels + array_labels
-        data = image_processing.load_images(image_fpaths)
+        data = image_processing.load_images(image_fpaths, processing, verbose)
         return data, np.array(labels)
 
     # e.g. test data
