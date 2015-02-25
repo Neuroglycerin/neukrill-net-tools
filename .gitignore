@@ -59,6 +59,3 @@ target/
 
 # Temporary files
 *~
-
-# ignore eggs
-.eggs
