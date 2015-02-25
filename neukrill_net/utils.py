@@ -236,15 +236,16 @@ def load_data(image_fname_dict, classes=None,
             if verbose:
                 print("class: {0} of 120: {1}".format(class_index, class_name))
 
-            image_fpaths += image_fname_dict['train'][class_name]
+            class_fpaths = image_fname_dict['train'][class_name]
+            array_labels = augmentation_factor * len(class_fpaths) * [class_name]
+            labels = labels + array_labels
+            image_fpaths += class_fpaths
             #data_subset = image_processing.load_images(image_fpaths,
             #                                              processing,
             #                                              verbose)
             #data.append(data_subset)
             #num_images = len(data_subset)
             # generate the class labels and add them to the list
-            array_labels = augmentation_factor * [class_name]
-            labels = labels + array_labels
         data = image_processing.load_images(image_fpaths, processing, verbose)
         return data, np.array(labels)
 
@@ -380,3 +381,16 @@ def load_run_settings(run_settings_path, settings,
     run_settings['submissions abspath'] = os.path.join(submissionsdir, run_settings['filename'] + ".csv")
 
     return run_settings
+
+def save_run_settings(run_settings):
+    """
+    Takes a run_settings dictionary and saves it back where it was loaded from,
+    using the path stored in its own dictionary. Return None.
+    """
+    # store the raw log loss results back in the run settings json
+    with open(run_settings['run_settings_path'], 'w') as f:
+        # have to remove the settings structure, can't serialise it
+        del run_settings['settings']
+        json.dump(run_settings, f, separators=(',',':'), indent=4, 
+                                                    sort_keys=True)
+    return None
