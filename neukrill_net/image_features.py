@@ -35,10 +35,29 @@ def get_ORB_keypoints(image):
     input: image
     output: list of ORB keypoints
     """
+    # blur using a Gaussian kernel
+    #image = cv2.GaussianBlur(image,(3,3),0)
+    image = cv2.bilateralFilter(image,5,75,75)
+
+
     # Initiate ORB detector
-    orb = cv2.ORB()
+    orb = cv2.ORB(edgeThreshold = 0)
     # find keypoints
     keyPoints = orb.detect(image, None)
+
+    return keyPoints
+
+
+def get_MSER_keypoints(image):
+    """
+    Detects keypoints using MSER detector. 
+    input image
+    output: list of MSER keypoints
+    """
+    # initiate MSER detector
+    mser = cv2.MSER()
+    # find keypoints
+    keyPoints = mser.detect(image)
 
     return keyPoints
 
