@@ -215,16 +215,42 @@ def load_data(image_fname_dict, classes=None,
         * data - list of image vectors
     """
 
-    if not processing and verbose:
-        print("Warning: no processing applied, it will \
-        not be possible to stack these images due to \
-        varying sizes.")
+    if not processing:
+        if verbose:
+            print("Warning: no processing applied, it will \
+            not be possible to stack these images due to \
+            varying sizes.")
+        # use the raw loading without processing
+        return load_rawdata(image_fname_dict, classes=classes, verbose=verbose)
 
-    # initialise lists
-    #data = []
     # check augmentation factor
     dummy_images = processing(np.zeros((100,100)))
+    if type(dummy_images) is not list:
+        dummy_images = [dummy_images]
+    if dummy_images[0].shape == ():
+        dummy_images[0] = np.array(dummy_images[0])[np.newaxis]
     augmentation_factor = len(dummy_images)
+    expected_shape = dummy_images[0].shape
+    # second dummy images
+    dummy_images = processing(np.zeros((42,42)))
+    if type(dummy_images) is not list:
+        dummy_images = [dummy_images]
+    if dummy_images[0].shape == ():
+        dummy_images[0] = np.array(dummy_images[0])[np.newaxis]
+    # use this opportunity to check if we're going to be able to process these
+    if expected_shape != dummy_images[0].shape:
+        # then we'll just load them as a list and process them after
+        X,labels = load_rawdata(image_fname_dict, classes=classes, verbose=verbose)
+        # reprocess X
+        X_new = []
+        labels_new = []
+        for image,label in zip(X,labels):
+            p_images = processing(image)
+            if type(p_images) is not list:
+                p_images = [p_images]
+            X_new += p_images
+            labels_new += len(p_images)*[label]
+        return X_new,labels_new
 
     # e.g. labelled training data
     if classes:

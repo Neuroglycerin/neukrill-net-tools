@@ -8,7 +8,6 @@ import skimage.transform
 import skimage.util
 import numpy as np
 
-
 def img_as_dtype(image, dt):
     """
     Convert an image to the target datatype.
@@ -58,7 +57,29 @@ def load_images(image_fpaths, processing, verbose=False):
     num_images = len(image_fpaths)
     # check how big our array is going to be
     dummy_images = processing(np.zeros((100,100)))
+    if type(dummy_images) is not list:
+        dummy_images = [dummy_images]
     augmentation_factor = len(dummy_images)
+    if dummy_images[0].shape == ():
+        dummy_images[0] = np.array(dummy_images[0])[np.newaxis]
+    # check we'll actually get back the same size of images
+    expected_shape = dummy_images[0].shape
+    dummy_images = processing(np.zeros((42,42)))
+    if type(dummy_images) is not list:
+        dummy_images = [dummy_images]
+    if dummy_images[0].shape == ():
+        dummy_images[0] = np.array(dummy_images[0])[np.newaxis]
+    if expected_shape != dummy_images[0].shape:
+        # have to use a dummy dictionary for this
+        image_list = [skimage.io.imread(fpath) for fpath in image_fpaths]
+        # then just apply the processing function
+        new_images = []
+        for image in image_list:
+            processed = processing(image)
+            if type(processed) is not list:
+                processed = [processed]
+            new_images += processed
+        return new_images
     # preallocate the array
     imarray_shape = [int(num_images*augmentation_factor)] + \
                     list(dummy_images[0].shape)
@@ -80,7 +101,10 @@ def load_images(image_fpaths, processing, verbose=False):
                 resized_images = [resized_images]
             for image in resized_images:
                 # push this image into the array
-                image_array[array_index,:,:] = image
+                if len(image_array.shape) == 3:
+                    image_array[array_index,:,:] = image
+                else:
+                    image_array[array_index,:] = image
                 # add to the index
                 array_index += 1
             #image_vectors = list(map(lambda image: image.ravel(),
