@@ -20,18 +20,18 @@ class TestAugmentImages(BaseTestCase):
         # Read the first of the images using skimage
         self.image = skimage.io.imread(self.image_fname_dict['test'][0])
 
-    def test_load_images_without_augmentation(self):
-        """
-        Test load images returns list of flat images as expected
-        with no processing
-        """
-        # Load the images without a processing function
-        images = image_processing.load_images(self.image_fpaths, None)
-        # Test the augmentation wrapper can generate a function which does
-        # no processing
-        processing = augment.augmentation_wrapper(units=None)
-        images2 = image_processing.load_images(self.image_fpaths, processing)
-        self.assertListOfNumpyArraysEqual(images, images2)
+#    def test_load_images_without_augmentation(self):
+#        """
+#        Test load images returns list of flat images as expected
+#        with no processing
+#        """
+#        # Load the images without a processing function
+#        images = image_processing.load_images(self.image_fpaths, None)
+#        # Test the augmentation wrapper can generate a function which does
+#        # no processing
+#        processing = augment.augmentation_wrapper(units=None)
+#        images2 = image_processing.load_images(self.image_fpaths, processing)
+#        self.assertListOfNumpyArraysEqual(images, images2)
         
     def test_rotations(self):
         # Test numerosity
