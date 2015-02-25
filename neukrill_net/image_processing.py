@@ -43,7 +43,6 @@ def img_as_dtype(image, dt):
     else:
         raise ValueError('Unfathomable target datatype: %s' % dt)
 
-
 def load_images(image_fpaths, processing, verbose=False):
     """
     Loads images provided in a list of filepaths
@@ -440,3 +439,56 @@ def mean_subtraction(image):
     # for some reason, thought this would take more code
     return image - np.mean(image)
 
+def normalise(image_array, run_settings):
+    """
+    Only operates on 4D array at the moment, for Pylearn2 data processing.
+    Could equally be called standardise, because it's going subtract the 
+    mean and divide by the stdev. Actually, that might just be more 
+    accurate...
+
+    Input:
+        4D array of images
+    Output:
+        Normalised version of 4D array
+    """
+    normalisation_stats = run_settings["preprocessing"]["normalise"]
+    # check if we know what the mean and stdev of the image is yet
+    if "mu" not in normalisation_stats or "sigma" not in normalisation_stats:
+        # then we have to calculate them, there are two ways to do that
+        if normalisation_stats["global_or_pixel"] == "pixel":
+            # calculate the stats for every pixel
+            normalisation_stats["mu"] = {}
+            normalisation_stats["sigma"] = {}
+            for i in range(image_array.shape[1]):
+                for j in range(image_array.shape[2]):
+                    pixelslice = image_array[:,i,j,0]
+                    # mean:
+                    normalisation_stats["mu"][(i,j)] = np.mean(pixelslice)
+                    # stdev:
+                    normalisation_stats["sigma"][(i,j)] = np.sqrt(np.var(pixelslice))
+        elif normalisation_stats["global_or_pixel"] == "global":
+            # Can just act on the whole thing
+            normalisation_stats["mu"] = np.mean(image_array)
+            normalisation_stats["sigma"] = np.sqrt(np.var(image_array))
+        else:
+            raise ValueError("Invalid option for global_or_pixel, should be "
+                             "one of global or pixel.")
+        # put them back in the run settings 
+        run_settings["preprocessing"]["normalise"] = normalisation_stats
+        # and save them back to the run settings pickle file
+        utils.save_run_settings(run_settings)
+    # now run the normalisation, using those stats
+    if normalisation_stats["global_or_pixel"] == "pixel":
+        for i in range(image_array.shape[1]):
+            for j in range(image_array.shape[2]):
+                mu = normalisation_stats["mu"][(i,j)]
+                sigma = normalisation_stats["sigma"][(i,j)]
+                image_array[:,i,j,0] = (image_array[:,i,j,0] - mu)/sigma
+    elif normalisation_stats["global_or_pixel"] == "global":
+        mu = normalisation_stats["mu"]
+        sigma = normalisation_stats["sigma"]
+        image_array = (image_array - mu)/sigma
+    else:
+        raise ValueError("Invalid option for global_or_pixel, should be "
+                             "one of global or pixel.")
+    return image_array, run_settings
