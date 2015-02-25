@@ -193,11 +193,12 @@ pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git
 ```
 
 To be safe (I don't know if this would break it or not), run the start script
-in the work repository to set up the environment variables.
+in the work repository to set up the environment variables. You need to indicate
+the core with a number (here 1).
 
 ```
 cd ../neukrill-net-work/
-source start_script
+source start_script.sh 1
 ```
 
 We now clone the their [github repo][pylearn2], and do a development install, as we 
@@ -248,7 +249,13 @@ mkdir build
 cd build
 ```
 
-Should source the virtual environment now.
+If you are on DICE, your version of cmake is not up to date and can't handle MD5 hashes for some reason.
+You need to run this line to comment out line 50 of the config file so it doesn't try to use MD5.
+```
+sed -i '50 s/^/#/' ../cmake/cl2cpp.cmake
+```
+
+Should source the virtual environment now if you haven't already.
 ```
 source $VIRTUAL_ENV/bin/activate
 ```
@@ -260,10 +267,11 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=$VIRTUAL_ENV/ -D PYTHO
 
 Alternatively, to install on a Python 2.7 venv:
 ```
+cp /usr/lib64/libpython2.7.so "$VIRTUAL_ENV"/lib
 cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=$VIRTUAL_ENV/local/ -D WITH_TBB=ON -D PYTHON_EXECUTABLE=$VIRTUAL_ENV/bin/python -D PYTHON_PACKAGES_PATH=$VIRTUAL_ENV/lib/python2.7/site-packages -D BUILD_NEW_PYTHON_SUPPORT=ON -D INSTALL_PYTHON_EXAMPLES=ON -D BUILD_EXAMPLES=ON ..
 ```
 
-After doing `cmake` for either Python 2.7 or 3.4, scroll up and check that the directories are correct and point at the venv in the Python 2/3 section, and that `Python (for build)` correctly points to the venv as well.
+After doing `cmake` for either Python 2.7 or 3.4, scroll up and check that the directories are correct and point at the venv in the Python section.
 
 Finish:
 ```
