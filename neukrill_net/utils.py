@@ -10,6 +10,7 @@ import csv
 import gzip
 import numpy as np
 import skimage
+import random
 
 import neukrill_net.image_processing as image_processing
 import neukrill_net.constants as constants
@@ -36,6 +37,8 @@ class Settings:
 
         # check user input for random seed and if absent set it
         self.random_seed = self.user_input.get('r_seed', 42)
+        # don't shuffle by default
+        self.shuffle_flag = False
 
         # check user defined classes if absent set it
         self.classes = self.user_input.get('classes',
@@ -136,6 +139,10 @@ class Settings:
                 split_name = name.split(os.path.sep)
                 class_name = split_name[-2]
                 image_names = sorted(glob.glob(os.path.join(name, '*.jpg')))
+                if self.shuffle_flag:
+                    random.seed(self.random_seed)
+                    # shuffle in place
+                    random.shuffle(image_names)
                 train_fnames.update({class_name: image_names})
 
             num_train_classes = len(train_fnames.keys())
@@ -152,7 +159,25 @@ class Settings:
                                   'train': train_fnames}
 
         return self._image_fnames
-    
+
+    def shuffle(self, seed=None):
+        """
+        Modifies processing of image_fnames to ensure that the paths inside
+        each class will be shuffled. (Internally, wipes existing data
+        structure and rewrites it with shuffling on next call.
+        Input:
+            seed: random seed to use for shuffling, default is 42.
+        Output:
+            None (sets internal flag)
+        """
+        self.shuffle_flag = True
+        # if seed supplied, apply new value
+        if seed:
+            self.random_seed = seed
+        # if image_fnames exists, get rid of it
+        if self._image_fnames:
+            self._image_fnames = None
+        return None
     
     @property
     def class_priors(self):
@@ -316,6 +341,10 @@ def load_run_settings(run_settings_path, settings,
                                         run_settings_path)[-1].split(".")[0]
     # and the full run settings path
     run_settings['run_settings_path'] = os.path.abspath(run_settings_path)
+    # if shuffling is specified and it's 1
+    if run_settings.get('shuffle',0):
+        # shuffle the dataset and apply seed if we have one
+        settings.shuffle(run_settings.get('random seed',None))
     # also put the settings in there
     run_settings['settings'] = settings
     # and the settings path, while we're at it
