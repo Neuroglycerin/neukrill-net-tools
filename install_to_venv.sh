@@ -42,6 +42,7 @@ python setup.py develop
 # Install plotting stuff
 pip install ipython[notebook]
 pip install matplotlib
+pip install https://github.com/ioam/holoviews/archive/v0.8.2.zip
 # Install Theano
 pip install nose
 pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git
