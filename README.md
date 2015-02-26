@@ -146,10 +146,11 @@ above, you can end up working in [mixed environments][ipy], which would be
 unpleasant.
 
 And you might also want to plot things, and that's usually done using
-matplotlib so:
+matplotlib (and maybe holoviews on top of it):
 
 ```
 pip install matplotlib
+pip install https://github.com/ioam/holoviews/archive/v0.8.2.zip
 ```
 
 That'll also install a bunch of requirements.
