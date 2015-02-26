@@ -463,7 +463,7 @@ def mean_subtraction(image):
     # for some reason, thought this would take more code
     return image - np.mean(image)
 
-def normalise(image_array, run_settings):
+def normalise(image_array, run_settings, verbose=False):
     """
     Only operates on 4D array at the moment, for Pylearn2 data processing.
     Could equally be called standardise, because it's going subtract the 
@@ -480,6 +480,8 @@ def normalise(image_array, run_settings):
     if "mu" not in normalisation_stats or "sigma" not in normalisation_stats:
         # then we have to calculate them, there are two ways to do that
         if normalisation_stats["global_or_pixel"] == "pixel":
+            if verbose:
+                print("Applying pixel-wise normalisation")
             # calculate the stats for every pixel
             normalisation_stats["mu"] = {}
             normalisation_stats["sigma"] = {}
@@ -487,10 +489,12 @@ def normalise(image_array, run_settings):
                 for j in range(image_array.shape[2]):
                     pixelslice = image_array[:,i,j,0]
                     # mean:
-                    normalisation_stats["mu"][(i,j)] = np.mean(pixelslice)
+                    normalisation_stats["mu"][str((i,j))] = np.mean(pixelslice)
                     # stdev:
-                    normalisation_stats["sigma"][(i,j)] = np.sqrt(np.var(pixelslice))
+                    normalisation_stats["sigma"][str((i,j))] = np.sqrt(np.var(pixelslice))
         elif normalisation_stats["global_or_pixel"] == "global":
+            if verbose:
+                print("Applying global normalisation")
             # Can just act on the whole thing
             normalisation_stats["mu"] = np.mean(image_array)
             normalisation_stats["sigma"] = np.sqrt(np.var(image_array))
@@ -500,13 +504,15 @@ def normalise(image_array, run_settings):
         # put them back in the run settings 
         run_settings["preprocessing"]["normalise"] = normalisation_stats
         # and save them back to the run settings pickle file
+        # circular dependency, woo! Issue made.
+        import neukrill_net.utils as utils
         utils.save_run_settings(run_settings)
     # now run the normalisation, using those stats
     if normalisation_stats["global_or_pixel"] == "pixel":
         for i in range(image_array.shape[1]):
             for j in range(image_array.shape[2]):
-                mu = normalisation_stats["mu"][(i,j)]
-                sigma = normalisation_stats["sigma"][(i,j)]
+                mu = normalisation_stats["mu"][str((i,j))]
+                sigma = normalisation_stats["sigma"][str((i,j))]
                 image_array[:,i,j,0] = (image_array[:,i,j,0] - mu)/sigma
     elif normalisation_stats["global_or_pixel"] == "global":
         mu = normalisation_stats["mu"]
