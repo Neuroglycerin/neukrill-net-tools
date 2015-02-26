@@ -413,6 +413,8 @@ def save_run_settings(run_settings):
     Takes a run_settings dictionary and saves it back where it was loaded from,
     using the path stored in its own dictionary. Return None.
     """
+    # don't act on original dictionary
+    run_settings = run_settings.copy()
     # store the raw log loss results back in the run settings json
     with open(run_settings['run_settings_path'], 'w') as f:
         # have to remove the settings structure, can't serialise it
