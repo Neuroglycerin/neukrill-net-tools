@@ -29,19 +29,19 @@ def get_FAST_keypoints(image):
     return keyPoints
 
 
-def get_ORB_keypoints(image):
+def get_ORB_keypoints(image, n=500):
     """
     Detects keypoints using ORB feature detector. Maximum no of keypoints returned is 500.
     input: image
+           n - max number of returned keypoints (default 500)
     output: list of ORB keypoints
     """
     # blur using a Gaussian kernel
     #image = cv2.GaussianBlur(image,(3,3),0)
-    image = cv2.bilateralFilter(image,5,75,75)
-
+    #image = cv2.bilateralFilter(image,5,75,75)
 
     # Initiate ORB detector
-    orb = cv2.ORB(edgeThreshold = 0)
+    orb = cv2.ORB(nfeatures = n, edgeThreshold = 0)
     # find keypoints
     keyPoints = orb.detect(image, None)
 
