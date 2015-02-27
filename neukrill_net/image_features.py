@@ -12,7 +12,7 @@ Summary of implemented functions:
 We can now specify the desired no of keypoints. Fitness is based on 'response' value of keypoints.
 
 TODO: -look into adaptive thresholds to generate keypoints if no points are detected with default parameters.
-      -make sure if varying patchSize for ORB, descriptor uses same parameters!
+      -make sure if varying patchSize for ORB, descriptor uses same parameters! (DONE - we use **kwargs)
 """
 
 import numpy as np
