@@ -44,8 +44,13 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
         # parse the settings file
         self.settings = neukrill_net.utils.Settings(settings_path)
         # get the run settings
+        if train_or_predict == 'test':
+            force=True
+        else:
+            force=False
         self.run_settings = neukrill_net.utils.load_run_settings(run_settings,
-                                                                self.settings)
+                                                                self.settings,
+                                                                force=force)
         processing_settings = self.run_settings["preprocessing"]
         # get a processing function from this
         processing = neukrill_net.augment.augmentation_wrapper(

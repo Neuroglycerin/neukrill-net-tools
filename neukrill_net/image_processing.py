@@ -433,7 +433,7 @@ def shape_fix(image, shape):
         len1 = shape[1] - image.shape[1] - len0
         pad1 = whiteVal * np.ones( (image.shape[0], len1) )
         image = np.concatenate( (pad0,image,pad1), axis=1 )
-    
+
     return image
 
 
