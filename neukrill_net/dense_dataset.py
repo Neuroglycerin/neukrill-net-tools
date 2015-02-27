@@ -40,12 +40,17 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
     """
     def __init__(self,settings_path="settings.json",
             run_settings="run_settings/default.json",training_set_mode="train",
-            train_or_predict="train"):
+            train_or_predict="train", verbose=False):
         # parse the settings file
         self.settings = neukrill_net.utils.Settings(settings_path)
-        # get the urocessing settings
-        with open(run_settings) as f:
-            self.run_settings = json.load(f)
+        # get the run settings
+        if train_or_predict == 'test':
+            force=True
+        else:
+            force=False
+        self.run_settings = neukrill_net.utils.load_run_settings(run_settings,
+                                                                self.settings,
+                                                                force=force)
         processing_settings = self.run_settings["preprocessing"]
         # get a processing function from this
         processing = neukrill_net.augment.augmentation_wrapper(
@@ -86,9 +91,12 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                         image_index += 1
             # if we're normalising
             if processing_settings.get("normalise",0):
+                if verbose:
+                    print("Applying normalisation: {0}".format(
+                        processing_settings["normalise"]["global_or_pixel"]))
                 # then call the normalise function
-                X,run_settings = neukrill_net.image_processing.normalise(X,
-                                                                run_settings)
+                X,self.run_settings = neukrill_net.image_processing.normalise(X,
+                                            self.run_settings, verbose=verbose)
             # make sure y is an array
             y = np.array(y)
             # count the y labels
