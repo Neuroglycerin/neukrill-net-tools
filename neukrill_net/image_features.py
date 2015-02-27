@@ -11,7 +11,8 @@ Summary of implemented functions:
 
 We can now specify the desired no of keypoints. Fitness is based on 'response' value of keypoints.
 
-TODO: look into adaptive thresholds to generate keypoints if no points are detected with default parameters.
+TODO: -look into adaptive thresholds to generate keypoints if no points are detected with default parameters.
+      -make sure if varying patchSize for ORB, descriptor uses same parameters!
 """
 
 import numpy as np
@@ -57,10 +58,10 @@ def get_FAST_keypoints(image, n=500):
     # sort by response and return best n keypoints
     keyPoints = sort_keypoints_by_response_and_get_n_best(keyPoints, n)
 
-    return keyPoints
+    return image, keyPoints, {}
 
 
-def get_ORB_keypoints(image, n=500):
+def get_ORB_keypoints(image, n=500, **kwargs):
     """
     Detects keypoints using ORB feature detector. Maximum no of keypoints returned is 500.
     input: image
@@ -71,35 +72,42 @@ def get_ORB_keypoints(image, n=500):
     #image = cv2.GaussianBlur(image,(3,3),0)
     #image = cv2.bilateralFilter(image,5,75,75)
 
-    # Initiate ORB detector
-    orb = cv2.ORB(nfeatures = n, edgeThreshold = 0)
-
-    # find keypoints
-    keyPoints = orb.detect(image, None)
-
-    # sort by response and return best n keypoints
-    keyPoints = sort_keypoints_by_response_and_get_n_best(keyPoints, n)
-
-    return keyPoints
-
-
-def get_MSER_keypoints(image, n=500):
-    """
-    Detects keypoints using MSER detector. 
-    input:  image
-            n - max number of returned keypoints (default 500)
-    output: list of MSER keypoints
-    """
-    # initiate MSER detector
-    mser = cv2.MSER()
-
-    # find keypoints
-    keyPoints = mser.detect(image)
+    keyPoints = []
+    thePatchSize = 31
+    # find keypoints; if none found, decrease patchSize
+    while ( len(keyPoints) == 0 ):
+        # Initiate ORB detector
+        orb = cv2.ORB(nfeatures = n, edgeThreshold = 0, patchSize = thePatchSize)
+        keyPoints = orb.detect(image, None)
+        if thePatchSize <= 3:
+            print "Reached limit of patch size."
+            break
+        thePatchSize -= 2
+        
 
     # sort by response and return best n keypoints
+    # already scored by "scoreType" HARRIS_SCORE?
     keyPoints = sort_keypoints_by_response_and_get_n_best(keyPoints, n)
 
-    return keyPoints
+    return image, keyPoints, {"patchSize" : thePatchSize}
+
+
+def get_ORB_descriptors(image, keyPoints, **kwargs):
+    """
+    Computes ORB descriptors for given keypoints.
+    input:  image (that was returned with the keypoints!)
+            keyPoints - detected keypoints
+            **kwargs = detection arguments
+    output: list of descriptors for given keypoints
+    """
+    orb = cv2.ORB(edgeThreshold = 0, patchSize = kwargs["patchSize"])
+    # gets keypoints and descriptors
+    kp, descriptors = orb.compute(image, keyPoints)
+
+    if descriptors is None:
+        descriptors = []
+
+    return descriptors
 
 
 def get_BRISK_keypoints(image, n=500):
@@ -118,4 +126,41 @@ def get_BRISK_keypoints(image, n=500):
     # sort by response and return best n keypoints
     keyPoints = sort_keypoints_by_response_and_get_n_best(keyPoints, n)
 
-    return keyPoints
+    return image, keyPoints, {}
+
+
+def get_BRISK_descriptors(image, keyPoints, **kwargs):
+    """
+    Computes BRISK descriptors for given keypoints.
+    input:  image (that was returned with the keypoints!)
+            keyPoints - detected keypoints
+            **kwargs = detection arguments
+    output: list of descriptors for given keypoints
+    """
+    brisk = cv2.BRISK()
+    # gets keypoints and descriptors
+    kp, descriptors = brisk.compute(image, keyPoints)
+
+    if descriptors is None:
+        descriptors = []
+
+    return descriptors
+
+
+def get_MSER_keypoints(image, n=500):
+    """
+    Detects keypoints using MSER detector. 
+    input:  image
+            n - max number of returned keypoints (default 500)
+    output: list of MSER keypoints
+    """
+    # initiate MSER detector
+    mser = cv2.FeatureDetector_create('MSER')
+
+    # find keypoints
+    keyPoints = mser.detect(image)
+
+    # sort by response and return best n keypoints
+    keyPoints = sort_keypoints_by_response_and_get_n_best(keyPoints, n)
+
+    return image, keyPoints, {}
