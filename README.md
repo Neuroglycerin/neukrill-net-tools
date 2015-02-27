@@ -90,6 +90,7 @@ source path/to/neukrill-venv/bin/activate
 
 Then, _in this repository_ install all the libraries we're 
 using to your virtual environment:
+
 ```
 cd path/to/neukrill-net-tools
 ```
@@ -187,11 +188,31 @@ First, make sure Theano and nose are installed using pip:
 pip install nose
 ```
 
-For Theano, you might have problems without the [bleeding edge version][tb]:
+For Theano, you _will have problems_ with the [bleeding edge version][tb]
+on some of our models. As described in [this issue][thi], you have to
+install an arbitrary older Theano commit for this to work. This works
+as below for Pylearn2. We clone the Theano repository __somewhere__:
 
 ```
-pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git
+git clone git@github.com:Theano/Theano.git
 ```
+
+Then __in the repository__, branch it, checking out that branch and move the 
+branch back to [this commit][tc]:
+
+```
+git checkout -b workingforsomereason
+git checkout 032a0aa6bc01204e9a3ce8758a1dd97d360562bf
+```
+
+You can then do a development install:
+
+```
+python setup.py develop
+```
+
+You should note that _we did not carefully pick this commit_. It was some 
+commit after this one that broke it, but _we don't know which one_.
 
 To be safe (I don't know if this would break it or not), run the start script
 in the work repository to set up the environment variables. You need to indicate
@@ -218,6 +239,7 @@ won't go out of date within this project.
 
 [pylearn2]: https://github.com/lisa-lab/pylearn2
 [tb]: http://deeplearning.net/software/theano/install.html#bleeding-edge-install-instructions
+[thi]: https://github.com/Neuroglycerin/neukrill-net-work/issues/37
 
 Installing OpenCV
 ===================
