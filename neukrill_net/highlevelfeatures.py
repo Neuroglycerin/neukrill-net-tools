@@ -9,8 +9,10 @@ import numpy as np
 import cv2
 import sklearn.cluster
 import six
+import skimage.io
 
 from neukrill_net import image_attributes
+
 
 def loadimage(obj):
     """
@@ -35,9 +37,14 @@ class HighLevelFeatureBase:
     """
     Base class for high level features
     """
-    def __init__(self, preprocessing_func=None, augment_func=None):
+    
+    _is_combiner = False
+    
+    def __init__(self, preprocessing_func=None, augment_func=None, **kwargs):
         """
         Initialise the preprocessing and augmentation functions.
+        
+        NOTE: should not be overwritten by children.
         """
         if not preprocessing_func is None:
             self.preprocess_image = preprocessing_func
@@ -45,8 +52,31 @@ class HighLevelFeatureBase:
         if not augment_func is None:
             self.augment_image = augment_func
         
+    
+    def __add__(self, other):
+        """
+        """
+        if self._is_combiner and other._is_combiner:
+            # Add all the other's children to me
+            for child in other.childHLFs:
+                self.add_HLF(child)
+            return self
             
-    def fit(self, images):
+        elif self._is_combiner:
+            # Add the HLF into me
+            self.add_HLF(other)
+            return self
+            
+        elif other._is_combiner:
+            # Add me HLF to the combined HLF
+            self.add_HLF(other)
+            return other
+            
+        else:
+            return MultiHighLevelFeature([self, other])
+        
+        
+    def fit(self, images, y=[]):
         """
         Fit the feature to a training set.
         Some subclasses will support this, but not all.
@@ -91,7 +121,18 @@ class HighLevelFeatureBase:
         raise NotImplementedError
         
         
-    def extractfeatures(self, images):
+    def _preprocess_extract_image(self, image):
+        """
+        Preprocess image and than extract features
+        Input : image - a 2D numpy array of an image
+        Output: features - a 1D numpy array of features extracted from the image.
+        
+        NOTE: Subclasses should not modify this function!
+        """
+        return self.preprocess_image(self.extractfeatures_image(image))
+        
+        
+    def transform(self, images):
         """
         Extract features from a set of images.
         
@@ -111,9 +152,7 @@ class HighLevelFeatureBase:
         # How many augmentations do we get from each image?
         num_augmentations = len(self.augment_image(first_image))
         # How many elements are in the feature vector from each image?
-        num_feature_elements = self.extractfeatures_image(
-                                    self.preprocess_image(first_image)
-                                    ).size
+        num_feature_elements = self._preprocess_extract_image(first_image).size
         
         # Initialise
         X = np.zeros((num_augmentations, len(images), num_feature_elements))
@@ -126,16 +165,59 @@ class HighLevelFeatureBase:
             augmented_list = self.augment_image(image)
             # Loop over all the augmented copies
             for augment_index, augmented_image in enumerate(augmented_list):
-                # Preprocess the image
-                augmented_image = self.preprocess_image(augmented_image)
                 # Extract features and put them into the array
-                X[augment_index, image_index, :] = np.ravel(
-                                                    self.extractfeatures_image(augmented_image)
-                                                    )
+                X[augment_index, image_index, :] = self._preprocess_extract_image(augmented_image).ravel()
         
         # Return the completed arary
         return X
 
+
+class MultiHighLevelFeature(HighLevelFeatureBase):
+    """
+    Class for merging high level features together
+    """
+    
+    _is_combiner = True
+    
+    def __init__(self, HLF_list, **kwargs):
+        """
+        Initialise
+        List of child high-level-features
+        Input : HLF_list - List of high-level-feature objects
+        """
+        
+        HighLevelFeatureBase.__init__(self, **kwargs)
+        
+        self._childHLFs = HLF_list
+        
+        
+    def add_HLF(self, HighLevelOther):
+        """
+        Add a new high level feature to the container
+        """
+        _childHLFs += [HighLevelOther]
+        
+        
+    def preprocess_image(self, image):
+        """
+        Preprocessing function does not make sense,
+        since the features have different functions
+        """
+        # By default, the preprocessing function does nothing to the 
+        # input image
+        raise NotImplementedError
+        
+        
+    def _preprocess_extract_image(self, image):
+        """
+        Preprocess image and than extract features with each child
+        Input : image - a 2D numpy array of an image
+        Output: features - a 1D numpy array of features extracted from the image
+                           with each HLF child in turn
+        """
+        return np.concatenate( [child._preprocess_extract_image(image).ravel() for child in self._childHLFs] )
+        
+    
 
 
 class BasicAttributes(HighLevelFeatureBase):
@@ -143,16 +225,16 @@ class BasicAttributes(HighLevelFeatureBase):
     Get generic, basic, high level attributes from the image
     """
     def __init__(self, attributes_list, **kwargs):
+        
+        HighLevelFeatureBase.__init__(self, **kwargs)
+        
         # Set the feature extractor function to provide the target list
         # of attributes
-        self.extractfeatures_image = attributes_wrapper(attributes_list)
-        
-        # Call parent's initialization routine
-        super(self.__class__,self).__init__(**kwargs)
+        self.extractfeatures_image = self.attributes_function_generator(attributes_list)
         
         
     @staticmethod
-    def attributes_wrapper(attributes_list):
+    def attributes_function_generator(attributes_list):
         """
         Generates a function which, given an image, spits out
         a vector of scalars each corresponding to the
@@ -185,6 +267,8 @@ class BagOfWords(HighLevelFeatureBase):
     
     def __init__(self, verbose=False, normalise_hist=False, **options):
         """Initialisation"""
+        
+        HighLevelFeatureBase.__init__(self, **options)
         
         # Set parameters
         self.verbose = verbose
@@ -251,7 +335,7 @@ class BagOfWords(HighLevelFeatureBase):
         return des
     
     
-    def fit(self, images):
+    def fit(self, images, y=[]):
         """
         Given a set of training images, define what constitutes "words" by
         clustering the descriptors of all keypoint patches.
