@@ -198,6 +198,18 @@ class MultiHighLevelFeature(HighLevelFeatureBase):
         _childHLFs += [HighLevelOther]
         
         
+    def fit(self, *args, **kwargs):
+        """
+        Fit the feature to a training set.
+        Some subclasses will support this, but not all.
+        Input : a list of images or image paths
+        Output: None
+        """
+        # Fit each of the children in turn
+        for child in self._childHLFs:
+            child.fit(*args, **kwargs)
+        
+        
     def preprocess_image(self, image):
         """
         Preprocessing function does not make sense,
