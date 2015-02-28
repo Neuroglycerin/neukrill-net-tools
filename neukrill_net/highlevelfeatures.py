@@ -121,7 +121,7 @@ class HighLevelFeatureBase:
         raise NotImplementedError
         
         
-    def _preprocess_extract_image(self, image):
+    def preprocess_and_extract_image(self, image):
         """
         Preprocess image and than extract features
         Input : image - a 2D numpy array of an image
@@ -152,7 +152,7 @@ class HighLevelFeatureBase:
         # How many augmentations do we get from each image?
         num_augmentations = len(self.augment_image(first_image))
         # How many elements are in the feature vector from each image?
-        num_feature_elements = self._preprocess_extract_image(first_image).size
+        num_feature_elements = self.preprocess_and_extract_image(first_image).size
         
         # Initialise
         X = np.zeros((num_augmentations, len(images), num_feature_elements))
@@ -166,7 +166,7 @@ class HighLevelFeatureBase:
             # Loop over all the augmented copies
             for augment_index, augmented_image in enumerate(augmented_list):
                 # Extract features and put them into the array
-                X[augment_index, image_index, :] = self._preprocess_extract_image(augmented_image).ravel()
+                X[augment_index, image_index, :] = self.preprocess_and_extract_image(augmented_image).ravel()
         
         # Return the completed arary
         return X
@@ -208,16 +208,17 @@ class MultiHighLevelFeature(HighLevelFeatureBase):
         raise NotImplementedError
         
         
-    def _preprocess_extract_image(self, image):
+    def preprocess_and_extract_image(self, image):
         """
         Preprocess image and than extract features with each child
         Input : image - a 2D numpy array of an image
         Output: features - a 1D numpy array of features extracted from the image
                            with each HLF child in turn
-        """
-        return np.concatenate( [child._preprocess_extract_image(image).ravel() for child in self._childHLFs] )
         
-    
+        NOTE: Subclasses should not modify this function!
+        """
+        return np.concatenate( [child.preprocess_and_extract_image(image).ravel() for child in self._childHLFs] )
+
 
 
 class BasicAttributes(HighLevelFeatureBase):
