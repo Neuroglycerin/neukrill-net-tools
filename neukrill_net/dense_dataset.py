@@ -117,6 +117,9 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
             # how many?
             self.N_images = sum(1 for image_path in 
                     self.settings.image_fnames[train_or_predict])
+            # check augmentation in the traditional way (it's boilerplate time)
+            self.N_images = int(self.N_images*
+                    self.run_settings["augmentation_factor"])
 
             # more boilerplate code, but it's going to be easier than making a
             # function that can deal with the above as well
