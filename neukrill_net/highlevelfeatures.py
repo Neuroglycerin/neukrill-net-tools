@@ -418,6 +418,6 @@ class Haralick(HighLevelFeatureBase):
     """
     Compute Haralick texture features
     """
-    def extract_image(image):
+    def extract_image(self, image):
         return mahotas.features.haralick(image, return_mean_ptp=True).ravel()
 
