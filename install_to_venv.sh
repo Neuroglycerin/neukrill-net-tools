@@ -1,70 +1,82 @@
 #!/bin/sh
-# ------------------------------------------
-# SETUP INSTRUCTIONS
-# ------------------------------------------
+# 
+# Input: the directory to create as the virtual environment
 #
 # Your neukrill-net-work folder should be in the same directory as neukrill-net-tools
 # otherwise this script won't work
 # 
-# cd to your neukrill-net-tools repository
-# Either run the script from there, or add a cd command to it here
-cd path/to/neukrill-net-tools
-# e.g.
-#cd ~/git/neukrill-net-tools
-
-# Set this parameter manually
-# Should be the absolute path to the location you
+#################################################################
+# Need to know the absolute path to the location you
 # want to create as your virtual environment
-VIRTUAL_ENV="/absolute/path/to/neukrill-venv"
-# e.g.
-#VIRTUAL_ENV="/home/username/myvirtualenvs/neukrill-venv"
-#VIRTUAL_ENV="/afs/inf.ed.ac.uk/user/sXX/sXXXXXXX/Documents/git/neukrill-venv"
-# Caution! Do not use the ~ shorthand!
-
-# ------------------------------------------
-# Don't touch the rest unless you know what you're doing
-# ------------------------------------------
-
-echo "Installing into virtual environment $VIRTUAL_ENV"
-
-# Make venv
-virtualenv --no-site-packages -p /usr/bin/python2.7 "$VIRTUAL_ENV"
-
-if [ ! -d "$VIRTUAL_ENV" ]; then
-  # Control will enter here if $VIRTUAL_ENV directory doesn't exist.
-  echo "Virtual environment directory was not created"
+#
+# Target venv directory is the argument supplied
+# At the moment, this may be a relative location
+VIRTUAL_ENV="$1"
+#
+# Make sure it does not already exist
+if [ -d "$VIRTUAL_ENV" ]; then
+  # Control will enter here if $VIRTUAL_ENV directory does exist.
+  echo "Error: Target directory $VIRTUAL_ENV already exists"
   exit 2
 fi
-
-# Source it
+#
+echo "Installing into virtual environment $VIRTUAL_ENV"
+#
+#################################################################
+#
+# Make venv
+virtualenv --no-site-packages -p /usr/bin/python2.7 "$VIRTUAL_ENV"
+#
+# Make sure we did make venv
+if [ ! -d "$VIRTUAL_ENV" ]; then
+  # Control will enter here if $VIRTUAL_ENV directory doesn't exist.
+  echo "Error: Virtual environment directory was not created"
+  exit 2
+fi
+#
+# Change from relative to absolute path
+VIRTUAL_ENV="$(cd "$(dirname "$VIRTUAL_ENV")"; pwd)/$(basename "$VIRTUAL_ENV")"
+#
+echo "Initialised virtual environment at $VIRTUAL_ENV"
+#
+#################################################################
+# Move to the directory of the script we are running now
+# This will be the neukrill-net-tools folder, if you haven't moved it!
+BASEDIR=$(dirname $0)
+cd $BASEDIR
+#
+#################################################################
+# Source virtual environment
 source "$VIRTUAL_ENV"/bin/activate
+#################################################################
 # Install these first
 pip install numpy==1.9.1
 pip install six==1.8.0
 # Then the rest of the requirements
 pip install -r requirements.txt
 pip install mahotas==1.2.4
+#################################################################
 # Now development install neukrill-net-tools
 python setup.py develop
+#################################################################
 # Install plotting stuff
 pip install ipython[notebook]
 pip install matplotlib
 pip install git+git://github.com/ioam/holoviews.git@v0.8.2
+#################################################################
 # Install Theano
 pip install nose==1.3.4
 pip install git+git://github.com/Theano/Theano.git@032a0aa6bc01204e9a3ce8758a1dd97d360562bf
-
 # Install Pylearn2
 cd ..
 source neukrill-net-work/start_script.sh 0
-# pip install git+git://github.com/lisa-lab/pylearn2.git@1719fba6e841e93a8cdcbc42e01d55dee142a830
 git clone https://github.com/lisa-lab/pylearn2.git
 cd pylearn2
 git checkout cf3999e7183f8dcaccccf4dfd2a31bbe3a948a97
 git checkout -b neukrillnetchosencommit
 python setup.py develop
 cd ..
-
+#################################################################
 # Install OpenCV
 wget -qO - https://github.com/Itseez/opencv/archive/2.4.10.1.tar.gz | tar xvz
 cd opencv-2.4.10.1
@@ -82,8 +94,8 @@ make install
 # Remove the downloaded copy of OpenCV - it is in the venv now
 cd ../../
 rm -r opencv-2.4.10.1
-
+#################################################################
 # Test the installation
 cd neukrill-net-tools
 python setup.py test
-
+#
