@@ -200,8 +200,8 @@ class MultiHighLevelFeature(HighLevelFeatureBase):
         
     def fit(self, *args, **kwargs):
         """
-        Fit the feature to a training set.
-        Some subclasses will support this, but not all.
+        Fit each of the children features to a training set.
+        
         Input : a list of images or image paths
         Output: None
         """
