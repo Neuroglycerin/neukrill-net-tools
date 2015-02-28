@@ -15,10 +15,7 @@ TODO: -look into adaptive thresholds to generate keypoints if no points are dete
       -make sure if varying patchSize for ORB, descriptor uses same parameters! (DONE - we use **kwargs)
 """
 
-import numpy as np
 import cv2
-from matplotlib import pyplot as plt
-
 
 
 def sort_keypoints_by_response_and_get_n_best(keypoint_list, n=500):
