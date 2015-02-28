@@ -6,6 +6,12 @@
 # otherwise this script won't work
 # 
 #################################################################
+#
+if [ $# -eq 0 ] || [ -z "$1" ]; then
+  echo "Error: No arguments supplied. Need to know target directory."
+  exit 2
+fi
+#################################################################
 # Need to know the absolute path to the location you
 # want to create as your virtual environment
 #
