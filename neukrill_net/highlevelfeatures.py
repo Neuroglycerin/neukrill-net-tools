@@ -179,14 +179,14 @@ class MultiHighLevelFeature(HighLevelFeatureBase):
     
     _is_combiner = True
     
-    def __init__(self, HLF_list, **kwargs):
+    def __init__(self, HLF_list, *args, **kwargs):
         """
         Initialise
         List of child high-level-features
         Input : HLF_list - List of high-level-feature objects
         """
         
-        HighLevelFeatureBase.__init__(self, **kwargs)
+        HighLevelFeatureBase.__init__(self, *args, **kwargs)
         
         self._childHLFs = HLF_list
         
@@ -237,9 +237,9 @@ class BasicAttributes(HighLevelFeatureBase):
     """
     Get generic, basic, high level attributes from the image
     """
-    def __init__(self, attributes_list, **kwargs):
+    def __init__(self, attributes_list, *args, **kwargs):
         
-        HighLevelFeatureBase.__init__(self, **kwargs)
+        HighLevelFeatureBase.__init__(self, *args, **kwargs)
         
         # Set the feature extractor function to provide the target list
         # of attributes
