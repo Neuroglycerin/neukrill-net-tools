@@ -2,9 +2,12 @@
 # ------------------------------------------
 # SETUP INSTRUCTIONS
 # ------------------------------------------
-
+#
+# Your neukrill-net-work folder should be in the same directory as neukrill-net-tools
+# otherwise this script won't work
+# 
 # cd to your neukrill-net-tools repository
-# Either run the script from there, or add cd command to it here
+# Either run the script from there, or add a cd command to it here
 cd path/to/neukrill-net-tools
 # e.g.
 #cd ~/git/neukrill-net-tools
@@ -25,49 +28,58 @@ VIRTUAL_ENV="/absolute/path/to/neukrill-venv"
 echo "Installing into virtual environment $VIRTUAL_ENV"
 
 # Make venv
-virtualenv --distribute --python=/usr/bin/python2.7 "$VIRTUAL_ENV"
+virtualenv --no-site-packages -p /usr/bin/python2.7 "$VIRTUAL_ENV"
 
 if [ ! -d "$VIRTUAL_ENV" ]; then
-  # Control will enter here if $DIRECTORY doesn't exist.
+  # Control will enter here if $VIRTUAL_ENV directory doesn't exist.
   echo "Virtual environment directory was not created"
   exit 2
 fi
 
 # Source it
 source "$VIRTUAL_ENV"/bin/activate
-pip install numpy
-pip install six
+# Install these first
+pip install numpy==1.9.1
+pip install six==1.8.0
+# Then the rest of the requirements
 pip install -r requirements.txt
+pip install mahotas==1.2.4
+# Now development install neukrill-net-tools
 python setup.py develop
 # Install plotting stuff
 pip install ipython[notebook]
 pip install matplotlib
-pip install https://github.com/ioam/holoviews/archive/v0.8.2.zip
+pip install git+git://github.com/ioam/holoviews.git@v0.8.2
 # Install Theano
-pip install nose
-pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git
+pip install nose==1.3.4
+pip install git+git://github.com/Theano/Theano.git@032a0aa6bc01204e9a3ce8758a1dd97d360562bf
 
 # Install Pylearn2
-cd ../neukrill-net-work/
-source start_script
 cd ..
+source neukrill-net-work/start_script.sh 0
+# pip install git+git://github.com/lisa-lab/pylearn2.git@1719fba6e841e93a8cdcbc42e01d55dee142a830
 git clone https://github.com/lisa-lab/pylearn2.git
 cd pylearn2
+git checkout cf3999e7183f8dcaccccf4dfd2a31bbe3a948a97
+git checkout -b neukrillnetchosencommit
 python setup.py develop
 cd ..
 
 # Install OpenCV
 wget -qO - https://github.com/Itseez/opencv/archive/2.4.10.1.tar.gz | tar xvz
 cd opencv-2.4.10.1
+# Have to command out the line which uses MD5 for DICE version of CMake
 sed -i '50 s/^/#/' cmake/cl2cpp.cmake
 mkdir build
 cd build
+# Have to copy the python2.7 library file over
 cp /usr/lib64/libpython2.7.so "$VIRTUAL_ENV"/lib
+# Now we can run CMake with all these arguments...
 cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX="$VIRTUAL_ENV"/local/ -D WITH_TBB=ON -D PYTHON_EXECUTABLE="$VIRTUAL_ENV"/bin/python -D PYTHON_PACKAGES_PATH="$VIRTUAL_ENV"/lib/python2.7/site-packages -D PYTHON_LIBRARY="$VIRTUAL_ENV"/lib/libpython2.7.so -D BUILD_NEW_PYTHON_SUPPORT=ON -D INSTALL_PYTHON_EXAMPLES=ON -D BUILD_EXAMPLES=ON ..
-
+# Install
 make
 make install
-
+# Remove the downloaded copy of OpenCV - it is in the venv now
 cd ../../
 rm -r opencv-2.4.10.1
 
