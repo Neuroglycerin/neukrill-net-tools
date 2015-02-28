@@ -35,8 +35,8 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
         the labels (see next option). Would consider better name for this
         variable.
     train_or_predict : depending on whether we're training a model or 
-        predicting on the supplied test set. Currently, only supports
-        "train". At the risk of confusion, for prediction use keystring: "test"
+        predicting on the supplied test set. For training, use: "train". 
+        At the risk of confusion, for prediction use keystring: "test"
     """
     def __init__(self,settings_path="settings.json",
             run_settings="run_settings/default.json",training_set_mode="train",
