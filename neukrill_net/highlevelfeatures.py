@@ -467,10 +467,11 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         Output: descriptions - a numpy array of keypoint descriptions
                                 sized (num_keypoints, description_len)
         """
-        return self.describer(*self.detector(image))
+        a,b,c = self.detector(image)
+        return self.describer(a,b,**c)
         
         
-    def describe_stack(self, images):
+    def describe_stack(self, images, y):
         """
         Describe all the keypoints in all the listed images
         Input : images - list of images or paths to images
@@ -479,6 +480,7 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         """
         # Initialise
         descriptions = None
+        y_full = []
         # Loop over list of images
         for image_index,image in enumerate(images):
             # Load the image if necessary
@@ -488,16 +490,22 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
             # Loop over all the augmented copies
             for augment_index, augmented_image in enumerate(augmented_list):
                 # Have to preprocess the augmented image
-                augmented_image = self.preprocess(augmented_image)
+                augmented_image = self.preprocess_image(augmented_image)
                 # Extract keypoint descriptions and put them into the array
-                my_descriptions = detect_and_describe(self, augmented_image)
-                if not descriptions is None:
-                    # Add to matrix
-                    descriptions = np.concatenate((descriptions,my_descriptions))
-                elif not my_descriptions.size==0:
+                my_descriptions = self.detect_and_describe(augmented_image)
+                if my_descriptions==[] or my_descriptions.size==0:
+                    # do nothing
+                    continue
+                elif descriptions is None:
                     # Initialise with right shape
                     descriptions = my_descriptions
-        return descriptions
+                else:
+                    # Add to matrix
+                    descriptions = np.concatenate((descriptions,my_descriptions))
+                # Add to y
+                y_full += [y[image_index]] * my_descriptions.shape[0]
+                
+        return descriptions, y_full
         
         
     def fit(self, images, y):
@@ -508,11 +516,12 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         Output: None
         """
         # Get keypoint descriptions for all the training data
-        X = np.vstack([self.detect_and_describe(self.preprocess_image(loadimage(image))) for image in images])
+        X, y = self.describe_stack(images, y)
         # Fit the classifier
         self.classifier.fit(X, y)
         # Note the number of classes for later
         self.num_classes = len(np.unique(y))
+        
         
     def extract_image(self, image):
         """
@@ -520,8 +529,11 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         Input : image - image as a numpy array
         Output: vec - the feature vector
         """
+        # Get descriptions
+        descriptions = self.detect_and_describe(image)
+        
         # Count how many keypoints we have
-        num_kp = kp_probs.shape[0]
+        num_kp = descriptions.shape[0]
         
         if num_kp==0:
             # Handle edge case where no keypoints are detected
@@ -529,12 +541,12 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
             
         else:
             # Compute probabilites for each keypoint belonging to each class
-            kp_probs = self.classifier.predict_proba(self.detect_and_describe(image))
+            kp_probs = self.classifier.predict_proba(descriptions)
             
             # Average over keypoints
             if self.summary_method=='mean':
                 # Take the mean of their probabilites
-                vec = np.mean(kp_probs.mean, 0)
+                vec = np.mean(kp_probs, 0)
                 
             elif self.summary_method=='vote':
                 # Let each keypoint vote, and take a probability distribution from
@@ -544,13 +556,14 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
                 
             else:
                 raise ValueError("Unrecognised summary method: {}".format(self.summary_method))
-        
+                
+            
         # Remove spare dimension
         vec = vec.ravel()
         
         if self.return_num_kp:
             # Add the number of keypoints to the start of the vector
-            vec = np.concatenate((num_kp,vec))
+            vec = np.concatenate((np.array([num_kp]),vec))
         
         return vec
 
