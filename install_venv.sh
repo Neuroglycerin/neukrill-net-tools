@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 
 # Input: the directory to create as the virtual environment
 #
@@ -68,6 +68,7 @@ python setup.py develop
 # Install plotting stuff
 pip install ipython[notebook]
 pip install matplotlib
+pip install git+git://github.com/ioam/param.git@d43a0071823eda175446b591279870e99d2eec67
 pip install git+git://github.com/ioam/holoviews.git@v0.8.2
 #################################################################
 # Install Theano
@@ -90,8 +91,19 @@ cd opencv-2.4.10.1
 sed -i '50 s/^/#/' cmake/cl2cpp.cmake
 mkdir build
 cd build
+#
 # Have to copy the python2.7 library file over
-cp /usr/lib64/libpython2.7.so "$VIRTUAL_ENV"/lib
+if [ -e /usr/lib64/libpython2.7.so ]; then
+    # For DICE
+    cp /usr/lib64/libpython2.7.so "$VIRTUAL_ENV"/lib
+elif [ -e /usr/lib/x86_64-linux-gnu/libpython2.7.so ]; then
+    # For Ubuntu
+    cp /usr/lib64/libpython2.7.so "$VIRTUAL_ENV"/lib
+else
+    echo "Error: Couldn't find libpython2.7.so. Did not install OpenCV to venv."
+    exit 2
+fi
+#
 # Now we can run CMake with all these arguments...
 cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX="$VIRTUAL_ENV"/local/ -D WITH_TBB=ON -D PYTHON_EXECUTABLE="$VIRTUAL_ENV"/bin/python -D PYTHON_PACKAGES_PATH="$VIRTUAL_ENV"/lib/python2.7/site-packages -D PYTHON_LIBRARY="$VIRTUAL_ENV"/lib/libpython2.7.so -D BUILD_NEW_PYTHON_SUPPORT=ON -D INSTALL_PYTHON_EXAMPLES=ON -D BUILD_EXAMPLES=ON ..
 # Install
