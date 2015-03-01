@@ -17,6 +17,7 @@ import cv2
 import sklearn.cluster
 import six
 import skimage.io
+import skimage.util
 import mahotas.features
 
 from neukrill_net import image_attributes
@@ -119,7 +120,7 @@ class HighLevelFeatureBase:
         return [image]
         
         
-    def extractfeatures_image(self, image):
+    def extract_image(self, image):
         """
         Extracts a feature vector from the image
         Input : image - a 2D numpy array of an image
@@ -137,7 +138,7 @@ class HighLevelFeatureBase:
         
         NOTE: Subclasses should not modify this function!
         """
-        return self.preprocess_image(self.extractfeatures_image(image))
+        return self.preprocess_image(self.extract_image(image))
         
         
     def transform(self, images):
@@ -251,7 +252,7 @@ class BasicAttributes(HighLevelFeatureBase):
         
         # Set the feature extractor function to provide the target list
         # of attributes
-        self.extractfeatures_image = self.attributes_function_generator(attributes_list)
+        self.extract_image = self.attributes_function_generator(attributes_list)
         
         
     @staticmethod
@@ -383,7 +384,7 @@ class BagOfWords(HighLevelFeatureBase):
         self.cluster.fit(X)
         
         
-    def extractfeatures_image(self, image):
+    def extract_image(self, image):
         """
         Computes the bag of words associated with an image.
         Computes descriptions of every keypoint in an image
@@ -425,8 +426,16 @@ class Haralick(HighLevelFeatureBase):
     """
     Compute Haralick texture features
     """
+    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, **options):
+        """Initialisation"""
+        HighLevelFeatureBase.__init__(self, **options)
+        
+    
     def extract_image(self, image):
-        return mahotas.features.haralick(image, return_mean_ptp=True).ravel()
+        H  = mahotas.features.haralick(image)
+        X0 = np.mean(H, 0)
+        X1 = (np.amax(H, 0) - np.amin(H, 0))
+        return np.concatenate((X0,X1))
 
 
 class KeypointEnsembleClassifier(HighLevelFeatureBase):
@@ -435,7 +444,7 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
     image.
     """
     
-    self.num_classes = 0
+    num_classes = 0
     
     def __init__(self, detector, describer, classifier, return_num_kp=True, summary_method='mean', **kwargs):
         """
@@ -533,7 +542,7 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
                 vec = np.argmax(kp_probs, axis=1)
                 vec, _ = np.histogram(vec, bins=np.arange(0,kp_probs.shape[1]+1)-0.5, density=True)
                 
-            else
+            else:
                 raise ValueError("Unrecognised summary method: {}".format(self.summary_method))
         
         # Remove spare dimension
