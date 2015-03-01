@@ -18,3 +18,13 @@ The `install_venv.sh` shell script is in the top level of this repository.
 **Note 1:** You must have `neukrill-net-tools` and `neukrill-net-work` in the same directory.
 
 **Note 2:** A pylearn2 directory will be created in the same directory as `neukrill-net-tools`.
+
+**Note 3:** You need have `cmake` installed **before** running `install_venv.sh`. You should run
+```
+sudo apt-get install cmake
+```
+or
+```
+yum install cmake
+```
+or whatever you need for your system to install the `cmake` package.
