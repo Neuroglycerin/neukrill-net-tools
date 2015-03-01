@@ -102,7 +102,7 @@ def get_ORB_descriptions(image, keyPoints, **kwargs):
     kp, descriptions = orb.compute(image, keyPoints)
 
     if descriptions is None:
-        descriptions = []
+        descriptions = np.array([])
 
     return descriptions
 
@@ -139,7 +139,7 @@ def get_BRISK_descriptions(image, keyPoints, **kwargs):
     kp, descriptions = brisk.compute(image, keyPoints)
 
     if descriptions is None:
-        descriptions = []
+        descriptions = np.array([])
 
     return descriptions
 
