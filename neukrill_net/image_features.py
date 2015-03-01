@@ -16,6 +16,7 @@ TODO: -look into adaptive thresholds to generate keypoints if no points are dete
 """
 
 import cv2
+import numpy as np
 
 
 def sort_keypoints_by_response_and_get_n_best(keypoint_list, n=500):
