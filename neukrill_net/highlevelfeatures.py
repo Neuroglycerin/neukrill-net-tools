@@ -459,6 +459,8 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         self.return_num_kp = return_num_kp
         self.summary_method = summary_method
         
+        self.scaler = sklearn.preprocessing.StandardScaler()
+        
         
     def detect_and_describe(self, image):
         """
@@ -517,6 +519,10 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         """
         # Get keypoint descriptions for all the training data
         X, y = self.describe_stack(images, y)
+        # Fit scaler against this distribution of keypoint descriptions
+        self.scaler.fit(X)
+        # Scale
+        X = self.scaler.transform(X)
         # Fit the classifier
         self.classifier.fit(X, y)
         # Note the number of classes for later
@@ -540,6 +546,8 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
             vec = np.ones((1,self.num_classes)) / num_kp
             
         else:
+            # Scale descriptions
+            descriptions = self.scaler.transform(descriptions)
             # Compute probabilites for each keypoint belonging to each class
             kp_probs = self.classifier.predict_proba(descriptions)
             
