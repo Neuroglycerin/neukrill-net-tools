@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 
 # Input: the directory to create as the virtual environment
 #
