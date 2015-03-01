@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 taxonomy = {
     "no_class": {
         "artifacts": {},
