@@ -17,6 +17,7 @@ import neukrill_net.utils
 import neukrill_net.augment
 import pylearn2.datasets
 import numpy as np
+import sys
 
 class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
     """
@@ -127,8 +128,21 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
             X = np.zeros((self.N_images,self.run_settings["final_shape"][0],
                 self.run_settings["final_shape"][1],1))
             image_index = 0
+            if verbose:
+                print("Loading this many images:..........................")
+                # get a list of 50 image_paths to watch out for
+                stepsize = len(self.settings.image_fnames[train_or_predict]/50)
+                progress_paths = [impath for i,impath in 
+                        enumerate(self.settings.image_fnames[train_or_predict]) 
+                        if i%stepsize == 0 ]
             # loop over all the images, in order
             for image_path in self.settings.image_fnames[train_or_predict]:
+                if verbose:
+                    if image_path in progress_paths: 
+                        sys.stdout.write(".")
+                        # if it's the last one we better stick a newline on
+                        if image_path == progress_paths[-1]:
+                            sys.stdout.write(".\n")
                 # load the image as numpy array
                 image = skimage.io.imread(image_path)
                 # apply processing function (get back multiple images)
