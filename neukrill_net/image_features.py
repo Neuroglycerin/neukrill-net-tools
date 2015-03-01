@@ -78,7 +78,6 @@ def get_ORB_keypoints(image, n=500, **kwargs):
         orb = cv2.ORB(nfeatures = n, edgeThreshold = 0, patchSize = thePatchSize)
         keyPoints = orb.detect(image, None)
         if thePatchSize <= 3:
-            print "Reached limit of patch size."
             break
         thePatchSize -= 2
         
