@@ -105,7 +105,7 @@ def get_ORB_descriptors(image, keyPoints, **kwargs):
     kp, descriptors = orb.compute(image, keyPoints)
 
     if descriptors is None:
-        descriptors = []
+        descriptors = np.array([])
 
     return descriptors
 
@@ -142,7 +142,7 @@ def get_BRISK_descriptors(image, keyPoints, **kwargs):
     kp, descriptors = brisk.compute(image, keyPoints)
 
     if descriptors is None:
-        descriptors = []
+        descriptors = np.array([])
 
     return descriptors
 
