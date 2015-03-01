@@ -35,19 +35,17 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
         the labels (see next option). Would consider better name for this
         variable.
     train_or_predict : depending on whether we're training a model or 
-        predicting on the supplied test set. Currently, only supports
-        "train". At the risk of confusion, for prediction use keystring: "test"
+        predicting on the supplied test set. For training, use: "train". 
+        At the risk of confusion, for prediction use keystring: "test"
     """
     def __init__(self,settings_path="settings.json",
             run_settings="run_settings/default.json",training_set_mode="train",
-            train_or_predict="train", verbose=False):
+            train_or_predict="train", verbose=False, force=False):
         # parse the settings file
         self.settings = neukrill_net.utils.Settings(settings_path)
         # get the run settings
         if train_or_predict == 'test':
             force=True
-        else:
-            force=False
         self.run_settings = neukrill_net.utils.load_run_settings(run_settings,
                                                                 self.settings,
                                                                 force=force)
@@ -117,6 +115,9 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
             # how many?
             self.N_images = sum(1 for image_path in 
                     self.settings.image_fnames[train_or_predict])
+            # check augmentation in the traditional way (it's boilerplate time)
+            self.N_images = int(self.N_images*
+                    self.run_settings["augmentation_factor"])
 
             # more boilerplate code, but it's going to be easier than making a
             # function that can deal with the above as well
