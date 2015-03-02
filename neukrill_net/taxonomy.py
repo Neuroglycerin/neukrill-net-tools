@@ -212,7 +212,7 @@ superclasses = {}
 def generate_superclasses(taxonomy, current_parents):
     if not taxonomy:
         superclasses[current_parents[-1]] = current_parents[0:-1]
-    for parent, children in taxonomy.iteritems():
+    for parent, children in taxonomy.items():
         current_parents.append(parent)
         generate_superclasses(children, current_parents)
         current_parents.pop()
