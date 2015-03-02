@@ -186,7 +186,7 @@ def get_shape_moments(image):
     """
     #im = copy.deepcopy(rawdata[0])
     ret,thresh = cv2.threshold(image,254,255,cv2.THRESH_BINARY_INV)
-    _, contours, _ = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 
     # Find the index of the largest contour
     areas = [cv2.contourArea(c) for c in contours]
@@ -211,7 +211,7 @@ def get_shape_HuMoments(moments):
     
     # take log as advised by internetz
     huMoments = -np.sign(huMoments) * np.log10(np.abs(huMoments))
-    
+
     # remove last moment as it is dependent on reflection
     huMoments = huMoments[:6]
 
