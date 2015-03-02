@@ -412,6 +412,8 @@ def load_run_settings(run_settings_path, settings,
 
     # save the pickle name here, so it's less likely to get garbled between train and test
     run_settings['pickle abspath'] = os.path.join(modeldir,run_settings['filename']+".pkl")
+    # also want alternative save path in some situations
+    run_settings['alt_picklepath'] = os.path.join(modeldir,run_settings['filename']+"_recent.pkl")
     # check if the pickle already exists - and don't allow overwriting if so
     if os.path.exists(run_settings['pickle abspath']) and not force:
         # not sure what type of error this should be
