@@ -149,6 +149,14 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                 for image in images:
                     X[image_index,:,:,0] = image
                     image_index += 1
+            # if we're normalising
+            if processing_settings.get("normalise",0):
+                if verbose:
+                    print("Applying normalisation: {0}".format(
+                        processing_settings["normalise"]["global_or_pixel"]))
+                # then call the normalise function
+                X,self.run_settings = neukrill_net.image_processing.normalise(X,
+                                            self.run_settings, verbose=verbose)
             # store the names in this dataset object
             self.names = [os.path.basename(fpath) for fpath in 
                     self.settings.image_fnames[train_or_predict]]
