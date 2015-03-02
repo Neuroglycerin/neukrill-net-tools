@@ -180,6 +180,23 @@ class Settings:
             self._image_fnames = None
         return None
     
+    
+    def flattened_train_paths(self, class_names):
+        """
+        Flattens the training paths
+        Input : class_names
+        Output: X - a list of the flattened training data paths
+                y - a list of the class labels (index in provided list) for each path
+        """
+        num_paths = sum([len(self.image_fnames['train'][classname]) for classname in self.image_fnames['train'].keys()])
+        paths = []
+        labels = []
+        for class_index, class_name in enumerate(class_names):
+            paths += self.image_fnames['train'][class_name]
+            labels += len(self.image_fnames['train'][class_name]) * [class_index]
+        return paths, labels
+        
+    
     @property
     def class_priors(self):
         """

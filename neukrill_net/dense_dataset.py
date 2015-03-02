@@ -41,14 +41,12 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
     """
     def __init__(self,settings_path="settings.json",
             run_settings="run_settings/default.json",training_set_mode="train",
-            train_or_predict="train", verbose=False):
+            train_or_predict="train", verbose=False, force=False):
         # parse the settings file
         self.settings = neukrill_net.utils.Settings(settings_path)
         # get the run settings
         if train_or_predict == 'test':
             force=True
-        else:
-            force=False
         self.run_settings = neukrill_net.utils.load_run_settings(run_settings,
                                                                 self.settings,
                                                                 force=force)

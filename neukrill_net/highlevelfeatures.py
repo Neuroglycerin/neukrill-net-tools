@@ -3,6 +3,13 @@
 Module for feature extractor object classes and classifier functions.
 """
 
+# Rule for methods:
+# When the input is images, it might be a list of np arrays, or a list of paths
+# When the input is image, it is always an np array
+# The base class handles conversion from paths to images in transform
+# fit(images) will need to load and preprocess each element in images
+
+
 from __future__ import division
 
 import numpy as np
@@ -10,6 +17,7 @@ import cv2
 import sklearn.cluster
 import six
 import skimage.io
+import skimage.util
 import mahotas.features
 
 from neukrill_net import image_attributes
@@ -112,7 +120,7 @@ class HighLevelFeatureBase:
         return [image]
         
         
-    def extractfeatures_image(self, image):
+    def extract_image(self, image):
         """
         Extracts a feature vector from the image
         Input : image - a 2D numpy array of an image
@@ -130,7 +138,7 @@ class HighLevelFeatureBase:
         
         NOTE: Subclasses should not modify this function!
         """
-        return self.preprocess_image(self.extractfeatures_image(image))
+        return self.preprocess_image(self.extract_image(image))
         
         
     def transform(self, images):
@@ -244,7 +252,7 @@ class BasicAttributes(HighLevelFeatureBase):
         
         # Set the feature extractor function to provide the target list
         # of attributes
-        self.extractfeatures_image = self.attributes_function_generator(attributes_list)
+        self.extract_image = self.attributes_function_generator(attributes_list)
         
         
     @staticmethod
@@ -376,7 +384,7 @@ class BagOfWords(HighLevelFeatureBase):
         self.cluster.fit(X)
         
         
-    def extractfeatures_image(self, image):
+    def extract_image(self, image):
         """
         Computes the bag of words associated with an image.
         Computes descriptions of every keypoint in an image
@@ -418,6 +426,152 @@ class Haralick(HighLevelFeatureBase):
     """
     Compute Haralick texture features
     """
+    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, **options):
+        """Initialisation"""
+        HighLevelFeatureBase.__init__(self, **options)
+        
+    
     def extract_image(self, image):
-        return mahotas.features.haralick(image, return_mean_ptp=True).ravel()
+        H  = mahotas.features.haralick(image)
+        X0 = np.mean(H, 0)
+        X1 = (np.amax(H, 0) - np.amin(H, 0))
+        return np.concatenate((X0,X1))
+
+
+class KeypointEnsembleClassifier(HighLevelFeatureBase):
+    """
+    Classifies an image using the ensemble of descriptions of keypoints in the
+    image.
+    """
+    
+    num_classes = 0
+    
+    def __init__(self, detector, describer, classifier, return_num_kp=True, summary_method='mean', **kwargs):
+        """
+        Initialise the keypoint evidence tree
+        """
+        # Call superclass
+        HighLevelFeatureBase.__init__(self, **kwargs)
+        
+        self.detector = detector
+        self.describer = describer
+        self.classifier = classifier
+        self.return_num_kp = return_num_kp
+        self.summary_method = summary_method
+        
+        self.scaler = sklearn.preprocessing.StandardScaler()
+        
+        
+    def detect_and_describe(self, image):
+        """
+        Describe all the keypoints in an image
+        Input : image - an image as a numpy array
+        Output: descriptions - a numpy array of keypoint descriptions
+                                sized (num_keypoints, description_len)
+        """
+        a,b,c = self.detector(image)
+        return self.describer(a,b,**c)
+        
+        
+    def describe_stack(self, images, y):
+        """
+        Describe all the keypoints in all the listed images
+        Input : images - list of images or paths to images
+        Output: descriptions - a numpy array of keypoint descriptions
+                                sized (total_num_keypoints, description_len)
+        """
+        # Initialise
+        descriptions = None
+        y_full = []
+        # Loop over list of images
+        for image_index,image in enumerate(images):
+            # Load the image if necessary
+            image = loadimage(image)
+            # Augment the image, giving a list of copies
+            augmented_list = self.augment_image(image)
+            # Loop over all the augmented copies
+            for augment_index, augmented_image in enumerate(augmented_list):
+                # Have to preprocess the augmented image
+                augmented_image = self.preprocess_image(augmented_image)
+                # Extract keypoint descriptions and put them into the array
+                my_descriptions = self.detect_and_describe(augmented_image)
+                if my_descriptions==[] or my_descriptions.size==0:
+                    # do nothing
+                    continue
+                elif descriptions is None:
+                    # Initialise with right shape
+                    descriptions = my_descriptions
+                else:
+                    # Add to matrix
+                    descriptions = np.concatenate((descriptions,my_descriptions))
+                # Add to y
+                y_full += [y[image_index]] * my_descriptions.shape[0]
+                
+        return descriptions, y_full
+        
+        
+    def fit(self, images, y):
+        """
+        Fit the keypoint classifier to training data
+        Input : images - list of images or image paths
+                y - class labels
+        Output: None
+        """
+        # Get keypoint descriptions for all the training data
+        X, y = self.describe_stack(images, y)
+        # Fit scaler against this distribution of keypoint descriptions
+        self.scaler.fit(X)
+        # Scale
+        X = self.scaler.transform(X)
+        # Fit the classifier
+        self.classifier.fit(X, y)
+        # Note the number of classes for later
+        self.num_classes = len(np.unique(y))
+        
+        
+    def extract_image(self, image):
+        """
+        Extract keypoint evidence from an image
+        Input : image - image as a numpy array
+        Output: vec - the feature vector
+        """
+        # Get descriptions
+        descriptions = self.detect_and_describe(image)
+        
+        # Count how many keypoints we have
+        num_kp = descriptions.shape[0]
+        
+        if num_kp==0:
+            # Handle edge case where no keypoints are detected
+            vec = np.ones((1,self.num_classes)) / num_kp
+            
+        else:
+            # Scale descriptions
+            descriptions = self.scaler.transform(descriptions)
+            # Compute probabilites for each keypoint belonging to each class
+            kp_probs = self.classifier.predict_proba(descriptions)
+            
+            # Average over keypoints
+            if self.summary_method=='mean':
+                # Take the mean of their probabilites
+                vec = np.mean(kp_probs, 0)
+                
+            elif self.summary_method=='vote':
+                # Let each keypoint vote, and take a probability distribution from
+                # the votes
+                vec = np.argmax(kp_probs, axis=1)
+                vec, _ = np.histogram(vec, bins=np.arange(0,kp_probs.shape[1]+1)-0.5, density=True)
+                
+            else:
+                raise ValueError("Unrecognised summary method: {}".format(self.summary_method))
+                
+            
+        # Remove spare dimension
+        vec = vec.ravel()
+        
+        if self.return_num_kp:
+            # Add the number of keypoints to the start of the vector
+            vec = np.concatenate((np.array([num_kp]),vec))
+        
+        return vec
 

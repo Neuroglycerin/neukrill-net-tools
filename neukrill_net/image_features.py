@@ -15,10 +15,8 @@ TODO: -look into adaptive thresholds to generate keypoints if no points are dete
       -make sure if varying patchSize for ORB, descriptor uses same parameters! (DONE - we use **kwargs)
 """
 
-import numpy as np
 import cv2
-from matplotlib import pyplot as plt
-
+import numpy as np
 
 
 def sort_keypoints_by_response_and_get_n_best(keypoint_list, n=500):
@@ -80,7 +78,6 @@ def get_ORB_keypoints(image, n=500, **kwargs):
         orb = cv2.ORB(nfeatures = n, edgeThreshold = 0, patchSize = thePatchSize)
         keyPoints = orb.detect(image, None)
         if thePatchSize <= 3:
-            print "Reached limit of patch size."
             break
         thePatchSize -= 2
         
@@ -92,22 +89,22 @@ def get_ORB_keypoints(image, n=500, **kwargs):
     return image, keyPoints, {"patchSize" : thePatchSize}
 
 
-def get_ORB_descriptors(image, keyPoints, **kwargs):
+def get_ORB_descriptions(image, keyPoints, **kwargs):
     """
-    Computes ORB descriptors for given keypoints.
+    Computes ORB descriptions for given keypoints.
     input:  image (that was returned with the keypoints!)
             keyPoints - detected keypoints
             **kwargs = detection arguments
-    output: list of descriptors for given keypoints
+    output: list of descriptions for given keypoints
     """
     orb = cv2.ORB(edgeThreshold = 0, patchSize = kwargs["patchSize"])
-    # gets keypoints and descriptors
-    kp, descriptors = orb.compute(image, keyPoints)
+    # gets keypoints and descriptions
+    kp, descriptions = orb.compute(image, keyPoints)
 
-    if descriptors is None:
-        descriptors = []
+    if descriptions is None:
+        descriptions = np.array([])
 
-    return descriptors
+    return descriptions
 
 
 def get_BRISK_keypoints(image, n=500):
@@ -129,22 +126,22 @@ def get_BRISK_keypoints(image, n=500):
     return image, keyPoints, {}
 
 
-def get_BRISK_descriptors(image, keyPoints, **kwargs):
+def get_BRISK_descriptions(image, keyPoints, **kwargs):
     """
-    Computes BRISK descriptors for given keypoints.
+    Computes BRISK descriptions for given keypoints.
     input:  image (that was returned with the keypoints!)
             keyPoints - detected keypoints
             **kwargs = detection arguments
-    output: list of descriptors for given keypoints
+    output: list of descriptions for given keypoints
     """
     brisk = cv2.BRISK()
-    # gets keypoints and descriptors
-    kp, descriptors = brisk.compute(image, keyPoints)
+    # gets keypoints and descriptions
+    kp, descriptions = brisk.compute(image, keyPoints)
 
-    if descriptors is None:
-        descriptors = []
+    if descriptions is None:
+        descriptions = np.array([])
 
-    return descriptors
+    return descriptions
 
 
 def get_MSER_keypoints(image, n=500):
