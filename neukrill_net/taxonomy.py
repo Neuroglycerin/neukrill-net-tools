@@ -219,7 +219,6 @@ def generate_superclasses(taxonomy, current_parents):
 
 generate_superclasses(taxonomy, [])
 
-
 class TaxonomyLayer(object):
     """A hierarchical representation of plankton species"""
     def __init__(self, depth):

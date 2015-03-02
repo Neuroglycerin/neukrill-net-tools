@@ -14,6 +14,7 @@ import random
 
 import neukrill_net.image_processing as image_processing
 import neukrill_net.constants as constants
+import neukrill_net.taxonomy
 
 class Settings:
     """
