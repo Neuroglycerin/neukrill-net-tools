@@ -18,6 +18,11 @@ TODO: -look into adaptive thresholds to generate keypoints if no points are dete
 import cv2
 import numpy as np
 
+"""
+####
+Keypoint Detection and description
+####
+"""
 
 def sort_keypoints_by_response_and_get_n_best(keypoint_list, n=500):
     """
@@ -89,7 +94,7 @@ def get_ORB_keypoints(image, n=500, **kwargs):
     return image, keyPoints, {"patchSize" : thePatchSize}
 
 
-def get_ORB_descriptions(image, keyPoints, **kwargs):
+def get_ORB_descriptions(image, keyPoints, patchSize=9, **kwargs):
     """
     Computes ORB descriptions for given keypoints.
     input:  image (that was returned with the keypoints!)
@@ -97,7 +102,7 @@ def get_ORB_descriptions(image, keyPoints, **kwargs):
             **kwargs = detection arguments
     output: list of descriptions for given keypoints
     """
-    orb = cv2.ORB(edgeThreshold = 0, patchSize = kwargs["patchSize"])
+    orb = cv2.ORB(edgeThreshold = 0, patchSize = patchSize)
     # gets keypoints and descriptions
     kp, descriptions = orb.compute(image, keyPoints)
 
@@ -161,3 +166,56 @@ def get_MSER_keypoints(image, n=500):
     keyPoints = sort_keypoints_by_response_and_get_n_best(keyPoints, n)
 
     return image, keyPoints, {}
+
+
+"""
+####
+Shape features:
+- moments
+- Hu moments
+####
+"""
+
+
+def get_shape_moments(image):
+    """
+    Returns dictionary of moments:
+    http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html#moments
+    input: image
+    output: dictionary of moments (see OpenCV documentation)
+    """
+    #im = copy.deepcopy(rawdata[0])
+    ret,thresh = cv2.threshold(image,254,255,cv2.THRESH_BINARY_INV)
+    _, contours, _ = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
+    # Find the index of the largest contour
+    areas = [cv2.contourArea(c) for c in contours]
+    max_index = np.argmax(areas)
+    cnt=contours[max_index]
+    M = cv2.moments(cnt)
+
+    #cv2.drawContours(image, cnt, -1, 2)
+    #cv2.imwrite('blabla.png',image)
+    return M
+
+
+def get_shape_HuMoments(moments):
+    """
+    Returns Hu moments (invariants to the image scale, rotation, and reflection).
+    http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html#humoments
+
+    input: dictionary of moments computed with get_shape_moments
+    output: numpy array of the 6 moments (7th one is removed as the sign is changed by reflection)
+    """
+    huMoments = cv2.HuMoments(moments).flatten()
+    
+    # take log as advised by internetz
+    huMoments = -np.sign(huMoments) * np.log10(np.abs(huMoments))
+    
+    # remove last moment as it is dependent on reflection
+    huMoments = huMoments[:6]
+
+    return huMoments
+
+
+
