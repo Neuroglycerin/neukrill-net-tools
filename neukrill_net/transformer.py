@@ -6,7 +6,7 @@
 # From a thread where someone was trying to do this exact same thing:
 # https://groups.google.com/forum/#!searchin/pylearn-users/augmentation/pylearn-users/LLlBpl9z0MY/yQojBR0t2zkJ
 
-import pylearn2.datasets.transformer
+import pylearn2.datasets.transformer_dataset
 
 class TransformerDataset(pylearn2.datasets.transformer_dataset.TransformerDataset):
     @property
