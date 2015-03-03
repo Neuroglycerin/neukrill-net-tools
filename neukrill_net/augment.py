@@ -255,21 +255,26 @@ class RandomAugment(object):
             sf_index = self.rng.randint(0, len(self.settings['scale']))
             image = image_processing.scale_image(image, self.settings['scale'][sf_index])
         
+            
         # Rotate
         if 'rotate' in self.settings and not self.settings['rotate']==None:
-            if self.settings['rotate']==-1:
-                # Uniform distribution of rotations
-                rot_angle = self.rng.uniform(low=0.0, high=360.0)
-                image = image_processing.rotate_image(
-                            image, rot_angle,
-                            resizable=self.settings['rotate_is_resizable'])
-                
-            else:
+            if type(self.settings['rotate']) is list:
                 # Pick from list of potential rotations
                 rot_index = self.rng.randint(0, len(self.settings['rotate']))
-                image = image_processing.rotate_image(
-                            image, self.settings['rotate'][rot_index],
-                            resizable=self.settings['rotate_is_resizable'])
+                rot_angle = self.settings['rotate'][rot_index]
+                
+            elif self.settings['rotate']==-1:
+                # Uniform distribution of rotations
+                rot_angle = self.rng.uniform(low=0.0, high=360.0)
+                
+            else:
+                # Select from implied list
+                rot_index = self.rng.randint(0, self.settings['rotate'])
+                rot_angle = 360 * rot_index / rot_angle
+                
+            image = image_processing.rotate_image(
+                        image, rot_angle,
+                        resizable=self.settings['rotate_is_resizable'])
         
         # Shear
         if 'shear' in self.settings and not self.settings['shear']==None:
