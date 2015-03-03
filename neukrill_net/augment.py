@@ -226,7 +226,7 @@ class RandomAugment(object):
         
         # Datatype unit conversion
         # We very probably want this to be float throughout
-        if 'scale' not in self.settings or self.settings['units'] == None or self.settings['units'] == 'auto':
+        if 'units' not in self.settings or self.settings['units'] == None or self.settings['units'] == 'auto':
             pass
         elif self.settings['units'] == 'float64' or self.settings['units'] == 'float':
             image = skimage.util.img_as_float(image)
