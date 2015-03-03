@@ -13,10 +13,13 @@ class AugmentBlock(pylearn2.blocks.Block):
     This Block takes any function object that can process
     images and applies it to all the images in a batch it's
     given to process.
+
+    DOES NOT WORK YET (MAY NEVER WORK).
     """
     def __init__(self,fn):
         self.fn = fn
         self.cpu_only = False
+        self.target_shape = target_shape
 
     def __call__(self,inputs):
         """
@@ -32,3 +35,25 @@ class AugmentBlock(pylearn2.blocks.Block):
                         inputs.shape[1:3]))[np.newaxis].T
         return processed
 
+
+class SampleAugment(pylearn2.blocks.Block):
+    """
+    ANOTHER VERSION OF THE ABOVE THAT MAY NEVER WORK.
+    """
+    def __init__(self,fn,target_shape):
+        self._fn = fn
+        self.cpu_only=False
+        self.target_shape = target_shape
+    def __call__(self,inputs):
+        return self.fn(inputs)
+    def fn(self,inputs):
+        # prepare empty array same size as inputs
+        req = inputs.shape
+        sh = [inputs.shape[0]] + list(self.target_shape)
+        inputs = inputs.reshape(sh)
+        processed = np.zeros(sh)
+        # hand each image as a 2D array
+        for i in range(inputs.shape[0]):
+            processed[i] = self._fn(inputs[i].reshape(self.target_shape))
+        processed = processed.reshape(req)
+        return processed
