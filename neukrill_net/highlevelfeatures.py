@@ -543,7 +543,10 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         
         if num_kp==0:
             # Handle edge case where no keypoints are detected
-            vec = np.ones((1,self.num_classes)) / num_kp
+            if self.summary_method=='mean':
+                vec = np.ones((1,self.num_classes)) / num_kp
+            else:
+                vec = np.zeros((1,self.num_classes)
             
         else:
             # Scale descriptions
