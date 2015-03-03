@@ -25,8 +25,16 @@ class TransformerDataset(pylearn2.datasets.transformer_dataset.TransformerDatase
         """
         self.__dict__.update(locals())
         del self.self
-        self.raw.iterator.uneven = False
+        self.raw.iterator = append_uneven(self.raw.iterator)
 
     @property
     def uneven(self):
         return False
+
+def append_uneven(func):
+    # dirty hack to fix uneven problem
+    def inner(*args,**keyargs):
+        i = inner(*args,**keyargs)
+        i.uneven = False
+        return i
+    return inner
