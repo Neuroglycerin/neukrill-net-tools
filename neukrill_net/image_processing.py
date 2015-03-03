@@ -23,7 +23,7 @@ def img_as_dtype(image, dt):
         # (0, 255)
         return skimage.util.img_as_ubyte(image)
         
-    elif dt == np.dtype(np.float64):
+    elif dt == np.dtype(np.float64) or dt == np.dtype(np.float32):
         # (0, 1)
         return skimage.util.img_as_float(image)
         
@@ -181,7 +181,7 @@ def resize_image(image, size):
                         padded_image.shape[0],padded_image.shape[1]))
 
     # Now resize to specified size
-    resized_image = skimage.transform.resize(padded_image, size)
+    resized_image = skimage.transform.resize(padded_image, size, cval=whiteVal)
     
     # Preserve the datatype
     # Ensure output matches input

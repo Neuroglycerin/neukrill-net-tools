@@ -320,7 +320,8 @@ class RandomAugment(object):
         if 'crop' in self.settings and not self.settings['crop']==None:
             for side_id in range(4):
                 crop_index = self.rng.randint(0, len(self.settings['crop']))
-                image = crop_image(image, side_id, self.settings['crop']['crop_index'])
+                image = image_processing.crop_image(image, side_id, 
+                        self.settings['crop'][crop_index])
         
         # Perform shunts if they are crops now
         if 'shunt' in self.settings and not self.settings['shunt']==None:
