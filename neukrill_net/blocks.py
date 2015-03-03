@@ -28,6 +28,7 @@ class AugmentBlock(pylearn2.blocks.Block):
         processed = np.zeros(inputs.shape)
         # hand each image as a 2D array
         for i in range(inputs.shape[0]):
-            processed[i] = self.fn(inputs[i].reshape(inputs.shape[1:3])).reshape(inputs.shape[1:])
+            processed[i] = self.fn(inputs[i].reshape(
+                        inputs.shape[1:3]))[np.newaxis].T
         return processed
 
