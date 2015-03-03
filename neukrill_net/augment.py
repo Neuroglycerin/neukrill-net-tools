@@ -309,7 +309,7 @@ class RandomAugment(object):
         #####################################################
         # Preserve the datatype
         # Ensure output matches input
-        image = img_as_dtype(image, original_dtype)
+        image = image_processing.img_as_dtype(image, original_dtype)
         
         return image
         
