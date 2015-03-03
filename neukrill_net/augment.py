@@ -200,3 +200,117 @@ def allpads(image, pad_amounts):
     return [image_processing.padshift_image(image, shift)
         for shift in itertools.product(pad_amounts, repeat=2)]
 
+
+class RandomAugment(object):
+    """
+    A class for performing random augmentations.
+    When you call it with an image it gives
+    you back a randomly manipulated version of it.
+    """
+    
+    def __init__(self, random_seed=42, **kwargs):
+        """
+        Inputs: random_seed
+                keyword assignment of augmentation settings.
+        """
+        # Initialise the random number generator
+        self.rng = np.random.RandomState(seed=random_seed)
+        # Store settings as a dictionary
+        self.settings = kwargs
+    
+    
+    def __call__(self, image):
+        """
+        Maps raw image to augmented image.
+        """
+        
+        # Datatype unit conversion
+        # We very probably want this to be float throughout
+        if units == 'float64' or units == 'float':
+            image = skimage.util.img_as_float(image)
+        elif units == 'uint8':
+            image = skimage.util.img_as_ubyte(image)
+        elif units == None or units == 'auto':
+            pass
+        else:
+            raise ValueError('Unrecognised output units: {}'.format(
+                                self.settings['units']))
+        
+        # Note down the original type
+        original_dtype = image.dtype
+        
+        #####################################################
+        # Pre-augmentation processing
+        
+        # Landscapise
+        # Set to True if you want to ensure all the images are landscape
+        if 'landscapise' in self.settings and self.settings['landscapise']:
+            image = image_processing.landscapise_image(image)
+        
+        #####################################################
+        # Random augmentation
+        
+        # Rescale
+        if 'scale' in self.settings and not self.settings['scale']==None:
+            sf_index = self.rng.randint(0, len(self.settings['scale']))
+            image = image_processing.scale_image(image, self.settings['scale'][sf_index])
+        
+        # Rotate
+        if 'rotate' in self.settings and not self.settings['rotate']==None:
+            if self.settings['rotate']==-1:
+                # Uniform distribution of rotations
+                rot_angle = self.rng.uniform(low=0.0, high=360.0)
+                image = image_processing.rotate_image(
+                            image, rot_angle,
+                            resizable=self.settings['rotate_is_resizable'])
+                
+            else:
+                # Pick from list of potential rotations
+                rot_index = self.rng.randint(0, len(self.settings['rotate']))
+                image = image_processing.rotate_image(
+                            image, self.settings['rotate'][rot_index],
+                            resizable=self.settings['rotate_is_resizable'])
+        
+        # Shear
+        if 'shear' in self.settings and not self.settings['shear']==None:
+            shear_index = self.rng.randint(0, len(self.settings['shear']))
+            image = image_processing.shear_image(image, shear_index)
+        
+        # Flip (always horizontally)
+        # All other relfections can be acheived by coupling with an appropriate reflection
+        # Flip setting should either be True or False in settings
+        if 'flip' in self.settings and self.settings['flip']:
+            # Flip if coin-toss says so
+            if self.rng.binomial(1, 0.5):
+                image = image_processing.flip_image(image, True)
+        
+        # Crop (every side or not at all)
+        if 'crop' in self.settings and not self.settings['crop']==None:
+            for side_id in range(4):
+                crop_index = self.rng.randint(0, len(self.settings['crop']))
+                image = crop_image(image, side_id, self.settings['crop']['crop_index'])
+        
+        # Add pixel noise
+        if 'noise' in self.settings and not self.settings['noise']==None:
+            noise_seed = self.rng.randint(2**32)
+            image = image_processing.noisify_image(image, self.settings['noise'], noise_seed)
+        
+        #####################################################
+        # Post-augmentation processing
+        
+        # Shape-fixing without resizing
+        if 'shape' in self.settings:
+            image = image_processing.shape_fix(image, self.settings['shape'])
+        
+        # Resize
+        if 'resize' in self.settings:
+            image = image_processing.resize_image(image, self.settings['resize'])
+        
+        #####################################################
+        # Preserve the datatype
+        # Ensure output matches input
+        image = img_as_dtype(image, original_dtype)
+        
+        return image
+        
+        
