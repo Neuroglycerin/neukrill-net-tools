@@ -11,4 +11,4 @@ import pylearn2.datasets.transformer_dataset
 class TransformerDataset(pylearn2.datasets.transformer_dataset.TransformerDataset):
     @property
     def uneven(self):
-        return self.raw_iterator.uneven
+        return False
