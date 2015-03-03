@@ -273,7 +273,7 @@ def shear_image(image, shear):
     aft = skimage.transform.AffineTransform(shear=shear_radians)
     
     # Apply transform to image data
-    image = skimage.transform.warp(image, aft)
+    image = skimage.transform.warp(image, aft, cval=1.0)
      
     # Preserve the datatype
     # Ensure output matches input
@@ -348,6 +348,69 @@ def crop_image(image, side_id, crop_proportion=0.2):
     else:
         raise ValueError('Side ID was not in [0,1,2,3]')
     return cropped_image
+
+
+def padcrop_image(image, side_id, padcrop_proportion=0):
+    """
+    Pads or crops a 2D image by a given proportion for one of its sides.
+    input:  image - input image
+            side_id - which side to crop
+                      0 right
+                      1 top
+                      2 left
+                      3 right
+            padcrop_proportion - how much to crop by (proportional to the
+                              length of this side of the image)
+    output: new_image - a new image, either larger or smaller on one side
+    """
+    # First, use skimage to check what value white should be
+    whiteVal = skimage.dtype_limits(image)[1]
+    
+    if (side_id % 2)==0:
+        # Left/right
+        sidelength = image.shape[1]
+    else:
+        # Top/bottom
+        sidelength = image.shape[0]
+    
+    padcroplen = np.floor(sidelength*padcrop_proportion)
+    
+    if side_id == 0:
+        # RHS
+        if padcroplen<=0:
+            new_image = image[:, :-croplen]
+        else:
+            pad = whiteVal * np.ones( (image.shape[0], padcroplen) )
+            new_image = np.concatenate( (image,pad), axis=1 )
+        
+    elif side_id == 1:
+        # Top
+        if padcroplen<=0:
+            new_image = image[croplen:, :]
+        else:
+            pad = whiteVal * np.ones( (padcroplen, image.shape[1]) )
+            new_image = np.concatenate( (pad,image), axis=0 )
+        
+    elif side_id == 2:
+        # LHS
+        if padcroplen<=0:
+            new_image = image[:, croplen:]
+        else:
+            pad = whiteVal * np.ones( (image.shape[0], padcroplen) )
+            new_image = np.concatenate( (pad,image), axis=1 )
+        
+    elif side_id == 3:
+        # Bottom
+        if padcroplen<=0:
+            new_image = image[:-croplen, :]
+        else:
+            pad = whiteVal * np.ones( (padcroplen, image.shape[1]) )
+            new_image = np.concatenate( (image,pad), axis=0 )
+        
+    else:
+        raise ValueError('Side ID was not in [0,1,2,3]')
+    
+    return new_image
 
 
 def padshift_image(image, centre_shift):
