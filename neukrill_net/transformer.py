@@ -23,8 +23,12 @@ class TransformerDataset(pylearn2.datasets.transformer_dataset.TransformerDatase
             transformer: pylearn2 Block
                 To transform the data
         """
-        self.__dict__.update(locals())
-        del self.self
+        #self.__dict__.update(locals())
+        #del self.self
+        self.raw = raw
+        self.transformer = transformer
+        self.cpu_only = cpu_only
+        self.space_preserving = space_preserving
         self.raw.iterator = append_uneven(self.raw.iterator)
 
     @property
@@ -35,6 +39,6 @@ def append_uneven(func):
     # dirty hack to fix uneven problem
     def inner(*args,**keyargs):
         i = inner(*args,**keyargs)
-        i.uneven = False
+        i.uneven = i.raw_iterator.uneven
         return i
     return inner
