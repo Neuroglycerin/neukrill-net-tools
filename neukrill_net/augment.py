@@ -305,8 +305,13 @@ class RandomAugment(object):
         
         # Shear
         if 'shear' in self.settings and not self.settings['shear']==None:
-            shear_index = self.rng.randint(0, len(self.settings['shear']))
-            image = image_processing.shear_image(image, shear_index)
+            if type(self.settings['shear']) is list:
+                shear_index = self.rng.randint(0, len(self.settings['shear']))
+                image = image_processing.shear_image(image, shear_index)
+            else:
+                # Chose from gaussian
+                shear_amount = self.rng.normal(loc=0.0, scale=self.settings['shear'])
+                image = image_processing.shear_image(image, shear_amount)
         
         # Flip (always horizontally)
         # All other relfections can be acheived by coupling with an appropriate reflection
