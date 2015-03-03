@@ -290,11 +290,6 @@ class RandomAugment(object):
                 crop_index = self.rng.randint(0, len(self.settings['crop']))
                 image = crop_image(image, side_id, self.settings['crop']['crop_index'])
         
-        # Add pixel noise
-        if 'noise' in self.settings and not self.settings['noise']==None:
-            noise_seed = self.rng.randint(2**32)
-            image = image_processing.noisify_image(image, self.settings['noise'], noise_seed)
-        
         #####################################################
         # Post-augmentation processing
         
@@ -305,6 +300,13 @@ class RandomAugment(object):
         # Resize
         if 'resize' in self.settings:
             image = image_processing.resize_image(image, self.settings['resize'])
+        
+        #####################################################
+        
+        # Add pixel noise
+        if 'noise' in self.settings and not self.settings['noise']==None:
+            noise_seed = self.rng.randint(2**32)
+            image = image_processing.noisify_image(image, self.settings['noise'], noise_seed)
         
         #####################################################
         # Preserve the datatype
