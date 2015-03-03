@@ -9,16 +9,23 @@
 import pylearn2.datasets.transformer_dataset
 
 class TransformerDataset(pylearn2.datasets.transformer_dataset.TransformerDataset):
-    def __init__(self, raw_iterator, transformer_dataset, data_specs):
+    def __init__(self, raw, transformer, cpu_only=False,
+                 space_preserving=False):
         """
-        .. todo::
+            .. todo::
 
-            WRITEME
+                WRITEME properly
+
+            Parameters
+            ----------
+            raw : pylearn2 Dataset
+                Provides raw data
+            transformer: pylearn2 Block
+                To transform the data
         """
-        self.raw_iterator = raw_iterator
-        self.transformer_dataset = transformer_dataset
-        self.stochastic = raw_iterator.stochastic
-        self.data_specs = data_specs
+        self.__dict__.update(locals())
+        del self.self
+        self.raw.iterator.uneven = False
 
     @property
     def uneven(self):
