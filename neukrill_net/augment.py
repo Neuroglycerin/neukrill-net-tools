@@ -208,7 +208,7 @@ class RandomAugment(object):
     you back a randomly manipulated version of it.
     """
     
-    def __init__(self, random_seed=42, **kwargs):
+    def __init__(self, random_seed=42, units='float64', rotate_is_resizable=False, **kwargs):
         """
         Inputs: random_seed
                 keyword assignment of augmentation settings.
@@ -217,7 +217,10 @@ class RandomAugment(object):
         self.rng = np.random.RandomState(seed=random_seed)
         # Store settings as a dictionary
         self.settings = kwargs
-    
+        # Add kwargs with defaults into dictionary
+        self.settings['units'] = units
+        self.settings['rotate_is_resizable'] = rotate_is_resizable
+        
     
     def __call__(self, image):
         """
@@ -255,21 +258,50 @@ class RandomAugment(object):
             sf_index = self.rng.randint(0, len(self.settings['scale']))
             image = image_processing.scale_image(image, self.settings['scale'][sf_index])
         
+        # Define shunts
+        if 'shunt' in self.settings and not self.settings['shunt']==None:
+            shuntlist = []
+            for i in range(4):
+                if type(self.settings['shunt']) is list:
+                    # Pick from list
+                    shunt_index = self.rng.randint(0, len(self.settings['shunt']))
+                    shunt = self.settings['shunt'][shunt_index]
+                else:
+                    # Chose from gaussian
+                    shunt = self.rng.normal(loc=0.0, scale=self.settings['shunt'])
+                    # Use some hard caps, for very unlikely events
+                    if shunt<-0.4:
+                        shunt = -0.4
+                    if shunt>0.4:
+                        shunt = 0.4
+                # Add to the list
+                shuntlist += [shunt]
+        
+        # Perform shunts if they are pads now
+        if 'shunt' in self.settings and not self.settings['shunt']==None:
+            for i in range(4):
+                if shuntlist[i]>0:
+                    image = image_processing.padcrop_image(image, i, shuntlist[i])
+        
         # Rotate
         if 'rotate' in self.settings and not self.settings['rotate']==None:
-            if self.settings['rotate']==-1:
-                # Uniform distribution of rotations
-                rot_angle = self.rng.uniform(low=0.0, high=360.0)
-                image = image_processing.rotate_image(
-                            image, rot_angle,
-                            resizable=self.settings['rotate_is_resizable'])
-                
-            else:
+            if type(self.settings['rotate']) is list:
                 # Pick from list of potential rotations
                 rot_index = self.rng.randint(0, len(self.settings['rotate']))
-                image = image_processing.rotate_image(
-                            image, self.settings['rotate'][rot_index],
-                            resizable=self.settings['rotate_is_resizable'])
+                rot_angle = self.settings['rotate'][rot_index]
+                
+            elif self.settings['rotate']==-1:
+                # Uniform distribution of rotations
+                rot_angle = self.rng.uniform(low=0.0, high=360.0)
+                
+            else:
+                # Select from implied list
+                rot_index = self.rng.randint(0, self.settings['rotate'])
+                rot_angle = 360 * rot_index / rot_angle
+                
+            image = image_processing.rotate_image(
+                        image, rot_angle,
+                        resizable=self.settings['rotate_is_resizable'])
         
         # Shear
         if 'shear' in self.settings and not self.settings['shear']==None:
@@ -290,6 +322,12 @@ class RandomAugment(object):
                 crop_index = self.rng.randint(0, len(self.settings['crop']))
                 image = image_processing.crop_image(image, side_id, 
                         self.settings['crop'][crop_index])
+        
+        # Perform shunts if they are crops now
+        if 'shunt' in self.settings and not self.settings['shunt']==None:
+            for i in range(4):
+                if shuntlist[i]<0:
+                    image = image_processing.padcrop_image(image, i, shuntlist[i])
         
         #####################################################
         # Post-augmentation processing
