@@ -378,7 +378,7 @@ def padcrop_image(image, side_id, padcrop_proportion=0):
     if side_id == 0:
         # RHS
         if padcroplen<=0:
-            new_image = image[:, :-croplen]
+            new_image = image[:, :-1+padcroplen]
         else:
             pad = whiteVal * np.ones( (image.shape[0], padcroplen) )
             new_image = np.concatenate( (image,pad), axis=1 )
@@ -386,7 +386,7 @@ def padcrop_image(image, side_id, padcrop_proportion=0):
     elif side_id == 1:
         # Top
         if padcroplen<=0:
-            new_image = image[croplen:, :]
+            new_image = image[-padcroplen:, :]
         else:
             pad = whiteVal * np.ones( (padcroplen, image.shape[1]) )
             new_image = np.concatenate( (pad,image), axis=0 )
@@ -394,7 +394,7 @@ def padcrop_image(image, side_id, padcrop_proportion=0):
     elif side_id == 2:
         # LHS
         if padcroplen<=0:
-            new_image = image[:, croplen:]
+            new_image = image[:, -padcroplen:]
         else:
             pad = whiteVal * np.ones( (image.shape[0], padcroplen) )
             new_image = np.concatenate( (pad,image), axis=1 )
@@ -402,7 +402,7 @@ def padcrop_image(image, side_id, padcrop_proportion=0):
     elif side_id == 3:
         # Bottom
         if padcroplen<=0:
-            new_image = image[:-croplen, :]
+            new_image = image[:-1+padcroplen, :]
         else:
             pad = whiteVal * np.ones( (padcroplen, image.shape[1]) )
             new_image = np.concatenate( (image,pad), axis=0 )
