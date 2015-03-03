@@ -206,4 +206,7 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                         [train_or_predict][class_label][test_break:]
             else:
                 raise ValueError("Invalid option for training set mode.")
+            # then check it's not empty
+            assert len(image_fnames[class_label]) > 0
+
         return image_fnames
