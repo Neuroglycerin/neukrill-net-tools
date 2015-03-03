@@ -22,4 +22,4 @@ class TransformerDataset(pylearn2.datasets.transformer_dataset.TransformerDatase
 
     @property
     def uneven(self):
-        return self.raw_iterator.uneven
+        return False
