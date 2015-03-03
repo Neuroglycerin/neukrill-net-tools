@@ -19,7 +19,7 @@ import six
 import skimage.io
 import skimage.util
 import mahotas.features
-
+import neukrill_net.image_features
 from neukrill_net import image_attributes
 
 
@@ -438,6 +438,29 @@ class Haralick(HighLevelFeatureBase):
         return np.concatenate((X0,X1))
 
 
+class ContourMoments(HighLevelFeatureBase):
+    """
+    Compute moments of image (after segmentation)
+    """
+    def __init__(self, return_only_hu=False, **kwargs):
+        """
+        Initialise
+        """
+        # Call superclass
+        HighLevelFeatureBase.__init__(self, **kwargs)
+        
+        self.return_only_hu = return_only_hu
+        
+        
+    def extract_image(self, image):
+        moments = neukrill_net.image_features.get_shape_moments(image)
+        hu_moments = neukrill_net.image_features.get_shape_HuMoments(moments)
+        if self.return_only_hu:
+            return hu_moments
+        else:
+            return np.concatenate((np.array(hu_moments),np.array(moments.values())))
+        
+
 class KeypointEnsembleClassifier(HighLevelFeatureBase):
     """
     Classifies an image using the ensemble of descriptions of keypoints in the
@@ -546,8 +569,7 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
             if self.summary_method=='mean':
                 vec = np.ones((1,self.num_classes)) / num_kp
             else:
-                vec = np.zeros((1,self.num_classes)
-            
+                vec = np.zeros((1,self.num_classes))
         else:
             # Scale descriptions
             descriptions = self.scaler.transform(descriptions)
