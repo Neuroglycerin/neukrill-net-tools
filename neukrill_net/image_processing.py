@@ -3,6 +3,8 @@
 Module for all image processing tools
 """
 
+from __future__ import division
+
 import skimage.io
 import skimage.transform
 import skimage.util
@@ -132,9 +134,67 @@ def landscapise_image(image):
         
     else:
         return image
+
+
+def centred_transform(image, transform):
+    """
+    Converts an skimage transformation object into another
+    skimage transformation object, but which will apply
+    the transform around the centre of the image.
+    """
+    shift_y, shift_x = np.array(image.shape[:2]) / 2.0
+    tf_shift = skimage.transform.SimilarityTransform(translation=[-shift_x, -shift_y])
+    tf_shift_inv = skimage.transform.SimilarityTransform(translation=[shift_x, shift_y])
+    return (tf_shift + (transform + tf_shift_inv))
+
+
+def custom_transform(image, order=0.5, **kwargs):
+    """
+    Returns a warped version of the input image.
+    Operates around the centre of the image.
+    Pads with white as necessary.
+    Supports 0<order<1.
+    Scale is an x-scale, y-scale tuple.
+    Rotation and shear units are radians.
+    Translation units are number of pixels in x and y.
+    """
+    transform = skimage.transform.AffineTransform(**kwargs)
+    transform = centred_transform(image, transform)
+    if order>0 and order<1:
+        return ( order * skimage.transform.warp(image, transform, cval=1.0, order=1) +
+                (1-order) * skimage.transform.warp(image, transform, cval=1.0, order=0) )
+    else:
+        return skimage.transform.warp(image, transform, cval=1.0, order=order)
+    
+    
+def custom_transform_nice_units(image, scale=None, rotation=None, shear=None,
+        translation=None, order=0.5):
+    """
+    Returns a warped version of the input image.
+    Like custom_transform, but
+    Scale can be a scalar for symmetric rescaling.
+    Rotation and shear units are degrees.
+    Translation units are relative to width and height.
+    """
+    
+    if scale is not None and not isinstance(scale, (list,tuple,np.ndarray)):
+        # Scalar input converted into x and y
+        scale = (scale,scale)
+    if rotation is not None:
+        # Degrees converted into radians
+        rotation = np.deg2rad(rotation)
+    if shear is not None:
+        # Degrees converted into radians
+        shear = np.deg2rad(shear)
+    if translation is not None:
+        # Translation in fraction of image converted to absolute
+        translation = (translation[0]*image.shape[0], translation[1]*image.shape[1])
+    
+    return custom_transform(image, scale=scale, rotation=rotation, shear=shear, 
+            translation=translation, order=order)
     
 
-def resize_image(image, size):
+def resize_image(image, size, order=0.75):
     """
     resize images to a pixel*pixel defined in a tuple
     input: image
@@ -144,6 +204,10 @@ def resize_image(image, size):
     does this by padding to make the image square, then
     resizing
     """
+    # Return input image if sizes match
+    if image.shape == size:
+        return image
+    
     # Note down the original type
     original_dtype = image.dtype
     
@@ -181,7 +245,11 @@ def resize_image(image, size):
                         padded_image.shape[0],padded_image.shape[1]))
 
     # Now resize to specified size
-    resized_image = skimage.transform.resize(padded_image, size, cval=whiteVal)
+    if order>0 and order<1:
+        resized_image = (order * skimage.transform.resize(padded_image, size, cval=whiteVal, order=1) +
+                            (1-order) * skimage.transform.resize(padded_image, size, cval=whiteVal, order=0) )
+    else:
+        resized_image = skimage.transform.resize(padded_image, size, cval=whiteVal, order=order)
     
     # Preserve the datatype
     # Ensure output matches input
