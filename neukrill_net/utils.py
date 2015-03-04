@@ -461,7 +461,7 @@ def format_yaml(run_settings,settings):
     sub = {}
     sub.update(run_settings)
     sub.update(run_settings['preprocessing'])
-    sub.update(run_settings['preprocessing']['normalise'])
+    sub.update(run_settings['preprocessing'].get('normalise',{}))
     # time for some crude string parsing
     yaml_string = yaml_string%(sub)
     # write the new yaml to the data directory, in a yaml_settings subdir
