@@ -441,28 +441,34 @@ class Haralick(HighLevelFeatureBase):
 
 class CoocurProps(HighLevelFeatureBase):
     """
-    Compute Haralick texture features
+    Compute texture features from Grey-Level Co-ocurance matrix properties
     """
-    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, max_dist=18, props=None, **options):
+    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, max_dist=18, num_angles=4, props=None, **options):
         """Initialisation"""
         HighLevelFeatureBase.__init__(self, **options)
+        
+        self.max_dist = max_dist
+        self.num_angles = num_angles
         
         if props is None:
             props = ['contrast','dissimilarity','homogeneity','ASM','energy','correlation']
         self.props = props
     
+    
     def extract_image(self, image):
+        """
+        Compute Grey-Level Co-ocurance matrix properties for a single image
+        """
+        P = np.zeros( (len(self.props), self.max_dist) )
         
-        P = np.zeros(len(self.props), max_dist, 4)
+        angles = np.arange(self.num_angles) * 2 * np.pi / self.num_angles
+        GLCM = skimage.feature.greycomatrix(image, range(1,self.max_dist+1), angles,
+                    levels=256, symmetric=False, normed=True)
         
-        for dist_index in range(max_dist):
-            for angle_index in range(4):
-                GLCM = skimage.feature.greycomatrix(image, [dist_index+1], [angle_index], levels=256, symmetric=False, normed=True)
-                for prop_index, prop in enumerate(self.props):
-                    P[prop_index, dist_index, angle_index] =
-                        skimage.feature.greycoprops(GLCM, prop=prop)
+        for prop_index, prop in enumerate(self.props):
+            P[prop_index, :] = np.mean(skimage.feature.greycoprops(GLCM, prop=prop), 1)
         
-        return np.mean(P,2).squeeze(2)
+        return P
 
 
 
