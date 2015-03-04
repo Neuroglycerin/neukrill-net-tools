@@ -1,9 +1,9 @@
 """
 This is a DataSet class that will, given a root directory containing images
 organised into folders with their class names, provide an interface to 
-pylearn2 to load the images as required at runtime. At the same time, 
-it will allow custom preprocessing functions to be run for augmenting the
-data or otherwise.
+pylearn2 to load the images at start time. Then, at runtime it will allow 
+custom preprocessing functions to be run for augmenting the data or 
+otherwise.
 
 Developed as part of our entry to the National Data Science Bowl plankton
 classification challenge.
