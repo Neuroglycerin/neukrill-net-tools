@@ -50,11 +50,19 @@ class SampleAugment(pylearn2.blocks.Block):
     def fn(self,inputs):
         # prepare empty array same size as inputs
         req = inputs.shape
-        sh = [inputs.shape[0]] + list(self.target_shape)
+        if req[0] > 1:
+            n_examples = req[0]
+            sh = [inputs.shape[0]] + list(self.target_shape)
+        elif len(req) == 2:
+            n_examples = req[0]
+            sh = [inputs.shape[0]] + list(self.target_shape)
+        else:
+            n_examples = req[-1]
+            sh =  [inputs.shape[-1]] + list(self.target_shape) 
         inputs = inputs.reshape(sh)
         processed = np.zeros(sh)
         # hand each image as a 2D array
-        for i in range(inputs.shape[0]):
+        for i in range(n_examples):
             processed[i] = self._fn(inputs[i].reshape(self.target_shape))
         processed = processed.reshape(req)
         processed = processed.astype(np.float32)
