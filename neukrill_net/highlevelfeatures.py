@@ -310,9 +310,9 @@ class Haralick(HighLevelFeatureBase):
     """
     Compute Haralick texture features
     """
-    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, **options):
+    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, **kwargs):
         """Initialisation"""
-        HighLevelFeatureBase.__init__(self, **options)
+        HighLevelFeatureBase.__init__(self, **kwargs)
         
     
     def extract_image(self, image):
@@ -327,9 +327,9 @@ class CoocurProps(HighLevelFeatureBase):
     """
     Compute texture features from Grey-Level Co-ocurance matrix properties
     """
-    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, max_dist=18, num_angles=4, props=None, **options):
+    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, max_dist=18, num_angles=4, props=None, **kwargs):
         """Initialisation"""
-        HighLevelFeatureBase.__init__(self, **options)
+        HighLevelFeatureBase.__init__(self, **kwargs)
         
         self.max_dist = max_dist
         self.num_angles = num_angles
@@ -353,6 +353,31 @@ class CoocurProps(HighLevelFeatureBase):
             P[prop_index, :] = np.mean(skimage.feature.greycoprops(GLCM, prop=prop), 1)
         
         return P
+
+
+class ThresholdAdjacency(HighLevelFeatureBase):
+    """
+    Compute Threshold Adjacency Statistics feature.
+    """
+    def __init__(self, parameterFree=True, **kwargs):
+        """
+        Initialisation
+        Set parameterFree to be True if you want to use parameter free TAS,
+        and False if not.
+        """
+        HighLevelFeatureBase.__init__(self, **kwargs)
+        
+        self.parameterFree = parameterFree
+        
+        
+    def extract_image(self, image):
+        """
+        Compute the TAS for a single image
+        """
+        if self.parameterFree:
+            return mahotas.features.pftas(image)
+        else:
+            return mahotas.features.tas(image)
 
 
 ###############################################################################
