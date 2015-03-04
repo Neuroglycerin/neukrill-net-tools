@@ -5,6 +5,8 @@ Functions to be used as "processing" arguments
 are here.
 """
 
+from __future__ import division
+
 import neukrill_net.image_processing as image_processing
 import numpy as np
 import skimage.util
@@ -297,7 +299,7 @@ class RandomAugment(object):
             else:
                 # Select from implied list
                 rot_index = self.rng.randint(0, self.settings['rotate'])
-                rot_angle = 360 * rot_index / rot_angle
+                rot_angle = 360.0 * rot_index / self.settings['rotate']
                 
             image = image_processing.rotate_image(
                         image, rot_angle,
@@ -307,7 +309,7 @@ class RandomAugment(object):
         if 'shear' in self.settings and not self.settings['shear']==None:
             if type(self.settings['shear']) is list:
                 shear_index = self.rng.randint(0, len(self.settings['shear']))
-                image = image_processing.shear_image(image, shear_index)
+                image = image_processing.shear_image(image, self.settings['shear'][shear_index])
             else:
                 # Chose from gaussian
                 shear_amount = self.rng.normal(loc=0.0, scale=self.settings['shear'])
