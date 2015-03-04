@@ -194,7 +194,7 @@ def custom_transform_nice_units(image, scale=None, rotation=None, shear=None,
             translation=translation, order=order)
     
 
-def resize_image(image, size, order=1):
+def resize_image(image, size, order=0.75):
     """
     resize images to a pixel*pixel defined in a tuple
     input: image
