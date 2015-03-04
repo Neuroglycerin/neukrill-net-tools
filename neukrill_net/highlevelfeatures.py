@@ -92,7 +92,18 @@ class HighLevelFeatureBase:
         Input : a list of images or image paths
         Output: None
         """
-        raise NotImplementedError
+        # By default, does not need fitting
+        pass
+        
+        
+    def fit_transform(self, X, *args, **kwargs):
+        """
+        Fit and then transform
+        Input : a list of images or image paths to fit to
+        Output: the stack of features transformed from the images
+        """
+        self.fit(X, *args, **kwargs)
+        return self.transform(X)
         
         
     def preprocess_image(self, image):
