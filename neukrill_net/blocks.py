@@ -40,10 +40,11 @@ class SampleAugment(pylearn2.blocks.Block):
     """
     ANOTHER VERSION OF THE ABOVE THAT MAY NEVER WORK.
     """
-    def __init__(self,fn,target_shape):
+    def __init__(self,fn,target_shape,input_shape):
         self._fn = fn
         self.cpu_only=False
         self.target_shape = target_shape
+        self.input_shape = input_shape
     def __call__(self,inputs):
         return self.fn(inputs)
     def fn(self,inputs):
@@ -56,4 +57,9 @@ class SampleAugment(pylearn2.blocks.Block):
         for i in range(inputs.shape[0]):
             processed[i] = self._fn(inputs[i].reshape(self.target_shape))
         processed = processed.reshape(req)
+        processed = processed.astype(np.float32)
         return processed
+    def get_input_space(self):
+        return self.input_shape
+    def get_output_space(self):
+        return self.target_shape
