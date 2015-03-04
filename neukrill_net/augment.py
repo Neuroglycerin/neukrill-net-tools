@@ -391,6 +391,23 @@ class RandomAugment(object):
         
         #####################################################
         
+        if 'normalise' in self.settings:
+            if self.settings['normalise']['global_or_pixel'] == 'global':
+                mu = self.settings['normalise']['mu']
+                sigma = self.settings['normalise']['sigma']
+                image = (image - mu)/sigma
+            elif self.settings['normalise']['global_or_pixel'] == 'pixel':
+                for i in range(image.shape[0]):
+                    for j in range(image.shape[1]):
+                        mu = self.settings['normalise']['mu'][str((i,j))]
+                        sigma = self.settings['normalise']['sigma'][str((i,j))]
+                        image[i,j] = (image[i,j] - mu)/sigma
+            else:
+                raise ValueError("Invalid option for global_or_pixel, should be "
+                                     "one of global or pixel.")
+        
+        #####################################################
+        
         # Datatype unit conversion
         if ('units' not in self.settings or
                 self.settings['units'] == None or self.settings['units'] == 'auto'):
