@@ -19,6 +19,15 @@ import pylearn2.datasets
 import numpy as np
 import sys
 
+from pylearn2.datasets.dataset import Dataset
+import functools
+from pylearn2.space import CompositeSpace, Conv2DSpace, VectorSpace, IndexSpace
+from pylearn2.utils import safe_zip
+from pylearn2.utils.iteration import (
+    FiniteDatasetIterator,
+    resolve_iterator_class
+)
+
 class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
     """
     A class intended to load images from a directory, apply some
@@ -210,3 +219,65 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
             assert len(image_fnames[class_label]) > 0
 
         return image_fnames
+
+    @functools.wraps(Dataset.iterator)
+    def iterator(self, mode=None, batch_size=None, num_batches=None,
+                 rng=None, data_specs=None,
+                 return_tuple=False):
+        """
+        Copied from dense_design_matrix, in order to fix uneven problem.
+        """
+
+        if data_specs is None:
+            data_specs = self._iter_data_specs
+
+        # If there is a view_converter, we have to use it to convert
+        # the stored data for "features" into one that the iterator
+        # can return.
+        space, source = data_specs
+        if isinstance(space, CompositeSpace):
+            sub_spaces = space.components
+            sub_sources = source
+        else:
+            sub_spaces = (space,)
+            sub_sources = (source,)
+
+        convert = []
+        for sp, src in safe_zip(sub_spaces, sub_sources):
+            if src == 'features' and \
+               getattr(self, 'view_converter', None) is not None:
+                conv_fn = (lambda batch, self=self, space=sp:
+                           self.view_converter.get_formatted_batch(batch,
+                                                                   space))
+            else:
+                conv_fn = None
+
+            convert.append(conv_fn)
+
+        # TODO: Refactor
+        if mode is None:
+            if hasattr(self, '_iter_subset_class'):
+                mode = self._iter_subset_class
+            else:
+                raise ValueError('iteration mode not provided and no default '
+                                 'mode set for %s' % str(self))
+        else:
+            mode = resolve_iterator_class(mode)
+
+        if batch_size is None:
+            batch_size = getattr(self, '_iter_batch_size', None)
+        if num_batches is None:
+            num_batches = getattr(self, '_iter_num_batches', None)
+        if rng is None and mode.stochastic:
+            rng = self.rng
+        # hack to make the online augmentations run
+        FiniteDatasetIterator.uneven = False
+        iterator = FiniteDatasetIterator(self,
+                                 mode(self.X.shape[0],
+                                      batch_size,
+                                      num_batches,
+                                      rng),
+                                 data_specs=data_specs,
+                                 return_tuple=return_tuple,
+                                 convert=convert)
+        return iterator
