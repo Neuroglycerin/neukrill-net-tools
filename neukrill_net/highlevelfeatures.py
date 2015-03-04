@@ -438,6 +438,34 @@ class Haralick(HighLevelFeatureBase):
         return np.concatenate((X0,X1))
 
 
+
+class CoocurProps(HighLevelFeatureBase):
+    """
+    Compute Haralick texture features
+    """
+    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, max_dist=18, props=None, **options):
+        """Initialisation"""
+        HighLevelFeatureBase.__init__(self, **options)
+        
+        if props is None:
+            props = ['contrast','dissimilarity','homogeneity','ASM','energy','correlation']
+        self.props = props
+    
+    def extract_image(self, image):
+        
+        P = np.zeros(len(self.props), max_dist, 4)
+        
+        for dist_index in range(max_dist):
+            for angle_index in range(4):
+                GLCM = skimage.feature.greycomatrix(image, [dist_index+1], [angle_index], levels=256, symmetric=False, normed=True)
+                for prop_index, prop in enumerate(self.props):
+                    P[prop_index, dist_index, angle_index] =
+                        skimage.feature.greycoprops(GLCM, prop=prop)
+        
+        return np.mean(P,2).squeeze(2)
+
+
+
 class ContourMoments(HighLevelFeatureBase):
     """
     Compute moments of image (after segmentation)
