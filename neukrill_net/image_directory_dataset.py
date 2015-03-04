@@ -124,6 +124,17 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         Returns iterator object with standard Pythonic interface; iterates
         over the dataset over batches, popping off batches from a shuffled 
         list of indices.
+        Inputs:
+            - mode: not actually used, just there so that Pylearn2 doesn't 
+        complain.
+            - batch_size: required, size of the minibatches produced.
+            - num_batches: supply if you want, the dataset will make as many
+        as it can if you don't.
+            - rng: not used, as above.
+            - data_specs: not used, as above
+            - return_tuple: not used, as above
+        Outputs:
+            - instance of FlyIterator, see above.
         """
         if not num_batches:
             # guess that we want to use all of them

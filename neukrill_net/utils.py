@@ -442,3 +442,29 @@ def save_run_settings(run_settings):
         json.dump(run_settings, f, separators=(',',':'), indent=4, 
                                                     sort_keys=True)
     return None
+
+def format_yaml(run_settings,settings):
+    """
+    Using the specification from run_settings, will
+    substitute in different values into a YAML file
+    and write the new YAML file to scratch.
+    """
+    # open the YAML template
+    with open(os.path.join("yaml_templates",run_settings['yaml file'])) as y:
+        yaml_string = y.read()
+    # sub in the following things for default: settings_path, run_settings_path, 
+    # final_shape, n_classes, save_path
+    run_settings["n_classes"] = len(settings.classes)
+    # legacy rename, to make sure it's in there
+    run_settings["save_path"] = run_settings['pickle abspath']
+    # time for some crude string parsing
+    yaml_string = yaml_string%(run_settings)
+    # write the new yaml to the data directory, in a yaml_settings subdir
+    yamldir = os.path.join(settings.data_dir,"yaml_settings")
+    if not os.path.exists(yamldir):
+        os.mkdir(yamldir)
+    yaml_path = os.path.join(yamldir,run_settings["filename"]+
+            run_settings['yaml file'].split(".")[0]+".yaml")
+    with open(yaml_path, "w") as f:
+        f.write(yaml_string)
+    return yaml_string
