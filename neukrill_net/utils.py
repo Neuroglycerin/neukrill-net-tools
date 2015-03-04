@@ -457,8 +457,13 @@ def format_yaml(run_settings,settings):
     run_settings["n_classes"] = len(settings.classes)
     # legacy rename, to make sure it's in there
     run_settings["save_path"] = run_settings['pickle abspath']
+    # make new dictionary for substitution
+    sub = {}
+    sub.update(run_settings)
+    sub.update(run_settings['preprocessing'])
+    sub.update(run_settings['preprocessing']['normalise'])
     # time for some crude string parsing
-    yaml_string = yaml_string%(run_settings)
+    yaml_string = yaml_string%(sub)
     # write the new yaml to the data directory, in a yaml_settings subdir
     yamldir = os.path.join(settings.data_dir,"yaml_settings")
     if not os.path.exists(yamldir):
