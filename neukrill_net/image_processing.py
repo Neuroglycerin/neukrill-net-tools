@@ -144,6 +144,10 @@ def resize_image(image, size):
     does this by padding to make the image square, then
     resizing
     """
+    # Return input image if sizes match
+    if image.shape == size:
+        return image
+    
     # Note down the original type
     original_dtype = image.dtype
     
