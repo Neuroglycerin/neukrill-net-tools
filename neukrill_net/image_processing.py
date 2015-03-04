@@ -194,7 +194,7 @@ def custom_transform_nice_units(image, scale=None, rotation=None, shear=None,
             translation=translation, order=order)
     
 
-def resize_image(image, size):
+def resize_image(image, size, order=1):
     """
     resize images to a pixel*pixel defined in a tuple
     input: image
@@ -245,7 +245,11 @@ def resize_image(image, size):
                         padded_image.shape[0],padded_image.shape[1]))
 
     # Now resize to specified size
-    resized_image = skimage.transform.resize(padded_image, size, cval=whiteVal)
+    if order>0 and order<1:
+        resized_image = (order * skimage.transform.resize(padded_image, size, cval=whiteVal, order=1) +
+                            (1-order) * skimage.transform.resize(padded_image, size, cval=whiteVal, order=0) )
+    else:
+        resized_image = skimage.transform.resize(padded_image, size, cval=whiteVal, order=order)
     
     # Preserve the datatype
     # Ensure output matches input
