@@ -42,6 +42,10 @@ def loadimage(obj):
         raise ValueError("Wrong kind of object given. Not a numpy array or a string.")
 
 
+###############################################################################
+# Base class
+###############################################################################
+
 class HighLevelFeatureBase:
     """
     Base class for high level features
@@ -192,6 +196,10 @@ class HighLevelFeatureBase:
         return X
 
 
+###############################################################################
+# Combiner class
+###############################################################################
+
 class MultiHighLevelFeature(HighLevelFeatureBase):
     """
     Class for merging high level features together
@@ -252,6 +260,9 @@ class MultiHighLevelFeature(HighLevelFeatureBase):
         return np.concatenate( [child.preprocess_and_extract_image(image).ravel() for child in self._childHLFs] )
 
 
+###############################################################################
+# Simplistic features
+###############################################################################
 
 class BasicAttributes(HighLevelFeatureBase):
     """
@@ -291,6 +302,90 @@ class BasicAttributes(HighLevelFeatureBase):
         return lambda image: np.asarray([f(image) for f in funcvec]) 
 
 
+###############################################################################
+# Global texture based features
+###############################################################################
+
+class Haralick(HighLevelFeatureBase):
+    """
+    Compute Haralick texture features
+    """
+    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, **options):
+        """Initialisation"""
+        HighLevelFeatureBase.__init__(self, **options)
+        
+    
+    def extract_image(self, image):
+        H  = mahotas.features.haralick(image)
+        X0 = np.mean(H, 0)
+        X1 = (np.amax(H, 0) - np.amin(H, 0))
+        return np.concatenate((X0,X1))
+
+
+
+class CoocurProps(HighLevelFeatureBase):
+    """
+    Compute texture features from Grey-Level Co-ocurance matrix properties
+    """
+    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, max_dist=18, num_angles=4, props=None, **options):
+        """Initialisation"""
+        HighLevelFeatureBase.__init__(self, **options)
+        
+        self.max_dist = max_dist
+        self.num_angles = num_angles
+        
+        if props is None:
+            props = ['contrast','dissimilarity','homogeneity','ASM','energy','correlation']
+        self.props = props
+    
+    
+    def extract_image(self, image):
+        """
+        Compute Grey-Level Co-ocurance matrix properties for a single image
+        """
+        P = np.zeros( (len(self.props), self.max_dist) )
+        
+        angles = np.arange(self.num_angles) * 2 * np.pi / self.num_angles
+        GLCM = skimage.feature.greycomatrix(image, range(1,self.max_dist+1), angles,
+                    levels=256, symmetric=False, normed=True)
+        
+        for prop_index, prop in enumerate(self.props):
+            P[prop_index, :] = np.mean(skimage.feature.greycoprops(GLCM, prop=prop), 1)
+        
+        return P
+
+
+###############################################################################
+# Contour based features
+###############################################################################
+
+class ContourMoments(HighLevelFeatureBase):
+    """
+    Compute moments of image (after segmentation)
+    """
+    def __init__(self, return_only_hu=False, **kwargs):
+        """
+        Initialise
+        """
+        # Call superclass
+        HighLevelFeatureBase.__init__(self, **kwargs)
+        
+        self.return_only_hu = return_only_hu
+        
+        
+    def extract_image(self, image):
+        moments = neukrill_net.image_features.get_shape_moments(image)
+        hu_moments = neukrill_net.image_features.get_shape_HuMoments(moments)
+        if self.return_only_hu:
+            return hu_moments
+        else:
+            return np.concatenate((np.array(hu_moments),np.array(moments.values())))
+
+
+
+###############################################################################
+# Local keypoint description based features
+###############################################################################
 
 class BagOfWords(HighLevelFeatureBase):
     """
@@ -433,78 +528,6 @@ class BagOfWords(HighLevelFeatureBase):
         return self.cluster.cluster_centers_.shape[0]
 
 
-class Haralick(HighLevelFeatureBase):
-    """
-    Compute Haralick texture features
-    """
-    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, **options):
-        """Initialisation"""
-        HighLevelFeatureBase.__init__(self, **options)
-        
-    
-    def extract_image(self, image):
-        H  = mahotas.features.haralick(image)
-        X0 = np.mean(H, 0)
-        X1 = (np.amax(H, 0) - np.amin(H, 0))
-        return np.concatenate((X0,X1))
-
-
-
-class CoocurProps(HighLevelFeatureBase):
-    """
-    Compute texture features from Grey-Level Co-ocurance matrix properties
-    """
-    def __init__(self, preprocessing_func=skimage.util.img_as_ubyte, max_dist=18, num_angles=4, props=None, **options):
-        """Initialisation"""
-        HighLevelFeatureBase.__init__(self, **options)
-        
-        self.max_dist = max_dist
-        self.num_angles = num_angles
-        
-        if props is None:
-            props = ['contrast','dissimilarity','homogeneity','ASM','energy','correlation']
-        self.props = props
-    
-    
-    def extract_image(self, image):
-        """
-        Compute Grey-Level Co-ocurance matrix properties for a single image
-        """
-        P = np.zeros( (len(self.props), self.max_dist) )
-        
-        angles = np.arange(self.num_angles) * 2 * np.pi / self.num_angles
-        GLCM = skimage.feature.greycomatrix(image, range(1,self.max_dist+1), angles,
-                    levels=256, symmetric=False, normed=True)
-        
-        for prop_index, prop in enumerate(self.props):
-            P[prop_index, :] = np.mean(skimage.feature.greycoprops(GLCM, prop=prop), 1)
-        
-        return P
-
-
-
-class ContourMoments(HighLevelFeatureBase):
-    """
-    Compute moments of image (after segmentation)
-    """
-    def __init__(self, return_only_hu=False, **kwargs):
-        """
-        Initialise
-        """
-        # Call superclass
-        HighLevelFeatureBase.__init__(self, **kwargs)
-        
-        self.return_only_hu = return_only_hu
-        
-        
-    def extract_image(self, image):
-        moments = neukrill_net.image_features.get_shape_moments(image)
-        hu_moments = neukrill_net.image_features.get_shape_HuMoments(moments)
-        if self.return_only_hu:
-            return hu_moments
-        else:
-            return np.concatenate((np.array(hu_moments),np.array(moments.values())))
-        
 
 class KeypointEnsembleClassifier(HighLevelFeatureBase):
     """
