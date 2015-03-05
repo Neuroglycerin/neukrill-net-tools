@@ -31,10 +31,6 @@ class TransformerDataset(pylearn2.datasets.transformer_dataset.TransformerDatase
         self.space_preserving = space_preserving
         self.raw.iterator = append_uneven(self.raw.iterator)
 
-    @property
-    def uneven(self):
-        return False
-
 def append_uneven(func):
     # dirty hack to fix uneven problem
     def inner(*args,**keyargs):

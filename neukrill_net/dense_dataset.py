@@ -68,7 +68,10 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
         if train_or_predict == "train":
             # split the dataset based on training_set_mode option:
             self.settings.image_fnames[train_or_predict] = \
-                    self.train_test_split(train_or_predict, training_set_mode)
+                    neukrill_net.utils.train_test_split(
+                            self.settings.image_fnames, 
+                            training_set_mode, 
+                            train_split=self.run_settings["train_split"])
 
             # count the images
             self.N_images = sum(1 for class_label in self.settings.classes
@@ -176,49 +179,6 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
             raise ValueError('Invalid option: should be either "train" for'
                              'training or "test" for prediction (I know '
                              ' that is annoying).')
-
-
-    def train_test_split(self, train_or_predict, training_set_mode):
-        """
-        Perform a stratified split of the image paths stored in
-        settings. Iterates over all class labels to do this.
-        """
-        # stratified split of the image paths for train, validation and test
-        # iterate over classes, removing some proportion of the elements, in a 
-        # deterministic way
-        train_split = self.run_settings["train_split"]
-        test_split = train_split + (1-train_split)/2
-        # initialise new variable to store split
-        image_fnames = {}
-        # assuming train split is some float between 0 and 1, and assign that
-        # proportion to train and half of the remaining to test and validation
-        for class_label in self.settings.classes:
-            # find where the break should be
-            train_break = int(train_split*len(
-                self.settings.image_fnames[train_or_predict][class_label]))
-            test_break = int(test_split*len(
-                self.settings.image_fnames[train_or_predict][class_label]))
-            if training_set_mode == "train":
-                # then everything up to train_break is what we want
-                image_fnames[class_label] \
-                        = self.settings.image_fnames\
-                        [train_or_predict][class_label][:train_break]
-            elif training_set_mode == "validation":
-                # then we want the _first_ half of everything after train_break
-                image_fnames[class_label] \
-                        = self.settings.image_fnames \
-                        [train_or_predict][class_label][train_break:test_break]
-            elif training_set_mode == "test":
-                # then we want the _second_ half of everything after train_break
-                image_fnames[class_label] \
-                        = self.settings.image_fnames \
-                        [train_or_predict][class_label][test_break:]
-            else:
-                raise ValueError("Invalid option for training set mode.")
-            # then check it's not empty
-            assert len(image_fnames[class_label]) > 0
-
-        return image_fnames
 
     @functools.wraps(Dataset.iterator)
     def iterator(self, mode=None, batch_size=None, num_batches=None,

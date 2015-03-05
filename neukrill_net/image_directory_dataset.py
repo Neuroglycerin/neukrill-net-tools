@@ -83,6 +83,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
     """
     def __init__(self, transformer, settings_path="settings.json", 
                  run_settings_path="run_settings/alexnet_based.json",
+                 training_set_mode="train",
                  verbose=False, force=False, seed=42):
         """
         Loads the images as a list of differently shaped
@@ -95,9 +96,17 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         self.run_settings = neukrill_net.utils.load_run_settings(run_settings_path,
                                                                  self.settings,
                                                                  force=force)
-        self.X, labels = neukrill_net.utils.load_rawdata(self.settings.image_fnames,
-                                                 classes=self.settings.classes,
-                                                 verbose=verbose)
+        # split train/test/validation
+        self.settings.image_fnames[train_or_predict] = \
+                neukrill_net.utils.train_test_split(
+                        self.settings.image_fnames, 
+                        training_set_mode, 
+                        train_split=self.run_settings["train_split"])
+        #load the data
+        self.X, labels = neukrill_net.utils.load_rawdata(
+                        self.settings.image_fnames,
+                        classes=self.settings.classes,
+                        verbose=verbose)
         self.N = len(self.X)
         # count the classes
         self.n_classes = len(self.settings.classes)
