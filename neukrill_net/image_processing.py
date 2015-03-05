@@ -291,18 +291,14 @@ def flip_image(image, flip_x=False, flip_y=False):
     """
     if len(image.shape) != 2:
         raise ValueError('Image must be 2-dimensional')
-
-    flipped_image = image.copy()
     
     if flip_x:
-        for row in range(flipped_image.shape[0]):
-            flipped_image[row] = flipped_image[row][::-1]
-
+        image = np.flipud(image)
+    
     if flip_y:
-        for column in range(flipped_image.shape[1]):
-            flipped_image[:,column] = flipped_image[:,column][::-1]
-
-    return flipped_image
+        image = np.fliplr(image)
+    
+    return image
 
 
 def rotate_image(image, angle, resizable=True):
