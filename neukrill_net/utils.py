@@ -473,3 +473,52 @@ def format_yaml(run_settings,settings):
     with open(yaml_path, "w") as f:
         f.write(yaml_string)
     return yaml_string
+
+def train_test_split(image_fnames, training_set_mode, train_split=0.8):
+    """
+    Perform a stratified split of the image paths stored in a 
+    image_fnames dictionary supplied.
+    Inputs:
+        -image_fnames: dictionary of image classes as keys and image paths
+    as values.
+        -training_set_mode: either "train", "validation" or "test". Will
+    split into each based on this.
+        -train_split: proportion to split into "train"; remainder split
+    equally into "test" and "validation".
+    
+    """
+    # stratified split of the image paths for train, validation and test
+    # iterate over classes, removing some proportion of the elements, in a 
+    # deterministic way
+    test_split = train_split + (1-train_split)/2
+    # initialise new variable to store split
+    split_fnames = {}
+    # assuming train split is some float between 0 and 1, and assign that
+    # proportion to train and half of the remaining to test and validation
+    for class_label in image_fnames.keys():
+        # find where the break should be
+        train_break = int(train_split*len(
+            image_fnames["train"][class_label]))
+        test_break = int(test_split*len(
+            image_fnames["train"][class_label]))
+        if training_set_mode == "train":
+            # then everything up to train_break is what we want
+            split_fnames[class_label] \
+                    = image_fnames\
+                    ["train"][class_label][:train_break]
+        elif training_set_mode == "validation":
+            # then we want the _first_ half of everything after train_break
+            split_fnames[class_label] \
+                    = image_fnames \
+                    ["train"][class_label][train_break:test_break]
+        elif training_set_mode == "test":
+            # then we want the _second_ half of everything after train_break
+            split_fnames[class_label] \
+                    = image_fnames \
+                    ["train"][class_label][test_break:]
+        else:
+            raise ValueError("Invalid option for training set mode.")
+        # then check it's not empty
+        assert len(split_fnames[class_label]) > 0
+
+    return split_fnames
