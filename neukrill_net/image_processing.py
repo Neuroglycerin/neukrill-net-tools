@@ -192,24 +192,17 @@ def custom_transform_nice_units(image, scale=None, rotation=None, shear=None,
     
     return custom_transform(image, scale=scale, rotation=rotation, shear=shear, 
             translation=translation, order=order)
-    
 
-def resize_image(image, size, order=0.75):
-    """
-    resize images to a pixel*pixel defined in a tuple
-    input: image
-           size e.g. the tuple (48,48)
-    output: resized_image
 
-    does this by padding to make the image square, then
-    resizing
+def pad_to_square(image):
     """
-    # Return input image if sizes match
-    if image.shape == size:
+    Pads an image with white so height and width are the same
+    Input : image
+    Output: centrally padded image with equal height and width
+    """
+    # Check if padding is unnecessary
+    if image.shape[0]==image.shape[1]:
         return image
-    
-    # Note down the original type
-    original_dtype = image.dtype
     
     # First, use skimage to check what value white should be
     whiteVal = skimage.dtype_limits(image)[1]
@@ -243,19 +236,48 @@ def resize_image(image, size, order=0.75):
                             "Raise an issue about this."
                             "print rows: {0}, columns:{1}".format(
                         padded_image.shape[0],padded_image.shape[1]))
+    
+    return padded_image
 
+def resize_image(image, size, order=0.75):
+    """
+    resize images to a pixel*pixel defined in a tuple
+    input: image
+           size e.g. the tuple (48,48)
+    output: resized_image
+
+    does this by padding to make the image square, then
+    resizing
+    """
+    # Return input image if sizes match
+    if image.shape == size:
+        return image
+    
+    # Note down the original type
+    original_dtype = image.dtype
+    
+    # Pad to square
+    image = pad_to_square(image)
+    
+    # Double-check we did make the image square
+    if image.shape[0] != image.shape[1]:
+        raise ValueError("Padded image is not square"
+                            "Raise an issue about this."
+                            "print rows: {0}, columns:{1}".format(
+                        image.shape[0],image.shape[1]))
+    
     # Now resize to specified size
     if order>0 and order<1:
-        resized_image = (order * skimage.transform.resize(padded_image, size, cval=whiteVal, order=1) +
-                            (1-order) * skimage.transform.resize(padded_image, size, cval=whiteVal, order=0) )
+        image = (order * skimage.transform.resize(image, size, cval=whiteVal, order=1) +
+                            (1-order) * skimage.transform.resize(image, size, cval=whiteVal, order=0) )
     else:
-        resized_image = skimage.transform.resize(padded_image, size, cval=whiteVal, order=order)
+        image = skimage.transform.resize(image, size, cval=whiteVal, order=order)
     
     # Preserve the datatype
     # Ensure output matches input
-    resized_image = img_as_dtype(resized_image, original_dtype)
+    image = img_as_dtype(image, original_dtype)
     
-    return resized_image
+    return image
 
 
 def flip_image(image, flip_x=False, flip_y=False):
@@ -269,18 +291,14 @@ def flip_image(image, flip_x=False, flip_y=False):
     """
     if len(image.shape) != 2:
         raise ValueError('Image must be 2-dimensional')
-
-    flipped_image = image.copy()
-
+    
     if flip_x:
-        for row in range(flipped_image.shape[0]):
-            flipped_image[row] = flipped_image[row][::-1]
-
+        image = np.flipud(image)
+    
     if flip_y:
-        for column in range(flipped_image.shape[1]):
-            flipped_image[:,column] = flipped_image[:,column][::-1]
-
-    return flipped_image
+        image = np.fliplr(image)
+    
+    return image
 
 
 def rotate_image(image, angle, resizable=True):
