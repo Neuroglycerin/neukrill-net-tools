@@ -93,9 +93,15 @@ mkdir build
 cd build
 #
 # Have to copy the python2.7 library file over
-if [ -e /usr/lib64/libpython2.7.so ]; then
+if [ -e "$VIRTUAL_ENV"/lib/libpython2.7.so ]; then
+    # There is one already there!
+    echo "File libpython2.7so is already present"
+elif [ -e /usr/lib64/libpython2.7.so ]; then
     # For DICE
     cp /usr/lib64/libpython2.7.so "$VIRTUAL_ENV"/lib
+elif [ -e /usr/lib/libpython2.7.so ]; then
+    # Other likely library location
+    cp /usr/lib/libpython2.7.so "$VIRTUAL_ENV"/lib
 elif [ -e /usr/lib/x86_64-linux-gnu/libpython2.7.so ]; then
     # For Ubuntu
     cp /usr/lib64/libpython2.7.so "$VIRTUAL_ENV"/lib
