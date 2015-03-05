@@ -12,6 +12,20 @@ if [ $# -eq 0 ] || [ -z "$1" ]; then
   exit 2
 fi
 #################################################################
+# Check for necessary commands
+#
+# Check for virutalenv
+if ! hash "virtualenv" 2> /dev/null; then
+  echo "This script requires python-virtualenv. Please install it."
+  exit 2
+fi
+# Check for cmake
+if ! hash "cmake" 2> /dev/null; then
+  echo "This script requires CMake. Please install it."
+  exit 2
+fi
+#
+#################################################################
 # Need to know the absolute path to the location you
 # want to create as your virtual environment
 #
@@ -105,7 +119,8 @@ elif [ -e /usr/lib/libpython2.7.so ]; then
 elif [ -e /usr/lib/x86_64-linux-gnu/libpython2.7.so ]; then
     # For Ubuntu
     cp /usr/lib/x86_64-linux-gnu/libpython2.7.so "$VIRTUAL_ENV"/lib
-else
+fi
+if [ ! -e "$VIRTUAL_ENV"/lib/libpython2.7.so ]; then
     echo "Error: Couldn't find libpython2.7.so. Did not install OpenCV to venv."
     exit 2
 fi
