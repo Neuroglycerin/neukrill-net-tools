@@ -256,6 +256,9 @@ def resize_image(image, size, order=0.75):
     # Note down the original type
     original_dtype = image.dtype
     
+    # First, use skimage to check what value white should be
+    whiteVal = skimage.dtype_limits(image)[1]
+    
     # Pad to square
     image = pad_to_square(image)
     
