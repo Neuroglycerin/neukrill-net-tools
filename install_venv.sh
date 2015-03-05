@@ -104,7 +104,7 @@ elif [ -e /usr/lib/libpython2.7.so ]; then
     cp /usr/lib/libpython2.7.so "$VIRTUAL_ENV"/lib
 elif [ -e /usr/lib/x86_64-linux-gnu/libpython2.7.so ]; then
     # For Ubuntu
-    cp /usr/lib64/libpython2.7.so "$VIRTUAL_ENV"/lib
+    cp /usr/lib/x86_64-linux-gnu/libpython2.7.so "$VIRTUAL_ENV"/lib
 else
     echo "Error: Couldn't find libpython2.7.so. Did not install OpenCV to venv."
     exit 2
