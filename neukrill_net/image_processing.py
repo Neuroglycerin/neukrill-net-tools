@@ -3,6 +3,8 @@
 Module for all image processing tools
 """
 
+from __future__ import division
+
 import skimage.io
 import skimage.transform
 import skimage.util
@@ -132,20 +134,75 @@ def landscapise_image(image):
         
     else:
         return image
+
+
+def centred_transform(image, transform):
+    """
+    Converts an skimage transformation object into another
+    skimage transformation object, but which will apply
+    the transform around the centre of the image.
+    """
+    shift_y, shift_x = np.array(image.shape[:2]) / 2.0
+    tf_shift = skimage.transform.SimilarityTransform(translation=[-shift_x, -shift_y])
+    tf_shift_inv = skimage.transform.SimilarityTransform(translation=[shift_x, shift_y])
+    return (tf_shift + (transform + tf_shift_inv))
+
+
+def custom_transform(image, order=0.5, **kwargs):
+    """
+    Returns a warped version of the input image.
+    Operates around the centre of the image.
+    Pads with white as necessary.
+    Supports 0<order<1.
+    Scale is an x-scale, y-scale tuple.
+    Rotation and shear units are radians.
+    Translation units are number of pixels in x and y.
+    """
+    transform = skimage.transform.AffineTransform(**kwargs)
+    transform = centred_transform(image, transform)
+    if order>0 and order<1:
+        return ( order * skimage.transform.warp(image, transform, cval=1.0, order=1) +
+                (1-order) * skimage.transform.warp(image, transform, cval=1.0, order=0) )
+    else:
+        return skimage.transform.warp(image, transform, cval=1.0, order=order)
     
-
-def resize_image(image, size):
+    
+def custom_transform_nice_units(image, scale=None, rotation=None, shear=None,
+        translation=None, order=0.5):
     """
-    resize images to a pixel*pixel defined in a tuple
-    input: image
-           size e.g. the tuple (48,48)
-    output: resized_image
-
-    does this by padding to make the image square, then
-    resizing
+    Returns a warped version of the input image.
+    Like custom_transform, but
+    Scale can be a scalar for symmetric rescaling.
+    Rotation and shear units are degrees.
+    Translation units are relative to width and height.
     """
-    # Note down the original type
-    original_dtype = image.dtype
+    
+    if scale is not None and not isinstance(scale, (list,tuple,np.ndarray)):
+        # Scalar input converted into x and y
+        scale = (scale,scale)
+    if rotation is not None:
+        # Degrees converted into radians
+        rotation = np.deg2rad(rotation)
+    if shear is not None:
+        # Degrees converted into radians
+        shear = np.deg2rad(shear)
+    if translation is not None:
+        # Translation in fraction of image converted to absolute
+        translation = (translation[0]*image.shape[0], translation[1]*image.shape[1])
+    
+    return custom_transform(image, scale=scale, rotation=rotation, shear=shear, 
+            translation=translation, order=order)
+
+
+def pad_to_square(image):
+    """
+    Pads an image with white so height and width are the same
+    Input : image
+    Output: centrally padded image with equal height and width
+    """
+    # Check if padding is unnecessary
+    if image.shape[0]==image.shape[1]:
+        return image
     
     # First, use skimage to check what value white should be
     whiteVal = skimage.dtype_limits(image)[1]
@@ -179,15 +236,48 @@ def resize_image(image, size):
                             "Raise an issue about this."
                             "print rows: {0}, columns:{1}".format(
                         padded_image.shape[0],padded_image.shape[1]))
+    
+    return padded_image
 
+def resize_image(image, size, order=0.75):
+    """
+    resize images to a pixel*pixel defined in a tuple
+    input: image
+           size e.g. the tuple (48,48)
+    output: resized_image
+
+    does this by padding to make the image square, then
+    resizing
+    """
+    # Return input image if sizes match
+    if image.shape == size:
+        return image
+    
+    # Note down the original type
+    original_dtype = image.dtype
+    
+    # Pad to square
+    image = pad_to_square(image)
+    
+    # Double-check we did make the image square
+    if image.shape[0] != image.shape[1]:
+        raise ValueError("Padded image is not square"
+                            "Raise an issue about this."
+                            "print rows: {0}, columns:{1}".format(
+                        image.shape[0],image.shape[1]))
+    
     # Now resize to specified size
-    resized_image = skimage.transform.resize(padded_image, size, cval=whiteVal)
+    if order>0 and order<1:
+        image = (order * skimage.transform.resize(image, size, cval=whiteVal, order=1) +
+                            (1-order) * skimage.transform.resize(image, size, cval=whiteVal, order=0) )
+    else:
+        image = skimage.transform.resize(image, size, cval=whiteVal, order=order)
     
     # Preserve the datatype
     # Ensure output matches input
-    resized_image = img_as_dtype(resized_image, original_dtype)
+    image = img_as_dtype(image, original_dtype)
     
-    return resized_image
+    return image
 
 
 def flip_image(image, flip_x=False, flip_y=False):
@@ -201,18 +291,14 @@ def flip_image(image, flip_x=False, flip_y=False):
     """
     if len(image.shape) != 2:
         raise ValueError('Image must be 2-dimensional')
-
-    flipped_image = image.copy()
-
+    
     if flip_x:
-        for row in range(flipped_image.shape[0]):
-            flipped_image[row] = flipped_image[row][::-1]
-
+        image = np.flipud(image)
+    
     if flip_y:
-        for column in range(flipped_image.shape[1]):
-            flipped_image[:,column] = flipped_image[:,column][::-1]
-
-    return flipped_image
+        image = np.fliplr(image)
+    
+    return image
 
 
 def rotate_image(image, angle, resizable=True):

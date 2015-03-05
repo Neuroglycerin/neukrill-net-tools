@@ -5,6 +5,8 @@ Functions to be used as "processing" arguments
 are here.
 """
 
+from __future__ import division
+
 import neukrill_net.image_processing as image_processing
 import numpy as np
 import skimage.util
@@ -219,7 +221,8 @@ class RandomAugment(object):
         self.settings = kwargs
         # Add kwargs with defaults into dictionary
         self.settings['units'] = units
-        self.settings['rotate_is_resizable'] = rotate_is_resizable
+        # Don't even need this anymore
+        #self.settings['rotate_is_resizable'] = rotate_is_resizable
         
     
     def __call__(self, image):
@@ -227,20 +230,11 @@ class RandomAugment(object):
         Maps raw image to augmented image.
         """
         
-        # Datatype unit conversion
-        # We very probably want this to be float throughout
-        if 'units' not in self.settings or self.settings['units'] == None or self.settings['units'] == 'auto':
-            pass
-        elif self.settings['units'] == 'float64' or self.settings['units'] == 'float':
-            image = skimage.util.img_as_float(image)
-        elif self.settings['units'] == 'uint8':
-            image = skimage.util.img_as_ubyte(image)
-        else:
-            raise ValueError('Unrecognised output units: {}'.format(
-                                self.settings['units']))
-        
         # Note down the original type
         original_dtype = image.dtype
+        
+        # Convert to float while we process it
+        image = skimage.util.img_as_float(image)
         
         #####################################################
         # Pre-augmentation processing
@@ -250,42 +244,90 @@ class RandomAugment(object):
         if 'landscapise' in self.settings and self.settings['landscapise']:
             image = image_processing.landscapise_image(image)
         
+        # Ensure image is square now if we are going to reshape
+        if 'resize' in self.settings or 'shape' in self.settings:
+            image = image_processing.pad_to_square(image)
+        
         #####################################################
         # Random augmentation
         
-        # Rescale
-        if 'scale' in self.settings and not self.settings['scale']==None:
-            sf_index = self.rng.randint(0, len(self.settings['scale']))
-            image = image_processing.scale_image(image, self.settings['scale'][sf_index])
+        # Flip (always horizontally)
+        # All other relfections can be acheived by coupling with an appropriate reflection
+        # Flip setting should either be True or False in settings
+        if 'flip' in self.settings and self.settings['flip']:
+            # Flip if coin-toss says so
+            if self.rng.binomial(1, 0.5):
+                image = image_processing.flip_image(image, True)
         
-        # Define shunts
-        if 'shunt' in self.settings and not self.settings['shunt']==None:
+        ### Affine Transformation
+        # Rescale
+        if ('scale' not in self.settings or
+                self.settings['scale']==None or
+                self.settings['scale']==0.0 ):
+            scalefactor = 1.0
+        else:
+            if isinstance(self.settings['scale'],(list,tuple)):
+                sf_index = self.rng.randint(0, len(self.settings['scale']))
+                scalefactor = self.settings['scale'][sf_index]
+            else:
+                scalefactor = self.rng.normal(loc=1.0, scale=self.settings['scale'])
+                # Ignore extreme events
+                if (scalefactor-1.0) > 3*self.settings['scale']:
+                    scalefactor = 1.0
+                elif (scalefactor-1.0) < -3*self.settings['scale']:
+                    scalefactor = 1.0
+        
+        # Asymmetric x and y scaling
+        if ('scale_asym' not in self.settings
+                or self.settings['scale_asym']==None
+                or self.settings['scale_asym']==0.0 ):
+            # x and y scales are the same
+            scalefactor = (scalefactor,scalefactor)
+        else:
+            # Pick a new x and y scale near the overall scale
+            x_sf = self.rng.normal(scale=self.settings['scale_asym'])
+            y_sf = self.rng.normal(scale=self.settings['scale_asym'])
+            # Ignore extreme events
+            if x_sf > 3*self.settings['scale_asym'] or x_sf < -3*self.settings['scale_asym']:
+                x_sf = 0.0
+            if y_sf > 3*self.settings['scale_asym'] or y_sf < -3*self.settings['scale_asym']:
+                y_sf = 0.0
+            # Combine x and y scales as a tuple
+            scalefactor = (scalefactor+x_sf, scalefactor+y_sf)
+        
+        # Define translation (shunt)
+        if ('shunt' not in self.settings
+                or self.settings['shunt']==None
+                or self.settings['shunt']==0.0 ):
+            shuntlist = (0,0)
+        else:
             shuntlist = []
-            for i in range(4):
-                if type(self.settings['shunt']) is list:
+            for i in range(2):
+                if isinstance(self.settings['shunt'],(list,tuple)):
                     # Pick from list
                     shunt_index = self.rng.randint(0, len(self.settings['shunt']))
                     shunt = self.settings['shunt'][shunt_index]
+                    # Ensure symmetry
+                    if self.rng.binomial(1, 0.5):
+                        shunt = -shunt
                 else:
                     # Chose from gaussian
                     shunt = self.rng.normal(loc=0.0, scale=self.settings['shunt'])
-                    # Use some hard caps, for very unlikely events
-                    if shunt<-0.4:
-                        shunt = -0.4
-                    if shunt>0.4:
-                        shunt = 0.4
+                    # Ignore extreme events
+                    if shunt<-3*self.settings['shunt'] or shunt>3*self.settings['shunt']:
+                        shunt = 0
                 # Add to the list
                 shuntlist += [shunt]
-        
-        # Perform shunts if they are pads now
-        if 'shunt' in self.settings and not self.settings['shunt']==None:
-            for i in range(4):
-                if shuntlist[i]>0:
-                    image = image_processing.padcrop_image(image, i, shuntlist[i])
+            # Convert list to tuple
+            shuntlist = tuple(shuntlist)
         
         # Rotate
-        if 'rotate' in self.settings and not self.settings['rotate']==None:
-            if type(self.settings['rotate']) is list:
+        if ('rotate' not in self.settings
+                or self.settings['rotate']==None
+                or self.settings['rotate']==0.0 ):
+            rot_angle = 0.0
+        else:
+            if isinstance(self.settings['rotate'],(list,tuple)):
                 # Pick from list of potential rotations
                 rot_index = self.rng.randint(0, len(self.settings['rotate']))
                 rot_angle = self.settings['rotate'][rot_index]
@@ -297,42 +339,37 @@ class RandomAugment(object):
             else:
                 # Select from implied list
                 rot_index = self.rng.randint(0, self.settings['rotate'])
-                rot_angle = 360 * rot_index / rot_angle
-                
-            image = image_processing.rotate_image(
-                        image, rot_angle,
-                        resizable=self.settings['rotate_is_resizable'])
+                rot_angle = 360.0 * rot_index / self.settings['rotate']
         
         # Shear
-        if 'shear' in self.settings and not self.settings['shear']==None:
-            if type(self.settings['shear']) is list:
+        if ('shear' not in self.settings
+                or self.settings['shear']==None
+                or self.settings['shear']==0.0 ):
+            shear_angle = 0.0
+        else:
+            if isinstance(self.settings['shear'],(list,tuple)):
                 shear_index = self.rng.randint(0, len(self.settings['shear']))
-                image = image_processing.shear_image(image, shear_index)
+                shear_angle = self.settings['shear'][shear_index]
             else:
                 # Chose from gaussian
-                shear_amount = self.rng.normal(loc=0.0, scale=self.settings['shear'])
-                image = image_processing.shear_image(image, shear_amount)
+                shear_angle = self.rng.normal(loc=0.0, scale=self.settings['shear'])
         
-        # Flip (always horizontally)
-        # All other relfections can be acheived by coupling with an appropriate reflection
-        # Flip setting should either be True or False in settings
-        if 'flip' in self.settings and self.settings['flip']:
-            # Flip if coin-toss says so
-            if self.rng.binomial(1, 0.5):
-                image = image_processing.flip_image(image, True)
+        # Order of affine transformation
+        if 'transform_order' not in self.settings or self.settings['transform_order']==None:
+            transform_order = 0.5
+        else:
+            transform_order = self.settings['transform_order']
         
-        # Crop (every side or not at all)
+        # Perform affine transformation
+        image = image_processing.custom_transform_nice_units(image, scale=scalefactor, 
+                    rotation=rot_angle, shear=shear_angle, translation=shuntlist, order=transform_order)
+        
+        # Crop by a random amount from each side
         if 'crop' in self.settings and not self.settings['crop']==None:
             for side_id in range(4):
                 crop_index = self.rng.randint(0, len(self.settings['crop']))
                 image = image_processing.crop_image(image, side_id, 
                         self.settings['crop'][crop_index])
-        
-        # Perform shunts if they are crops now
-        if 'shunt' in self.settings and not self.settings['shunt']==None:
-            for i in range(4):
-                if shuntlist[i]<0:
-                    image = image_processing.padcrop_image(image, i, shuntlist[i])
         
         #####################################################
         # Post-augmentation processing
@@ -342,20 +379,55 @@ class RandomAugment(object):
             image = image_processing.shape_fix(image, self.settings['shape'])
         
         # Resize
+        if not 'resize_order' in self.settings or self.settings['resize_order']==None:
+            resize_order = 0.75
         if 'resize' in self.settings:
-            image = image_processing.resize_image(image, self.settings['resize'])
+            image = image_processing.resize_image(image, self.settings['resize'], resize_order)
         
         #####################################################
         
         # Add pixel noise
-        if 'noise' in self.settings and not self.settings['noise']==None:
+        if ('noise' in self.settings
+                and not self.settings['noise']==None
+                and not self.settings['noise']==0.0 ):
             noise_seed = self.rng.randint(2**32)
             image = image_processing.noisify_image(image, self.settings['noise'], noise_seed)
         
         #####################################################
-        # Preserve the datatype
-        # Ensure output matches input
-        image = image_processing.img_as_dtype(image, original_dtype)
+        
+        if 'normalise' in self.settings:
+            if self.settings['normalise']['global_or_pixel'] == 'global':
+                mu = self.settings['normalise']['mu']
+                sigma = self.settings['normalise']['sigma']
+                image = (image - mu)/sigma
+            elif self.settings['normalise']['global_or_pixel'] == 'pixel':
+                for i in range(image.shape[0]):
+                    for j in range(image.shape[1]):
+                        mu = self.settings['normalise']['mu'][str((i,j))]
+                        sigma = self.settings['normalise']['sigma'][str((i,j))]
+                        image[i,j] = (image[i,j] - mu)/sigma
+            else:
+                raise ValueError("Invalid option for global_or_pixel, should be "
+                                     "one of global or pixel.")
+        
+        #####################################################
+        
+        # Datatype unit conversion
+        if ('units' not in self.settings or
+                self.settings['units'] == None or self.settings['units'] == 'auto'):
+            # Preserve the datatype
+            # Ensure output matches input
+            image = image_processing.img_as_dtype(image, original_dtype)
+            
+        elif self.settings['units'] == 'float64' or self.settings['units'] == 'float':
+            image = skimage.util.img_as_float(image)
+            
+        elif self.settings['units'] == 'uint8':
+            image = skimage.util.img_as_ubyte(image)
+            
+        else:
+            raise ValueError('Unrecognised output units: {}'.format(
+                                self.settings['units']))
         
         return image
         
