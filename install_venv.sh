@@ -19,6 +19,16 @@ if ! hash "virtualenv" 2> /dev/null; then
   echo "This script requires python-virtualenv. Please install it."
   exit 2
 fi
+# Check for pip
+if ! hash "pip" 2> /dev/null; then
+  echo "This script requires pip. Please install it."
+  exit 2
+fi
+# Check for source
+if ! hash "source" 2> /dev/null; then
+  echo "This script requires source. Please install it."
+  exit 2
+fi
 # Check for cmake
 if ! hash "cmake" 2> /dev/null; then
   echo "This script requires CMake. Please install it."
