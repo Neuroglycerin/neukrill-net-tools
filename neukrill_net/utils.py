@@ -495,7 +495,7 @@ def train_test_split(image_fnames, training_set_mode, train_split=0.8):
     split_fnames = {}
     # assuming train split is some float between 0 and 1, and assign that
     # proportion to train and half of the remaining to test and validation
-    for class_label in image_fnames.keys():
+    for class_label in image_fnames["train"].keys():
         # find where the break should be
         train_break = int(train_split*len(
             image_fnames["train"][class_label]))

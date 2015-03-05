@@ -97,7 +97,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
                                                                  self.settings,
                                                                  force=force)
         # split train/test/validation
-        self.settings.image_fnames[train_or_predict] = \
+        self.settings.image_fnames["train"] = \
                 neukrill_net.utils.train_test_split(
                         self.settings.image_fnames, 
                         training_set_mode, 
