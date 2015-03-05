@@ -245,7 +245,7 @@ class RandomAugment(object):
             image = image_processing.landscapise_image(image)
         
         # Ensure image is square now if we are going to reshape
-        if 'resize' in self.settings:
+        if 'resize' in self.settings or 'shape' in self.settings:
             image = image_processing.pad_to_square(image)
         
         #####################################################
