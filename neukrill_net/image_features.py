@@ -196,8 +196,6 @@ def get_shape_moments(image):
     cnt=contours[max_index]
     M = cv2.moments(cnt)
 
-    #cv2.drawContours(image, cnt, -1, 2)
-    #cv2.imwrite('blabla.png',image)
     return M
 
 
@@ -211,7 +209,7 @@ def get_shape_HuMoments(moments):
     """
     huMoments = cv2.HuMoments(moments).flatten()
     
-    # take log as advised by internetz
+    # take log as this is better for classification
     huMoments = -np.sign(huMoments) * np.log10(np.abs(huMoments))
 
     # remove last moment as it is dependent on reflection
