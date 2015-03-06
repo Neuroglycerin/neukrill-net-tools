@@ -9,8 +9,6 @@ import numpy as np
 from neukrill_net.tests.base import BaseTestCase
 import neukrill_net.utils as utils
 import neukrill_net.utils as constants
-# appears we were not using this?
-#import unittest.mock
 
 class TestSettings(BaseTestCase):
     """
@@ -165,8 +163,8 @@ class TestLoadData(BaseTestCase):
                          ['fecal_pellet'], list(labels))
         self.assertEqual(data.shape, (10, 1))
 
-        self.assertEqual([[int(x[0])] for x in data], [[73], [65], [51], [35], 
-                                                [37], [0], [202], [0], 
+        self.assertEqual([[int(x[0])] for x in data], [[73], [65], [51], [35],
+                                                [37], [0], [202], [0],
                                                 [0], [158]])
 
 #    def test_load_test_fails_without_processing(self):
@@ -201,3 +199,27 @@ class TestLoadData(BaseTestCase):
         self.assertIs(int(data[1][0]), 5)
         self.assertIs(int(data[2][0]), 46)
 
+class TestLoadRawData(BaseTestCase):
+    """
+    Test load_rawdata function in utils
+    """
+
+    def setUp(self):
+        self.image_fname_dict = self.image_fname_dict
+        self.classes = self.classes
+        self.X, self.labels = utils.load_rawdata(self.image_fname_dict,
+                                       classes = self.classes,
+                                       verbose = True)
+
+
+
+    def test_loaded_labels(self):
+        self.assertIs(len(self.labels), 10)
+        self.assertEqual(['acantharia_protist'] * 3 + \
+                         ['acantharia_protist_halo'] * 2 + \
+                         ['artifacts_edge'] * 4 + \
+                         ['fecal_pellet'], list(self.labels))
+
+    def test_loaded_data(self):
+        self.assertEqual(len(self.X), 10)
+        self.assertIs(type(self.X[0]), np.ndarray)
