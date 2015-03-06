@@ -84,7 +84,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
     def __init__(self, transformer, settings_path="settings.json", 
                  run_settings_path="run_settings/alexnet_based.json",
                  training_set_mode="train",
-                 verbose=False, force=False, seed=42):
+                 verbose=False, force=False):
         """
         Loads the images as a list of differently shaped
         numpy arrays and loads the labels as a vector of 
@@ -120,7 +120,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         self.y = self.y.astype(np.float32)
         
         # set up the random state
-        self.rng = np.random.RandomState(seed)
+        self.rng = np.random.RandomState(self.settings.r_seed)
         
         # shuffle a list of image indices
 
