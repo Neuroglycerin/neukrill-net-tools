@@ -123,7 +123,6 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         self.rng = np.random.RandomState(self.settings.r_seed)
         
         # shuffle a list of image indices
-
         self.indices = range(self.N)
         self.rng.shuffle(self.indices)
         
@@ -164,6 +163,8 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         """
         selection = self.rng.random_integers(0,high=self.N,size=batch_size)
         batch = [self.X[s].ravel() for s in selection]
+        if include_labels:
+            raise NotImplementedError
         return batch
         
     def get_batch_topo(self, batch_size, include_labels=False):
