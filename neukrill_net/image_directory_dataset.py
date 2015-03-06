@@ -177,6 +177,8 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         """
         selection = self.rng.random_integers(0,high=self.N,size=batch_size)
         batch = [self.X[s] for s in selection]
+        if include_labels:
+            raise NotImplementedError
         return batch
         
     def get_num_examples(self):
