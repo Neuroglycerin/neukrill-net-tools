@@ -15,8 +15,11 @@ TODO: -look into adaptive thresholds to generate keypoints if no points are dete
       -make sure if varying patchSize for ORB, descriptor uses same parameters! (DONE - we use **kwargs)
 """
 
+from __future__ import division
+
 import cv2
 import numpy as np
+import time
 
 """
 ####
@@ -184,7 +187,6 @@ def get_shape_moments(image):
     input: image
     output: dictionary of moments (see OpenCV documentation)
     """
-    #im = copy.deepcopy(rawdata[0])
     ret,thresh = cv2.threshold(image,254,255,cv2.THRESH_BINARY_INV)
     contours, _ = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 
@@ -194,8 +196,6 @@ def get_shape_moments(image):
     cnt=contours[max_index]
     M = cv2.moments(cnt)
 
-    #cv2.drawContours(image, cnt, -1, 2)
-    #cv2.imwrite('blabla.png',image)
     return M
 
 
@@ -209,7 +209,7 @@ def get_shape_HuMoments(moments):
     """
     huMoments = cv2.HuMoments(moments).flatten()
     
-    # take log as advised by internetz
+    # take log as this is better for classification
     huMoments = -np.sign(huMoments) * np.log10(np.abs(huMoments))
 
     # remove last moment as it is dependent on reflection
@@ -218,4 +218,52 @@ def get_shape_HuMoments(moments):
     return huMoments
 
 
+"""
+####
+Histogram of pixel intensities.
+####
+"""
 
+def get_histogram(image):
+    """
+    Returns the histogram of pixel intensities within the image after segmentation.
+
+    Just want to analyze the pixels in the contour region, then save a copy of the mask for each contour so that you can use it to check which pixels are within the contour.
+
+    Ref: http://stackoverflow.com/questions/10176184/with-opencv-try-to-extract-a-region-of-a-picture-described-by-arrayofarrays
+
+    input: image
+    output: normalised histogram [0,255]
+    """
+    ret,thresh = cv2.threshold(image,254,255,cv2.THRESH_BINARY_INV)
+    contours, _ = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
+    # Find the index of the largest contour
+    areas = [cv2.contourArea(c) for c in contours]
+    max_index = np.argmax(areas)
+    cnt=contours[max_index]
+
+    # get bounding box for contour
+    x,y,w,h = cv2.boundingRect(cnt)
+    
+    size = image.shape 
+
+    mask = np.zeros(size, dtype=np.uint8)
+    cv2.drawContours(mask, [cnt], -1, (255,255,255), thickness = cv2.cv.CV_FILLED)
+    
+    result = cv2.bitwise_and(image, image, mask = mask)
+    contourRegion = result[y:y+h,x:x+w]
+
+    # crop mask
+    mask = mask[y:y+h,x:x+w]
+    # no of black pixels in mask
+    no_of_black_pix_mask = np.sum(mask==0)
+
+    #bins = np.arange(256).reshape(256,1)
+    hist_item = cv2.calcHist([contourRegion],[0],None,[256],[0,256])
+    hist_item[0] -= no_of_black_pix_mask
+
+    sumHist = sum(hist_item[:248])
+    hist_item = hist_item/sumHist
+
+    return hist_item

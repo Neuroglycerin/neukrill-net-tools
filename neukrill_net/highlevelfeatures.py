@@ -407,6 +407,13 @@ class ContourMoments(HighLevelFeatureBase):
             return np.concatenate((np.array(hu_moments),np.array(moments.values())))
 
 
+class ContourHistogram(HighLevelFeatureBase):
+    """
+    Compute normalised histogram of pixel intesities within the contour.
+    """
+    def extract_image(self, image):
+        return neukrill_net.image_features.get_histogram(image)
+
 
 ###############################################################################
 # Local keypoint description based features
