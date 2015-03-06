@@ -34,13 +34,13 @@ class FlyIterator(object):
     seeding with sampled numbers from the dataset's own rng.
     """
     def __init__(self, dataset, batch_size, num_batches,
-                 final_shape, seed=42):
+                 final_shape, rng):
         self.dataset = dataset
         self.batch_size = batch_size
         self.num_batches = num_batches
         self.final_shape = final_shape
         # initialise rng
-        self.rng = np.random.RandomState(seed=seed)
+        self.rng = rng
         # shuffle indices of size equal to number of examples
         # in dataset
         N = self.dataset.get_num_examples()
@@ -150,7 +150,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         iterator = FlyIterator(dataset=self, batch_size=batch_size, 
                                 num_batches=num_batches, 
                                 final_shape=self.run_settings["final_shape"],
-                                seed=self.rng.random_integers(low=0, high=256))
+                                rng=self.rng)
         return iterator
         
     def adjust_to_be_viewed_with():
