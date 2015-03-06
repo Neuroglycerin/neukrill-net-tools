@@ -12,6 +12,30 @@ if [ $# -eq 0 ] || [ -z "$1" ]; then
   exit 2
 fi
 #################################################################
+# Check for necessary commands
+#
+# Check for virutalenv
+if ! hash "virtualenv" 2> /dev/null; then
+  echo "This script requires python-virtualenv. Please install it."
+  exit 2
+fi
+# Check for pip
+if ! hash "pip" 2> /dev/null; then
+  echo "This script requires pip. Please install it."
+  exit 2
+fi
+# Check for source
+if ! hash "source" 2> /dev/null; then
+  echo "This script requires source. Please install it."
+  exit 2
+fi
+# Check for cmake
+if ! hash "cmake" 2> /dev/null; then
+  echo "This script requires CMake. Please install it."
+  exit 2
+fi
+#
+#################################################################
 # Need to know the absolute path to the location you
 # want to create as your virtual environment
 #
@@ -93,13 +117,20 @@ mkdir build
 cd build
 #
 # Have to copy the python2.7 library file over
-if [ -e /usr/lib64/libpython2.7.so ]; then
+if [ -e "$VIRTUAL_ENV"/lib/libpython2.7.so ]; then
+    # There is one already there!
+    echo "File libpython2.7so is already present"
+elif [ -e /usr/lib64/libpython2.7.so ]; then
     # For DICE
     cp /usr/lib64/libpython2.7.so "$VIRTUAL_ENV"/lib
+elif [ -e /usr/lib/libpython2.7.so ]; then
+    # Other likely library location
+    cp /usr/lib/libpython2.7.so "$VIRTUAL_ENV"/lib
 elif [ -e /usr/lib/x86_64-linux-gnu/libpython2.7.so ]; then
     # For Ubuntu
-    cp /usr/lib64/libpython2.7.so "$VIRTUAL_ENV"/lib
-else
+    cp /usr/lib/x86_64-linux-gnu/libpython2.7.so "$VIRTUAL_ENV"/lib
+fi
+if [ ! -e "$VIRTUAL_ENV"/lib/libpython2.7.so ]; then
     echo "Error: Couldn't find libpython2.7.so. Did not install OpenCV to venv."
     exit 2
 fi

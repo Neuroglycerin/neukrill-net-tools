@@ -296,10 +296,10 @@ def flip_image(image, flip_x=False, flip_y=False):
         raise ValueError('Image must be 2-dimensional')
     
     if flip_x:
-        image = np.flipud(image)
+        image = np.fliplr(image)
     
     if flip_y:
-        image = np.fliplr(image)
+        image = np.flipud(image)
     
     return image
 
