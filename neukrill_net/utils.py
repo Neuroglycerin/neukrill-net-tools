@@ -522,3 +522,24 @@ def train_test_split(image_fnames, training_set_mode, train_split=0.8):
         assert len(split_fnames[class_label]) > 0
 
     return split_fnames
+
+def confusion_matrix_from_proba(y_true, y_pred, labels=None):
+    """
+    Computes a confusion matrix from average of sample probabilites.
+    Inputs: y_true - the true labels. Vector
+            y_pred - Matrix of predicted probabilities.
+                     Each i-th row is the predections for the i-th
+                     sample (whose true class is given in y_true[i]
+                     Each j-th column is predictions for the sample
+                     being a member of the j-th class
+    Output: M - Confusion matrix from averaging the probabilities
+    """
+    y_true = np.array(y_true)
+    if labels is None:
+        labels = np.union1d(y_true,np.arange(y_pred.shape[1]))
+    n_classes = len(labels)
+    M = np.zeros((n_classes,n_classes))
+    for i in range(n_classes):
+        li = (y_true == i)
+        M[i,:] = np.mean(y_pred[li,:],0)
+    return M
