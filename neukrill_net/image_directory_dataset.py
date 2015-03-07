@@ -60,7 +60,7 @@ class FlyIterator(object):
     def next(self):
         # return one batch
         if len(self.indices) >= self.batch_size:
-            batch_indices = [self.indices.pop() for i in range(self.batch_size)]
+            batch_indices = [self.indices.pop(0) for i in range(self.batch_size)]
             # preallocate array
             if len(self.final_shape) == 2: 
                 Xbatch = np.zeros([self.batch_size]+list(self.final_shape)+[1])
