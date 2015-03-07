@@ -54,7 +54,8 @@ def augmentation_wrapper(units='float64', **augment_settings):
     
     # Resize
     if 'resize' in augment_settings:
-        
+        if 'resize_order' not in augment_settings:
+            augment_settings['resize_order'] = 0.75
         # apply our resize
         resize = lambda images: [image_processing.resize_image(
                                     image,
