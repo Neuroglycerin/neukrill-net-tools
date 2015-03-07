@@ -56,10 +56,11 @@ def create_encoding(class_name):
         else:
             superclass_array[sup_classes.index(taxonomy.superclasses[key][-1])] = 1
 
-        superclass_map = {s:i for s,i in zip(sup_classes, superclass_array)}
+        #superclass_map = {s:i for s,i in zip(sup_classes, superclass_array)}
 
         # Append it to the output list
-        all_arrays.append(superclass_map)
+        #all_arrays.append(superclass_map)
+        all_arrays.append(superclass_array)
 
         # Increase depth
         i = i + 1
