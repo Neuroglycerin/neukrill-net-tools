@@ -39,19 +39,29 @@ def propagate_labels_to_leaves(hdic, classes, mode='key->value'):
     """
     hdic2 = {}
     for key, value in hdic.iteritems():
-        # Check if the key is in the search terms
-        key_matches = [class_name if key==class_name for class_name in classes]
-        # Check if the value is in the search terms
-        val_matches = [class_name if value==class_name for class_name in classes]
-        
-        if len(key_matches) and mode=='key->key':
-            hdic2[key_matches[0]] = hdic2.pop(key)
+        if mode=='key->key' or mode=='key->value':
+            # Check if the key is in the search terms
+            found_index = None
+            for class_index,class_name in enumerate(classes):
+                if key==class_name:
+                    found_index = class_index
+                    break
             
-        elif len(key_matches) and mode=='key->value':
-            hdic2[key] = key_matches[0]
+            if found_index is not None and mode=='key->key':
+                hdic2[found_index] = value
+                
+            if found_index is not None and mode=='key->value':
+                hdic2[key] = found_index
             
-        elif len(val_matches) and mode=='value->value':
-            hdic2[key] = val_matches[0]
+        elif mode=='value->value':
+            # Check if the value is in the search terms
+            found_index = None
+            for class_index,class_name in enumerate(classes):
+                if value==class_name:
+                    found_index = class_index
+                    break
+            if found_index is not None:
+                hdic2[key] = found_index
             
         elif isinstance(value, dict):
             # Descend through the dictionary stack
