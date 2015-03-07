@@ -475,8 +475,13 @@ def format_yaml(run_settings,settings):
         os.mkdir(yamldir)
     yaml_path = os.path.join(yamldir,run_settings["filename"]+
             run_settings['yaml file'].split(".")[0]+".yaml")
-    with open(yaml_path, "w") as f:
-        f.write(yaml_string)
+    try:
+        with open(yaml_path, "w") as f:
+            f.write(yaml_string)
+    except IOError:
+        warnings.warn("Could not write full YAML specification to scratch.\n"
+                      "Not required for reproducibility, but can be used \n"
+                      "with Pylearn2 on its own, so may be useful.")
     return yaml_string
 
 def train_test_split(image_fnames, training_set_mode, train_split=0.8):
