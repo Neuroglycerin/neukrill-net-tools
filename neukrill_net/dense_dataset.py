@@ -88,6 +88,9 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                 self.run_settings["final_shape"][1],1))
             image_index = 0
             # load the images in image_fpaths, iterating and keeping track of class
+            if self.run_settings.get("use_super_classes", False):
+                # create dictionary to cache superclass vectors
+                supclass_vecs = {}
             for class_label in self.settings.classes:
                 for image_path in self.settings.image_fnames[
                                                     train_or_predict][class_label]:
@@ -97,11 +100,15 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                     images = processing(image)
                     # for each image store a class label
                     if self.run_settings.get("use_super_classes", False):
-                        # get superclass hierarchy for class label
-                        supclass_hier = enc.create_encoding(class_label)
-                        # collapse to a list of 1/0 values
-                        supclass_vec = [el for grp in supclass_hier for el in grp]
-                        y += [supclass_vec]*len(images)
+                        # check if superclass vector for this class label
+                        # already generated, if not generate
+                        if not supclass_vecs.has_key(class_label):
+                            # get superclass hierarchy for class label
+                            supclass_hier[class_label] = enc.create_encoding(class_label)
+                            # collapse to a list of 1/0 values
+                            supclass_vecs[class_label] = \
+                                [el for grp in supclass_hier for el in grp]
+                        y += [supclass_vecs[class_label]]*len(images)
                     else:
                         y += [class_label]*len(images)
                     # then broadcast each of these images into the empty X array
