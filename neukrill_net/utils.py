@@ -11,6 +11,7 @@ import gzip
 import numpy as np
 import skimage
 import random
+import warnings
 
 import neukrill_net.image_processing as image_processing
 import neukrill_net.constants as constants
