@@ -1,5 +1,4 @@
 import taxonomy
-import pprint
 
 def create_encoding(class_name):
 
@@ -15,10 +14,6 @@ def create_encoding(class_name):
     #class_map = {s:i for s,i in zip(classes, class_array)}
     #all_arrays.append(class_map)
     all_arrays.append(class_array)
-    
-    # Reverse parents in superclasses so that depth = 1 gives first immediate parent
-    for key, value in taxonomy.superclasses.items():
-        taxonomy.superclasses[key] = value[::-1] 
 
     # Set depth
     i = 1
@@ -26,15 +21,14 @@ def create_encoding(class_name):
     # Create an instance of TaxonomyLayer
     layer = taxonomy.TaxonomyLayer(i)
 
-    # This will be the next superclass array
-    sup_classes = []
-
     # This will have all classes in it at the end of iterations
     check = []
 
     # While alphabetically sorted classes are not equal to the checking array
     while classes != check:
         check = []
+
+        # This will be the next superclass array
         sup_classes = []
         # Go through superclasses
         for key, value in sorted(taxonomy.superclasses.items(), key = lambda x:x[0]):

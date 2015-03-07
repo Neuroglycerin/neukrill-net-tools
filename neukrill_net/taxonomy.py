@@ -211,7 +211,7 @@ superclasses = {}
 
 def generate_superclasses(taxonomy, current_parents):
     if not taxonomy:
-        superclasses[current_parents[-1]] = current_parents[0:-1]
+        superclasses[current_parents[-1]] = current_parents[-2::-1]
     for parent, children in taxonomy.items():
         current_parents.append(parent)
         generate_superclasses(children, current_parents)
@@ -228,3 +228,4 @@ class TaxonomyLayer(object):
         if self.depth > len(superclasses[item]):
             return item
         return superclasses[item][self.depth - 1]
+
