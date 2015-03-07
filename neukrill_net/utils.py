@@ -458,7 +458,6 @@ def format_yaml(run_settings,settings):
     hier = enc.create_encoding(settings.classes[0])
     hier_group_sizes = {"n_classes_{0}".format(i+1) : n for i, n 
                         in enumerate([len(el) for el in hier])}
-    print(hier_group_sizes)
     run_settings.update(hier_group_sizes)
     run_settings["n_classes"] = len(settings.classes)
     # legacy rename, to make sure it's in there
