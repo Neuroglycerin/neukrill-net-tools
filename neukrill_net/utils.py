@@ -15,6 +15,7 @@ import random
 import neukrill_net.image_processing as image_processing
 import neukrill_net.constants as constants
 import neukrill_net.taxonomy
+import neukrill_net.encoding as enc
 
 class Settings:
     """
@@ -454,6 +455,10 @@ def format_yaml(run_settings,settings):
         yaml_string = y.read()
     # sub in the following things for default: settings_path, run_settings_path,
     # final_shape, n_classes, save_path
+    hier = enc.create_encoding(settings.classes[0])
+    hier_group_sizes = {"n_classes_{0}".format(i+1) : n for i, n 
+                        in enumerate([len(el) for el in hier])}
+    run_settings.update(hier_group_sizes)
     run_settings["n_classes"] = len(settings.classes)
     # legacy rename, to make sure it's in there
     run_settings["save_path"] = run_settings['pickle abspath']
