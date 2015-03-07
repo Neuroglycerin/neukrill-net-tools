@@ -44,8 +44,10 @@ class FlyIterator(object):
         # indices of size equal to number of examples
         N = self.dataset.get_num_examples()
         self.indices = range(N)
-        if mode == 'shuffled_sequential':
+        if mode == 'even_shuffled_sequential':
             self.rng.shuffle(self.indices)
+        else:
+            assert mode == 'even_sequential'
         # have to add this for checks during training
         # bit of a lie
         self.stochastic = False
