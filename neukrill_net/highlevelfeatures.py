@@ -208,6 +208,11 @@ class MultiHighLevelFeature(HighLevelFeatureBase):
     
     _is_combiner = True
     
+    @property
+    def _needs_fitting(self):
+        return any([child._needs_fitting for child in self._childHLFs])
+        
+        
     def __init__(self, HLF_list, *args, **kwargs):
         """
         Initialise
