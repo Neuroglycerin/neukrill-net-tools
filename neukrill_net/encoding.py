@@ -10,9 +10,6 @@ def create_encoding(class_name):
     class_array = [0] * len(classes)
     class_array[classes.index(class_name)] = 1
 
-    #pprint.pprint(classes)
-    #pprint.pprint(class_array)
-
     # Big list with all arrays
     all_arrays = []
     class_map = {s:i for s,i in zip(classes, class_array)}
@@ -36,13 +33,10 @@ def create_encoding(class_name):
 
     # While alphabetically sorted classes are not equal to the checking array
     while classes != check:
-    #for j in range(3):
         check = []
         sup_classes = []
         # Go through superclasses
         for key, value in sorted(taxonomy.superclasses.items(), key = lambda x:x[0]):
-
-            #pprint.pprint(layer[key])
 
             # Add first parent to sup_classes if it's not there yet
             if layer[key] != key:
@@ -64,9 +58,6 @@ def create_encoding(class_name):
 
         superclass_map = {s:i for s,i in zip(sup_classes, superclass_array)}
 
-        #pprint.pprint(sup_classes)
-        #pprint.pprint(superclass_array)
-
         # Append it to the output list
         all_arrays.append(superclass_map)
 
@@ -78,6 +69,3 @@ def create_encoding(class_name):
     if all([x==y for x,y in zip(all_arrays[-1], all_arrays[-2])]):
         all_arrays.pop()
     return all_arrays
-
-arrays = create_encoding('copepod_calanoid_flatheads')
-pprint.pprint(arrays)
