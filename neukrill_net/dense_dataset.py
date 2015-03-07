@@ -104,7 +104,7 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                         # already generated, if not generate
                         if not supclass_vecs.has_key(class_label):
                             # get superclass hierarchy for class label
-                            supclass_hier[class_label] = enc.create_encoding(class_label)
+                            supclass_hier = enc.create_encoding(class_label)
                             # collapse to a list of 1/0 values
                             supclass_vecs[class_label] = \
                                 [el for grp in supclass_hier for el in grp]
@@ -125,9 +125,9 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                                             self.run_settings, verbose=verbose)
             # make sure y is an array
             y = np.array(y)
+            print(y.shape)
             if self.run_settings.get("use_super_classes", False):
                 # using superclasses so y already contains target vectors
-                print(y)
                 super(self.__class__,self).__init__(topo_view=X,y=y)
             else:
                 # not using superclasses so map label strings to integers
