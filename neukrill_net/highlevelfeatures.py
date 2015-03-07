@@ -52,6 +52,7 @@ class HighLevelFeatureBase:
     """
     
     _is_combiner = False
+    _needs_fitting = False
     
     def __init__(self, preprocessing_func=None, augment_func=None, **kwargs):
         """
@@ -425,6 +426,8 @@ class BagOfWords(HighLevelFeatureBase):
     the clusters (words) within which local features fall.
     """
     
+    _needs_fitting = True
+    
     def __init__(self, verbose=False, normalise_hist=False, **options):
         """Initialisation"""
         
@@ -567,6 +570,7 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
     image.
     """
     
+    _needs_fitting = True
     num_classes = 0
     
     def __init__(self, detector, describer, classifier, return_num_kp=True, summary_method='mean', **kwargs):
