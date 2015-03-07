@@ -12,8 +12,9 @@ def create_encoding(class_name):
 
     # Big list with all arrays
     all_arrays = []
-    class_map = {s:i for s,i in zip(classes, class_array)}
-    all_arrays.append(class_map)
+    #class_map = {s:i for s,i in zip(classes, class_array)}
+    #all_arrays.append(class_map)
+    all_arrays.append(class_array)
     
     # Reverse parents in superclasses so that depth = 1 gives first immediate parent
     for key, value in taxonomy.superclasses.items():
