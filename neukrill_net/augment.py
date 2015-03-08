@@ -231,52 +231,18 @@ class RandomAugment(object):
         #self.settings['rotate_is_resizable'] = rotate_is_resizable
         
     
-    def __call__(self, image):
+    def get_augs(self):
         """
-        Maps raw image to augmented image.
+        Computes the augmentation options
         """
-        
-        # Note down the original type
-        original_dtype = image.dtype
-        
-        # Convert to float while we process it
-        image = skimage.util.img_as_float(image)
-        
-        #####################################################
-        # Pre-augmentation processing
-        
-        # Landscapise
-        # Set to True if you want to ensure all the images are landscape
-        if 'landscapise' in self.settings and self.settings['landscapise']:
-            image = image_processing.landscapise_image(image)
-        
-        # Ensure image is square now if we are going to resize
-        if 'resize' in self.settings:
-            image = image_processing.pad_to_square(image)
-        
-        # Shape-fixing without resizing
-        if 'shape' in self.settings:
-            if 'dynamic_shapefix' in self.settings and self.settings['dynamic_shapefix']:
-                # Do a dynamic shapefix where we pan to a random location of those viable
-                pos_x = self.rng.uniform(low=0.0, high=1.0)
-                pos_y = self.rng.uniform(low=0.0, high=1.0)
-                image = image_processing.dynamic_shape_fix(image, self.settings['shape'],
-                            (pos_x,pos_y), do_crop=False, do_pad=True)
-                
-            else:
-                image = image_processing.shape_fix(image, self.settings['shape'],
-                            do_crop=False, do_pad=True)
-        
-        #####################################################
-        # Random augmentation
-        
         # Flip (always horizontally)
         # All other relfections can be acheived by coupling with an appropriate reflection
         # Flip setting should either be True or False in settings
         if 'flip' in self.settings and self.settings['flip']:
             # Flip if coin-toss says so
-            if self.rng.binomial(1, 0.5):
-                image = image_processing.flip_image(image, True)
+            flip = self.rng.binomial(1, 0.5)
+        else:
+            flip = False
         
         ### Affine Transformation
         # Rescale
@@ -379,35 +345,91 @@ class RandomAugment(object):
         else:
             transform_order = self.settings['transform_order']
         
-        # Perform affine transformation
-        image = image_processing.custom_transform_nice_units(image, scale=scalefactor, 
-                    rotation=rot_angle, shear=shear_angle, translation=shuntlist, order=transform_order)
+        aug_dic = {'flip': flip,
+                    'scalefactor': scalefactor, 'rot_angle': rot_angle,
+                    'shear_angle': shear_angle, 'shuntlist': shuntlist,
+                    'transform_order': transform_order}
+        return aug_dic
         
-        # Crop by a random amount from each side
-        if 'crop' in self.settings and not self.settings['crop']==None:
-            for side_id in range(4):
-                crop_index = self.rng.randint(0, len(self.settings['crop']))
-                image = image_processing.crop_image(image, side_id, 
-                        self.settings['crop'][crop_index])
+    
+    def __call__(self, image):
+        """
+        Basically a wrapper function for augment_and_process
+        """
+        
+        # Note down the original type
+        original_dtype = image.dtype
+        
+        # Convert to float while we process it
+        image = skimage.util.img_as_float(image)
+        
+        # Landscapise
+        # Set to True if you want to ensure all the images are landscape
+        if 'landscapise' in self.settings and self.settings['landscapise']:
+            image = image_processing.landscapise_image(image)
+        
+        # Get the augmentation properties
+        aug_dic = self.get_augs()
+        
+        # Augment and preprocess
+        return self.augment_and_process(image, aug_dic, self.settings)
+        
+        
+    def augment_and_process(self, image, aug_dic, processing_settings):
+        """
+        Maps raw image to augmented image.
+        """
+        
+        #####################################################
+        # Pre-augmentation processing
+        
+        # Ensure image is square now if we are going to resize
+        if 'resize' in processing_settings:
+            image = image_processing.pad_to_square(image)
+        
+        # Shape-fixing without resizing
+        if 'shape' in processing_settings:
+            if 'dynamic_shapefix' in processing_settings and processing_settings['dynamic_shapefix']:
+                # Do a dynamic shapefix where we pan to a random location of those viable
+                pos_x = self.rng.uniform(low=0.0, high=1.0)
+                pos_y = self.rng.uniform(low=0.0, high=1.0)
+                image = image_processing.dynamic_shape_fix(image, processing_settings['shape'],
+                            (pos_x,pos_y), do_crop=False, do_pad=True)
+                
+            else:
+                image = image_processing.shape_fix(image, processing_settings['shape'],
+                            do_crop=False, do_pad=True)
+        
+        #####################################################
+        # Random augmentation
+        
+        if aug_dic['flip']:
+            image = image_processing.flip_image(image, True)
+        
+        # Perform affine transformation
+        image = image_processing.custom_transform_nice_units(image,
+                    scale=aug_dic['scalefactor'], rotation=aug_dic['rot_angle'],
+                    shear=aug_dic['shear_angle'], translation=aug_dic['shuntlist'],
+                    order=aug_dic['transform_order'])
         
         #####################################################
         # Post-augmentation processing
         
         # Shape-fixing without resizing
-        if 'shape' in self.settings:
-            if 'dynamic_shapefix' in self.settings and self.settings['dynamic_shapefix']:
+        if 'shape' in processing_settings:
+            if 'dynamic_shapefix' in processing_settings and processing_settings['dynamic_shapefix']:
                 # Do a dynamic shapefix where we pan to a random location of those viable
-                image = image_processing.dynamic_shape_fix(image, self.settings['shape'],
+                image = image_processing.dynamic_shape_fix(image, processing_settings['shape'],
                             (pos_x,pos_y))
                 
             else:
-                image = image_processing.shape_fix(image, self.settings['shape'])
+                image = image_processing.shape_fix(image, processing_settings['shape'])
         
         # Resize
-        if not 'resize_order' in self.settings or self.settings['resize_order']==None:
+        if not 'resize_order' in processing_settings or processing_settings['resize_order']==None:
             resize_order = 0.75
-        if 'resize' in self.settings:
-            image = image_processing.resize_image(image, self.settings['resize'], resize_order)
+        if 'resize' in processing_settings:
+            image = image_processing.resize_image(image, processing_settings['resize'], resize_order)
         
         #####################################################
         
@@ -420,16 +442,16 @@ class RandomAugment(object):
         
         #####################################################
         
-        if 'normalise' in self.settings:
-            if self.settings['normalise']['global_or_pixel'] == 'global':
-                mu = self.settings['normalise']['mu']
-                sigma = self.settings['normalise']['sigma']
+        if 'normalise' in processing_settings:
+            if processing_settings['normalise']['global_or_pixel'] == 'global':
+                mu = processing_settings['normalise']['mu']
+                sigma = processing_settings['normalise']['sigma']
                 image = (image - mu)/sigma
-            elif self.settings['normalise']['global_or_pixel'] == 'pixel':
+            elif processing_settings['normalise']['global_or_pixel'] == 'pixel':
                 for i in range(image.shape[0]):
                     for j in range(image.shape[1]):
-                        mu = self.settings['normalise']['mu'][str((i,j))]
-                        sigma = self.settings['normalise']['sigma'][str((i,j))]
+                        mu = processing_settings['normalise']['mu'][str((i,j))]
+                        sigma = processing_settings['normalise']['sigma'][str((i,j))]
                         image[i,j] = (image[i,j] - mu)/sigma
             else:
                 raise ValueError("Invalid option for global_or_pixel, should be "
@@ -456,4 +478,42 @@ class RandomAugment(object):
         
         return image
         
+        
+class ParallelRandomAugment(RandomAugment):
+    """
+    Random augmentation, but two at a time!
+    """
+    def __init__(self, preproc1, preproc2, **kwargs):
+        
+        # Assign preprocessing options to attributes
+        self.preproc1 = preproc1
+        self.preproc2 = preproc2
+        
+        # Call superclass
+        RandomAugment.__init__(self, **kwargs)
+        
+    def __call__(self, image):
+        """
+        Wraps two augment_and_process functions and returns
+        two results as a tuple
+        """
+        
+        # Note down the original type
+        original_dtype = image.dtype
+        
+        # Convert to float while we process it
+        image = skimage.util.img_as_float(image)
+        
+        # Landscapise
+        # Set to True if you want to ensure all the images are landscape
+        if 'landscapise' in self.settings and self.settings['landscapise']:
+            image = image_processing.landscapise_image(image)
+        
+        # Get the augmentation properties
+        aug_dic = self.get_augs()
+        
+        # Augment and preprocess
+        im1 = self.augment_and_process(image, aug_dic, self.preproc1)
+        im2 = self.augment_and_process(image, aug_dic, self.preproc2)
+        return (im1,im2)
         
