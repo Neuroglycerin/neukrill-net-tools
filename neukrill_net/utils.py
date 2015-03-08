@@ -480,8 +480,8 @@ def format_yaml(run_settings,settings):
         with open(yaml_path, "w") as f:
             f.write(yaml_string)
     except IOError:
-        warnings.warn("Could not write full YAML specification to scratch.\n"
-                      "Not required for reproducibility, but can be used \n"
+        warnings.warn("Could not write full YAML specification to scratch."
+                      " Not required for reproducibility, but can be used "
                       "with Pylearn2 on its own, so may be useful.")
     return yaml_string
 
