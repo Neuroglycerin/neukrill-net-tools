@@ -34,7 +34,7 @@ class FlyIterator(object):
     seeding with sampled numbers from the dataset's own rng.
     """
     def __init__(self, dataset, batch_size, num_batches,
-                 final_shape, mode='shuffled_sequential',  rng):
+                 final_shape, rng, mode='shuffled_sequential'):
         self.dataset = dataset
         self.batch_size = batch_size
         self.num_batches = num_batches
