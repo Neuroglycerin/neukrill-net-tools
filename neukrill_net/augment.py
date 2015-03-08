@@ -357,12 +357,6 @@ class RandomAugment(object):
         Basically a wrapper function for augment_and_process
         """
         
-        # Note down the original type
-        original_dtype = image.dtype
-        
-        # Convert to float while we process it
-        image = skimage.util.img_as_float(image)
-        
         # Landscapise
         # Set to True if you want to ensure all the images are landscape
         if 'landscapise' in self.settings and self.settings['landscapise']:
@@ -379,6 +373,12 @@ class RandomAugment(object):
         """
         Maps raw image to augmented image.
         """
+        
+        # Note down the original type
+        original_dtype = image.dtype
+        
+        # Convert to float while we process it
+        image = skimage.util.img_as_float(image)
         
         #####################################################
         # Pre-augmentation processing
@@ -497,12 +497,6 @@ class ParallelRandomAugment(RandomAugment):
         Wraps two augment_and_process functions and returns
         two results as a tuple
         """
-        
-        # Note down the original type
-        original_dtype = image.dtype
-        
-        # Convert to float while we process it
-        image = skimage.util.img_as_float(image)
         
         # Landscapise
         # Set to True if you want to ensure all the images are landscape
