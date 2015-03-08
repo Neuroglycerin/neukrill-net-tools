@@ -220,6 +220,9 @@ class RandomAugment(object):
         """
         # Initialise the random number generator
         self.rng = np.random.RandomState(seed=random_seed)
+        # Let 'shapefix' and 'shape' be aliases of the same property
+        if 'shapefix' in kwargs:
+            kwargs['shape'] = kwargs['shapefix']
         # Store settings as a dictionary
         self.settings = kwargs
         # Add kwargs with defaults into dictionary
@@ -379,7 +382,14 @@ class RandomAugment(object):
         
         # Shape-fixing without resizing
         if 'shape' in self.settings:
-            image = image_processing.shape_fix(image, self.settings['shape'])
+            if 'dynamic_shapefix' in self.settings and self.settings['dynamic_shapefix']:
+                # Do a dynamic shapefix where we pan to a random location of those viable
+                pos_x = self.rng.uniform(low=0.0, high=1.0)
+                pos_y = self.rng.uniform(low=0.0, high=1.0)
+                image = image_processing.dynamic_shape_fix(image, self.settings['shape'], (pos_x,pos_y))
+                
+            else:
+                image = image_processing.shape_fix(image, self.settings['shape'])
         
         # Resize
         if not 'resize_order' in self.settings or self.settings['resize_order']==None:

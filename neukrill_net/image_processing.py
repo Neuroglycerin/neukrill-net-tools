@@ -568,9 +568,9 @@ def shape_fix(image, shape):
     elif image.shape[0] < shape[0]:
         # Too small; pad up
         len0 = np.floor( (shape[0] - image.shape[0])/2 )
-        pad0 = whiteVal * np.ones( (len0, image.shape[1]) )
+        pad0 = whiteVal * np.ones( (len0, image.shape[1]), dtype=image.dtype )
         len1 = shape[0] - image.shape[0] - len0
-        pad1 = whiteVal * np.ones( (len1, image.shape[1]) )
+        pad1 = whiteVal * np.ones( (len1, image.shape[1]), dtype=image.dtype )
         image = np.concatenate( (pad0,image,pad1), axis=0 )
     
     # Now do dim-1
@@ -581,9 +581,60 @@ def shape_fix(image, shape):
     else:
         # Too small; pad up
         len0 = np.floor( (shape[1] - image.shape[1])/2 )
-        pad0 = whiteVal * np.ones( (image.shape[0], len0) )
+        pad0 = whiteVal * np.ones( (image.shape[0], len0), dtype=image.dtype )
         len1 = shape[1] - image.shape[1] - len0
-        pad1 = whiteVal * np.ones( (image.shape[0], len1) )
+        pad1 = whiteVal * np.ones( (image.shape[0], len1), dtype=image.dtype )
+        image = np.concatenate( (pad0,image,pad1), axis=1 )
+
+    return image
+
+
+def dynamic_shape_fix(image, shape, pos):
+    """
+    Makes all images the same size without resizing them.
+    Crops large images down to their central SHAPE elements.
+    Pads smaller images with white so the whole thing is sized SHAPE.
+    The pixel value of "white" is determined from the datatype of
+    the input.
+    pos is a tuple of the proportional location of x and y
+    """
+    # First, use skimage to check what value white should be
+    whiteVal = skimage.dtype_limits(image)[1]
+    # We will pad with 1.0 if input is float, 
+    # or pad with 255 if input is ubyte
+    
+    # First do dim-0
+    if image.shape[0] > shape[0]:
+        # Too big; crop down
+        startmin = 0
+        startmax = image.shape[0] - shape[0]
+        start = round(startmin + (startmax-startmin)*pos[0])
+        image = image[ start:(start+shape[0]) , : ]
+    elif image.shape[0] < shape[0]:
+        # Too small; pad up
+        len0min = 0
+        len0max = shape[0] - image.shape[0]
+        len0 = round(len0min + (len0max-len0min)*pos[0])
+        pad0 = whiteVal * np.ones( (len0, image.shape[1]), dtype=image.dtype )
+        len1 = shape[0] - image.shape[0] - len0
+        pad1 = whiteVal * np.ones( (len1, image.shape[1]), dtype=image.dtype )
+        image = np.concatenate( (pad0,image,pad1), axis=0 )
+    
+    # Now do dim-1
+    if image.shape[1] > shape[1]:
+        # Too big; crop down
+        startmin = 0
+        startmax = image.shape[1] - shape[1]
+        start = round(startmin + (startmax-startmin)*pos[1])
+        image = image[ : , start:(start+shape[1]) ]
+    else:
+        # Too small; pad up
+        len0min = 0
+        len0max = shape[1] - image.shape[1]
+        len0 = round(len0min + (len0max-len0min)*pos[1])
+        pad0 = whiteVal * np.ones( (image.shape[0], len0), dtype=image.dtype )
+        len1 = shape[1] - image.shape[1] - len0
+        pad1 = whiteVal * np.ones( (image.shape[0], len1), dtype=image.dtype )
         image = np.concatenate( (pad0,image,pad1), axis=1 )
 
     return image
