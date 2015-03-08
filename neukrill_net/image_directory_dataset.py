@@ -11,7 +11,7 @@ classification challenge.
 __authors__ = "Gavin Gray"
 __copyright__ = "Copyright 2015 - University of Edinburgh"
 __credits__ = ["Gavin Gray"]
-__license__ = "3-clause BSD"
+__license__ = "MIT"
 __maintainer__ = "Gavin Gray"
 __email__ = "gavingray1729@gmail.com"
 
