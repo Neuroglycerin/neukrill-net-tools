@@ -120,7 +120,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
             supclass_vecs = {}
             general_hier = enc.get_hierarchy()
             lengths = sum([len(array) for array in hier])
-            self.y = np.zeros((self.N,lengths)
+            self.y = np.zeros((self.N,lengths))
         else:
             self.y = np.zeros((self.N,self.n_classes))
         class_dictionary = {}
