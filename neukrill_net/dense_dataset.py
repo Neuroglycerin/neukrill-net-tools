@@ -91,6 +91,8 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
             if self.run_settings.get("use_super_classes", False):
                 # create dictionary to cache superclass vectors
                 supclass_vecs = {}
+                # get the general hierarchy
+                general_hier = enc.get_hierarchy()
             for class_label in self.settings.classes:
                 for image_path in self.settings.image_fnames[
                                                     train_or_predict][class_label]:
@@ -104,7 +106,7 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                         # already generated, if not generate
                         if not supclass_vecs.has_key(class_label):
                             # get superclass hierarchy for class label
-                            supclass_hier = enc.create_encoding(class_label)
+                            supclass_hier = enc.get_encoding(class_label, general_hier)
                             # collapse to a list of 1/0 values
                             supclass_vecs[class_label] = \
                                 [el for grp in supclass_hier for el in grp]
