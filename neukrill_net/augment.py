@@ -481,13 +481,12 @@ class RandomAugment(object):
         
 class ParallelRandomAugment(RandomAugment):
     """
-    Random augmentation, but two at a time!
+    Random augmentation, but more than one at a time!
     """
-    def __init__(self, preproc1, preproc2, **kwargs):
+    def __init__(self, preproc_list, **kwargs):
         
         # Assign preprocessing options to attributes
-        self.preproc1 = preproc1
-        self.preproc2 = preproc2
+        self.preproc_list = preproc_list
         
         # Call superclass
         RandomAugment.__init__(self, **kwargs)
@@ -507,7 +506,9 @@ class ParallelRandomAugment(RandomAugment):
         aug_dic = self.get_augs()
         
         # Augment and preprocess
-        im1 = self.augment_and_process(image, aug_dic, self.preproc1)
-        im2 = self.augment_and_process(image, aug_dic, self.preproc2)
-        return (im1,im2)
+        images = []
+        for preproc in self.preproc_list:
+            images += [self.augment_and_process(image, aug_dic, preproc)]
+        
+        return images
         
