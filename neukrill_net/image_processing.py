@@ -547,7 +547,7 @@ def padshift_image(image, centre_shift):
     
     return image
 
-def shape_fix(image, shape):
+def shape_fix(image, shape, do_crop=True, do_pad=True):
     """
     Makes all images the same size without resizing them.
     Crops large images down to their central SHAPE elements.
@@ -561,11 +561,11 @@ def shape_fix(image, shape):
     # or pad with 255 if input is ubyte
     
     # First do dim-0
-    if image.shape[0] > shape[0]:
+    if image.shape[0] > shape[0] and do_crop:
         # Too big; crop down
         start = np.floor( (image.shape[0] - shape[0])/2 )
         image = image[ start:(start+shape[0]) , : ]
-    elif image.shape[0] < shape[0]:
+    elif image.shape[0] < shape[0] and do_pad:
         # Too small; pad up
         len0 = np.floor( (shape[0] - image.shape[0])/2 )
         pad0 = whiteVal * np.ones( (len0, image.shape[1]), dtype=image.dtype )
@@ -574,11 +574,11 @@ def shape_fix(image, shape):
         image = np.concatenate( (pad0,image,pad1), axis=0 )
     
     # Now do dim-1
-    if image.shape[1] > shape[1]:
+    if image.shape[1] > shape[1] and do_crop:
         # Too big; crop down
         start = np.floor( (image.shape[1] - shape[1])/2 )
         image = image[ : , start:(start+shape[1]) ]
-    else:
+    elif image.shape[1] < shape[1] and do_pad:
         # Too small; pad up
         len0 = np.floor( (shape[1] - image.shape[1])/2 )
         pad0 = whiteVal * np.ones( (image.shape[0], len0), dtype=image.dtype )
@@ -589,7 +589,7 @@ def shape_fix(image, shape):
     return image
 
 
-def dynamic_shape_fix(image, shape, pos):
+def dynamic_shape_fix(image, shape, pos, do_crop=True, do_pad=True):
     """
     Makes all images the same size without resizing them.
     Crops large images down to their central SHAPE elements.
@@ -604,13 +604,13 @@ def dynamic_shape_fix(image, shape, pos):
     # or pad with 255 if input is ubyte
     
     # First do dim-0
-    if image.shape[0] > shape[0]:
+    if image.shape[0] > shape[0] and do_crop:
         # Too big; crop down
         startmin = 0
         startmax = image.shape[0] - shape[0]
         start = round(startmin + (startmax-startmin)*pos[0])
         image = image[ start:(start+shape[0]) , : ]
-    elif image.shape[0] < shape[0]:
+    elif image.shape[0] < shape[0] and do_pad:
         # Too small; pad up
         len0min = 0
         len0max = shape[0] - image.shape[0]
@@ -621,13 +621,13 @@ def dynamic_shape_fix(image, shape, pos):
         image = np.concatenate( (pad0,image,pad1), axis=0 )
     
     # Now do dim-1
-    if image.shape[1] > shape[1]:
+    if image.shape[1] > shape[1] and do_crop:
         # Too big; crop down
         startmin = 0
         startmax = image.shape[1] - shape[1]
         start = round(startmin + (startmax-startmin)*pos[1])
         image = image[ : , start:(start+shape[1]) ]
-    else:
+    elif image.shape[1] < shape[1] and do_pad:
         # Too small; pad up
         len0min = 0
         len0max = shape[1] - image.shape[1]

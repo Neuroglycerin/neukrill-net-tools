@@ -250,9 +250,22 @@ class RandomAugment(object):
         if 'landscapise' in self.settings and self.settings['landscapise']:
             image = image_processing.landscapise_image(image)
         
-        # Ensure image is square now if we are going to reshape
-        if 'resize' in self.settings or 'shape' in self.settings:
+        # Ensure image is square now if we are going to resize
+        if 'resize' in self.settings:
             image = image_processing.pad_to_square(image)
+        
+        # Shape-fixing without resizing
+        if 'shape' in self.settings:
+            if 'dynamic_shapefix' in self.settings and self.settings['dynamic_shapefix']:
+                # Do a dynamic shapefix where we pan to a random location of those viable
+                pos_x = self.rng.uniform(low=0.0, high=1.0)
+                pos_y = self.rng.uniform(low=0.0, high=1.0)
+                image = image_processing.dynamic_shape_fix(image, self.settings['shape'],
+                            (pos_x,pos_y), do_crop=False, do_pad=True)
+                
+            else:
+                image = image_processing.shape_fix(image, self.settings['shape'],
+                            do_crop=False, do_pad=True)
         
         #####################################################
         # Random augmentation
@@ -384,9 +397,8 @@ class RandomAugment(object):
         if 'shape' in self.settings:
             if 'dynamic_shapefix' in self.settings and self.settings['dynamic_shapefix']:
                 # Do a dynamic shapefix where we pan to a random location of those viable
-                pos_x = self.rng.uniform(low=0.0, high=1.0)
-                pos_y = self.rng.uniform(low=0.0, high=1.0)
-                image = image_processing.dynamic_shape_fix(image, self.settings['shape'], (pos_x,pos_y))
+                image = image_processing.dynamic_shape_fix(image, self.settings['shape'],
+                            (pos_x,pos_y))
                 
             else:
                 image = image_processing.shape_fix(image, self.settings['shape'])
