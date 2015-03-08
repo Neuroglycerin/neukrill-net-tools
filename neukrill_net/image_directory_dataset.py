@@ -20,6 +20,7 @@ import numpy as np
 
 import pylearn2.datasets.dataset 
 import neukrill_net.utils
+import encoding as enc
 
 # don't have to think too hard about how to write this:
 # https://stackoverflow.com/questions/19151/build-a-basic-python-iterator
@@ -115,12 +116,25 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         # count the classes
         self.n_classes = len(self.settings.classes)
         # transform labels from strings to integers
-        self.y = np.zeros((self.N,self.n_classes))
+        if self.run_settings.get("use_super_classes", False):
+            supclass_vecs = {}
+            general_hier = enc.get_hierarchy()
+            lengths = sum([len(array) for array in hier])
+            self.y = np.zeros((self.N,lengths)
+        else:
+            self.y = np.zeros((self.N,self.n_classes))
         class_dictionary = {}
         for i,c in enumerate(self.settings.classes):
             class_dictionary[c] = i
         for i,j in enumerate(map(lambda c: class_dictionary[c],labels)):
-            self.y[i,j] = 1
+            if self.run_settings.get("use_super_classes", False):
+                if not supclass_vecs.has_key(class_label):
+                    supclass_hier = enc.get_encoding(class_label, general_hier)
+                    supclass_vecs[class_label] = \
+                                [el for grp in supclass_hier for el in grp]
+                    y[i,:] = np.array(supclass_vecs[class_label])
+            else:
+                self.y[i,j] = 1
         self.y = self.y.astype(np.float32)
         
         # set up the random state

@@ -357,12 +357,6 @@ class RandomAugment(object):
         Basically a wrapper function for augment_and_process
         """
         
-        # Note down the original type
-        original_dtype = image.dtype
-        
-        # Convert to float while we process it
-        image = skimage.util.img_as_float(image)
-        
         # Landscapise
         # Set to True if you want to ensure all the images are landscape
         if 'landscapise' in self.settings and self.settings['landscapise']:
@@ -380,6 +374,12 @@ class RandomAugment(object):
         Maps raw image to augmented image.
         """
         
+        # Note down the original type
+        original_dtype = image.dtype
+        
+        # Convert to float while we process it
+        image = skimage.util.img_as_float(image)
+        
         #####################################################
         # Pre-augmentation processing
         
@@ -389,7 +389,7 @@ class RandomAugment(object):
         
         # Shape-fixing without resizing
         if 'shape' in processing_settings:
-            if 'dynamic_shapefix' in processing_settings and processing_settings['dynamic_shapefix']:
+            if 'dynamic_shapefix' not in processing_settings or processing_settings['dynamic_shapefix']:
                 # Do a dynamic shapefix where we pan to a random location of those viable
                 pos_x = self.rng.uniform(low=0.0, high=1.0)
                 pos_y = self.rng.uniform(low=0.0, high=1.0)
@@ -417,7 +417,7 @@ class RandomAugment(object):
         
         # Shape-fixing without resizing
         if 'shape' in processing_settings:
-            if 'dynamic_shapefix' in processing_settings and processing_settings['dynamic_shapefix']:
+            if 'dynamic_shapefix' not in processing_settings or processing_settings['dynamic_shapefix']:
                 # Do a dynamic shapefix where we pan to a random location of those viable
                 image = image_processing.dynamic_shape_fix(image, processing_settings['shape'],
                             (pos_x,pos_y))
@@ -481,13 +481,12 @@ class RandomAugment(object):
         
 class ParallelRandomAugment(RandomAugment):
     """
-    Random augmentation, but two at a time!
+    Random augmentation, but more than one at a time!
     """
-    def __init__(self, preproc1, preproc2, **kwargs):
+    def __init__(self, preproc_list, **kwargs):
         
         # Assign preprocessing options to attributes
-        self.preproc1 = preproc1
-        self.preproc2 = preproc2
+        self.preproc_list = preproc_list
         
         # Call superclass
         RandomAugment.__init__(self, **kwargs)
@@ -498,12 +497,6 @@ class ParallelRandomAugment(RandomAugment):
         two results as a tuple
         """
         
-        # Note down the original type
-        original_dtype = image.dtype
-        
-        # Convert to float while we process it
-        image = skimage.util.img_as_float(image)
-        
         # Landscapise
         # Set to True if you want to ensure all the images are landscape
         if 'landscapise' in self.settings and self.settings['landscapise']:
@@ -513,7 +506,9 @@ class ParallelRandomAugment(RandomAugment):
         aug_dic = self.get_augs()
         
         # Augment and preprocess
-        im1 = self.augment_and_process(image, aug_dic, self.preproc1)
-        im2 = self.augment_and_process(image, aug_dic, self.preproc2)
-        return (im1,im2)
+        images = []
+        for preproc in self.preproc_list:
+            images += [self.augment_and_process(image, aug_dic, preproc)]
+        
+        return images
         
