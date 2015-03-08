@@ -34,7 +34,7 @@ class FlyIterator(object):
     seeding with sampled numbers from the dataset's own rng.
     """
     def __init__(self, dataset, batch_size, num_batches,
-                 final_shape, rng):
+                 final_shape, mode='shuffled_sequential',  rng):
         self.dataset = dataset
         self.batch_size = batch_size
         self.num_batches = num_batches
@@ -43,9 +43,13 @@ class FlyIterator(object):
         self.rng = rng
         # shuffle indices of size equal to number of examples
         # in dataset
+        # indices of size equal to number of examples
         N = self.dataset.get_num_examples()
         self.indices = range(N)
-        self.rng.shuffle(self.indices)
+        if mode == 'even_shuffled_sequential':
+            self.rng.shuffle(self.indices)
+        else:
+            assert mode == 'even_sequential'
         # have to add this for checks during training
         # bit of a lie
         self.stochastic = False
@@ -133,8 +137,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         over the dataset over batches, popping off batches from a shuffled 
         list of indices.
         Inputs:
-            - mode: not actually used, just there so that Pylearn2 doesn't 
-        complain.
+            - mode: 'sequential' or 'shuffled_sequential'.
             - batch_size: required, size of the minibatches produced.
             - num_batches: supply if you want, the dataset will make as many
         as it can if you don't.

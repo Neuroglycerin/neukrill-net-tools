@@ -11,10 +11,12 @@ import gzip
 import numpy as np
 import skimage
 import random
+import warnings
 
 import neukrill_net.image_processing as image_processing
 import neukrill_net.constants as constants
 import neukrill_net.taxonomy
+import neukrill_net.encoding as enc
 
 class Settings:
     """
@@ -54,7 +56,7 @@ class Settings:
         #                       'NO_SUPER_CLASS': ('unclassified')}
 
         self._image_fnames = {}
-        
+
         self._class_priors = []
 
     def parse_settings(self, settings_file):
@@ -179,8 +181,8 @@ class Settings:
         if self._image_fnames:
             self._image_fnames = None
         return None
-    
-    
+
+
     def flattened_train_paths(self, class_names):
         """
         Flattens the training paths
@@ -195,8 +197,8 @@ class Settings:
             paths += self.image_fnames['train'][class_name]
             labels += len(self.image_fnames['train'][class_name]) * [class_index]
         return paths, labels
-        
-    
+
+
     @property
     def class_priors(self):
         """
@@ -211,10 +213,10 @@ class Settings:
             # Normalise the classes
             class_probs /= sum(class_probs)
             self._class_priors = class_probs
-        
+
         return self._class_priors
-        
-        
+
+
 def load_data(image_fname_dict, classes=None,
               processing=None, verbose=False):
     """
@@ -273,7 +275,7 @@ def load_data(image_fname_dict, classes=None,
     # e.g. labelled training data
     if classes:
         labels = []
-        
+
         image_fpaths = []
 
         for class_index, class_name in enumerate(classes):
@@ -305,16 +307,16 @@ def load_data(image_fname_dict, classes=None,
 def load_rawdata(image_fname_dict, classes=None, verbose=False):
     """
     Loads training or test data without appyling any processing.
-    
+
     If the classes kwarg is not none assumed to be loading labelled train
     data and returns two np objs:
         * data - list of image matrices
         * labels - vector of labels
-    
+
     if classes kwarg is none, data will be loaded as test data and just return
         * data - list of image matrices
     """
-    
+
     # initialise lists
     data = []
 
@@ -327,15 +329,15 @@ def load_rawdata(image_fname_dict, classes=None, verbose=False):
                 print("class: {0} of 120: {1}".format(class_index, class_name))
 
             fpaths = image_fname_dict['train'][class_name]
-            
+
             # Load the data and add to list
             data += [skimage.io.imread(fpath) for fpath in fpaths]
-            
+
             # generate the class labels and add them to the list
             labels += len(fpaths) * [class_name]
-            
+
         return data, np.array(labels)
-        
+
     # e.g. test data
     else:
         data = [skimage.io.imread(fpath) for fpath in image_fname_dict['test']]
@@ -356,20 +358,20 @@ def write_predictions(out_fname, p, names, classes):
     output: None
             writes a gzip compressed csv file to `out_fname`.gz on disk
     """
-    
+
     # Write the probabilites as a CSV
     with open(out_fname, 'w') as csv_out:
         out_writer = csv.writer(csv_out, delimiter=',')
         out_writer.writerow(['image'] + list(classes))
         for index in range(len(names)):
             out_writer.writerow([names[index]] + list(p[index,]))
-    
+
     # Compress with gzip
     with open(out_fname, 'rb') as f_in:
         f_out = gzip.open(out_fname + '.gz', 'wb')
         f_out.writelines(f_in)
         f_out.close()
-    
+
     # Delete the uncompressed CSV
     os.unlink(out_fname)
 
@@ -382,7 +384,7 @@ def load_run_settings(run_settings_path, settings,
         saving results, pickles, etc.
     * run_settings_path - abspath to the run settings file, is handed
         to the Dataset class for Pylearn2
-    * settings_path - abspath to the settings file, assumed to be in the usual 
+    * settings_path - abspath to the settings file, assumed to be in the usual
         cwd
     * modeldir - directory in which to save models
     * pickle abspath - abspath where _this_ run will save its pickle file
@@ -439,7 +441,7 @@ def save_run_settings(run_settings):
     with open(run_settings['run_settings_path'], 'w') as f:
         # have to remove the settings structure, can't serialise it
         del run_settings['settings']
-        json.dump(run_settings, f, separators=(',',':'), indent=4, 
+        json.dump(run_settings, f, separators=(',',':'), indent=4,
                                                     sort_keys=True)
     return None
 
@@ -452,8 +454,12 @@ def format_yaml(run_settings,settings):
     # open the YAML template
     with open(os.path.join("yaml_templates",run_settings['yaml file'])) as y:
         yaml_string = y.read()
-    # sub in the following things for default: settings_path, run_settings_path, 
+    # sub in the following things for default: settings_path, run_settings_path,
     # final_shape, n_classes, save_path
+    hier = enc.get_hierarchy()
+    hier_group_sizes = {"n_classes_{0}".format(i+1) : n for i, n 
+                        in enumerate([len(el) for el in hier])}
+    run_settings.update(hier_group_sizes)
     run_settings["n_classes"] = len(settings.classes)
     # legacy rename, to make sure it's in there
     run_settings["save_path"] = run_settings['pickle abspath']
@@ -470,13 +476,18 @@ def format_yaml(run_settings,settings):
         os.mkdir(yamldir)
     yaml_path = os.path.join(yamldir,run_settings["filename"]+
             run_settings['yaml file'].split(".")[0]+".yaml")
-    with open(yaml_path, "w") as f:
-        f.write(yaml_string)
+    try:
+        with open(yaml_path, "w") as f:
+            f.write(yaml_string)
+    except IOError:
+        warnings.warn("Could not write full YAML specification to scratch.\n"
+                      "Not required for reproducibility, but can be used \n"
+                      "with Pylearn2 on its own, so may be useful.")
     return yaml_string
 
 def train_test_split(image_fnames, training_set_mode, train_split=0.8):
     """
-    Perform a stratified split of the image paths stored in a 
+    Perform a stratified split of the image paths stored in a
     image_fnames dictionary supplied.
     Inputs:
         -image_fnames: dictionary of image classes as keys and image paths
@@ -485,10 +496,10 @@ def train_test_split(image_fnames, training_set_mode, train_split=0.8):
     split into each based on this.
         -train_split: proportion to split into "train"; remainder split
     equally into "test" and "validation".
-    
+
     """
     # stratified split of the image paths for train, validation and test
-    # iterate over classes, removing some proportion of the elements, in a 
+    # iterate over classes, removing some proportion of the elements, in a
     # deterministic way
     test_split = train_split + (1-train_split)/2
     # initialise new variable to store split
@@ -499,26 +510,53 @@ def train_test_split(image_fnames, training_set_mode, train_split=0.8):
         # find where the break should be
         train_break = int(train_split*len(
             image_fnames["train"][class_label]))
+
         test_break = int(test_split*len(
             image_fnames["train"][class_label]))
+
         if training_set_mode == "train":
             # then everything up to train_break is what we want
             split_fnames[class_label] \
                     = image_fnames\
                     ["train"][class_label][:train_break]
+
         elif training_set_mode == "validation":
             # then we want the _first_ half of everything after train_break
             split_fnames[class_label] \
                     = image_fnames \
                     ["train"][class_label][train_break:test_break]
+
         elif training_set_mode == "test":
-            # then we want the _second_ half of everything after train_break
+            # then we want everything after test_break
             split_fnames[class_label] \
                     = image_fnames \
                     ["train"][class_label][test_break:]
+
         else:
             raise ValueError("Invalid option for training set mode.")
+
         # then check it's not empty
         assert len(split_fnames[class_label]) > 0
 
     return split_fnames
+
+def confusion_matrix_from_proba(y_true, y_pred, labels=None):
+    """
+    Computes a confusion matrix from average of sample probabilites.
+    Inputs: y_true - the true labels. Vector
+            y_pred - Matrix of predicted probabilities.
+                     Each i-th row is the predections for the i-th
+                     sample (whose true class is given in y_true[i]
+                     Each j-th column is predictions for the sample
+                     being a member of the j-th class
+    Output: M - Confusion matrix from averaging the probabilities
+    """
+    y_true = np.array(y_true)
+    if labels is None:
+        labels = np.union1d(y_true,np.arange(y_pred.shape[1]))
+    n_classes = len(labels)
+    M = np.zeros((n_classes,n_classes))
+    for i in range(n_classes):
+        li = (y_true == i)
+        M[i,:] = np.mean(y_pred[li,:],0)
+    return M

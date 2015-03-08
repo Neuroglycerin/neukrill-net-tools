@@ -52,6 +52,7 @@ class HighLevelFeatureBase:
     """
     
     _is_combiner = False
+    _needs_fitting = False
     
     def __init__(self, preprocessing_func=None, augment_func=None, **kwargs):
         """
@@ -207,6 +208,11 @@ class MultiHighLevelFeature(HighLevelFeatureBase):
     
     _is_combiner = True
     
+    @property
+    def _needs_fitting(self):
+        return any([child._needs_fitting for child in self._childHLFs])
+        
+        
     def __init__(self, HLF_list, *args, **kwargs):
         """
         Initialise
@@ -407,6 +413,13 @@ class ContourMoments(HighLevelFeatureBase):
             return np.concatenate((np.array(hu_moments),np.array(moments.values())))
 
 
+class ContourHistogram(HighLevelFeatureBase):
+    """
+    Compute normalised histogram of pixel intesities within the contour.
+    """
+    def extract_image(self, image):
+        return neukrill_net.image_features.get_histogram(image)
+
 
 ###############################################################################
 # Local keypoint description based features
@@ -417,6 +430,8 @@ class BagOfWords(HighLevelFeatureBase):
     A class for traditional Bag Of visual Words using a histogram of
     the clusters (words) within which local features fall.
     """
+    
+    _needs_fitting = True
     
     def __init__(self, verbose=False, normalise_hist=False, **options):
         """Initialisation"""
@@ -560,6 +575,7 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
     image.
     """
     
+    _needs_fitting = True
     num_classes = 0
     
     def __init__(self, detector, describer, classifier, return_num_kp=True, summary_method='mean', **kwargs):

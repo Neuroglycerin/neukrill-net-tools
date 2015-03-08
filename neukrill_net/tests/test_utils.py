@@ -9,8 +9,6 @@ import numpy as np
 from neukrill_net.tests.base import BaseTestCase
 import neukrill_net.utils as utils
 import neukrill_net.utils as constants
-# appears we were not using this?
-#import unittest.mock
 
 class TestSettings(BaseTestCase):
     """
@@ -165,8 +163,8 @@ class TestLoadData(BaseTestCase):
                          ['fecal_pellet'], list(labels))
         self.assertEqual(data.shape, (10, 1))
 
-        self.assertEqual([[int(x[0])] for x in data], [[73], [65], [51], [35], 
-                                                [37], [0], [202], [0], 
+        self.assertEqual([[int(x[0])] for x in data], [[73], [65], [51], [35],
+                                                [37], [0], [202], [0],
                                                 [0], [158]])
 
 #    def test_load_test_fails_without_processing(self):
@@ -200,4 +198,89 @@ class TestLoadData(BaseTestCase):
         self.assertIs(int(data[0][0]), 63)
         self.assertIs(int(data[1][0]), 5)
         self.assertIs(int(data[2][0]), 46)
+
+class TestLoadRawData(BaseTestCase):
+    """
+    Test load_rawdata function in utils
+    """
+
+    def setUp(self):
+        self.image_fname_dict = self.image_fname_dict
+        self.classes = self.classes
+
+
+    def test_loaded_labels(self):
+        X, labels = utils.load_rawdata(self.image_fname_dict,
+                                       classes = self.classes,
+                                       verbose = True)
+
+
+        self.assertIs(len(labels), 10)
+        self.assertEqual(['acantharia_protist'] * 3 + \
+                         ['acantharia_protist_halo'] * 2 + \
+                         ['artifacts_edge'] * 4 + \
+                         ['fecal_pellet'], list(labels))
+
+    def test_loaded_data(self):
+        X, labels = utils.load_rawdata(self.image_fname_dict,
+                                       classes = self.classes,
+                                       verbose = True)
+
+
+        self.assertEqual(len(X), 10)
+        self.assertIs(type(X[0]), np.ndarray)
+
+
+
+class TestTrainTestSplit(BaseTestCase):
+    """
+    Unit tests for test_train_split fn in utils
+    """
+    def setUp(self):
+        self.image_fnames = {'test': ['b', 'c', 'd', 'e', 'f', 'g', 'h', 'j', 'k', 'm'],
+                'train': {'a': ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a0'],
+                          'b': ['b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'b0'],
+                          'c': ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c0']}}
+
+
+    def test_train_split(self):
+        """
+        Check train split mode works as expected
+        """
+        split_fnames = utils.train_test_split(self.image_fnames, 'train', train_split = 0.5)
+        # ensure all classes are still in split_fnames
+        self.assertEqual(len(split_fnames), 3)
+        # ensure there are the correct number of items in split
+        self.assertEqual([len(x) for x in split_fnames.values()], [5,5,5])
+
+        # ensure last item is 5
+        self.assertEqual(sorted([x[-1] for x in split_fnames.values()]), ["a5","b5","c5"])
+
+    def test_test_split(self):
+        """
+        Check test split mode
+        """
+        split_fnames = utils.train_test_split(self.image_fnames, 'test', train_split = 0.5)
+        # ensure all classes are still in split_fnames
+        self.assertEqual(len(split_fnames), 3)
+        # ensure there are the correct number of items in split
+        self.assertEqual([len(x) for x in split_fnames.values()], [3,3,3])
+
+        # ensure last item is 5
+        self.assertEqual(sorted([x[-1] for x in split_fnames.values()]), ["a0","b0","c0"])
+
+
+    def test_validation_split(self):
+        """
+        Check test split mode
+        """
+        split_fnames = utils.train_test_split(self.image_fnames, 'validation', train_split = 0.5)
+        # ensure all classes are still in split_fnames
+        self.assertEqual(len(split_fnames), 3)
+        # ensure there are the correct number of items in split
+        self.assertEqual([len(x) for x in split_fnames.values()], [2,2,2])
+
+        # ensure last item is 5
+        self.assertEqual(sorted([x[-1] for x in split_fnames.values()]), ["a7","b7","c7"])
+
 

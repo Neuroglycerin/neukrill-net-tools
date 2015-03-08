@@ -1,14 +1,20 @@
 language: python
 python:
     - "2.7"
-    - "3.4"
 before_install: 
+    - sudo apt-get install build-essential
     - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
     - chmod +x miniconda.sh
     - ./miniconda.sh -b
     - export PATH=/home/travis/miniconda/bin:$PATH
     - conda update --yes conda
     - conda create --yes -n condaenv python=$TRAVIS_PYTHON_VERSION
+    - git clone https://github.com/Itseez/opencv.git
+    - mkdir opencv-build
+    - cd opencv-build/
+    - cmake -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_DOCS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_opencv_java=OFF -DBUILD_JASPER=ON -DWITH_JASPER=ON -DBUILD_ZLIB=ON -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DWITH_OPENEXR=OFF -DBUILD_PNG=ON -DWITH_PNG=ON -DWITH_TIFF=ON -DBUILD_TIFF=ON -DWITH_WEBP=OFF -DWITH_JPEG=ON -DBUILD_JPEG=ON ../opencv
+    - sudo make install
+    - cd ..
 install:
     - conda install --yes -n condaenv --file requirements.txt
     - source activate condaenv
