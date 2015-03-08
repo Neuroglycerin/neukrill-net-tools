@@ -65,7 +65,7 @@ def propagate_labels_to_leaves(hdic, classes, mode='key->value'):
             
         elif isinstance(value, dict):
             # Descend through the dictionary stack
-            hdic2[key] = propagate_labels_to_leaves(value, classes, mode=mode):
+            hdic2[key] = propagate_labels_to_leaves(value, classes, mode=mode)
             
         else:
             hdic2[key] = value
@@ -103,7 +103,7 @@ class StackedClassifier():
             # Inner high level features do need fitting
             # Stratified (hopefully) split of inner and outer training data
             X_inner, X_outer, y_inner, y_outer = sklearn.cross_validation.train_test_split(
-                X, y, self._inner_prop=self._inner_prop, random_state=self.random_state)
+                X, y, test_size=self._inner_prop, random_state=self.random_state)
             # Fit the inner, high level features
             self.hlf.fit(X_inner, y_inner)
             # Transform the training input for use with the outer classifier
@@ -133,11 +133,11 @@ class StackedClassifier():
         return self.transform(X,y)
         
     
-    def get_proba(self, X):
+    def predict_proba(self, X):
         """
         Get probabilites from classifier
         """
-        return self.clf.get_proba(self.hlf.transform(X))
+        return self.clf.predict_proba(self.hlf.transform(X))
 
 
 class HierarchyClassifier():
@@ -187,7 +187,7 @@ class HierarchyClassifier():
                 
                 # Reduce X and y down to just the correct classes
                 # This is probably wrong...
-                indices = np.concatenate([np.nonzero(y == class_name) for class_name in clases_in_sub])
+                indices = np.concatenate([np.flatnonzero(y == class_name) for class_name in classes_in_sub])
                 
                 # Note for ourselves the label associated with the branch
                 my_y[indices] = branch_counter
@@ -239,19 +239,19 @@ class HierarchyClassifier():
         return self.transform(X,y)
         
         
-    def get_proba(self, X):
+    def predict_proba(self, X):
         """
         Get probability of each X belonging to each class
         """
-        p_dict = self.sub_get_proba(X, self.clf_hierarchy)
+        p_dict = self.sub_predict_proba(X, *self.clf_hierarchy)
         # Turn dictionary into numpy array with correct ordering
-        p = -1 * np.ones(len(p_dict))
+        p = -1 * np.ones( (X.shape[0], len(p_dict)) )
         for class_label, class_proba in p_dict.iteritems():
-            p[class_label] = class_proba
+            p[:,class_label] = class_proba
         return p
         
         
-    def sub_get_proba(self, X, my_clf, branch_map, clf_hierarchy):
+    def sub_predict_proba(self, X, my_clf, branch_map, clf_hierarchy):
         """
         Get the probability of membership of each branch at one level of the
         hierarchical model.
@@ -268,7 +268,7 @@ class HierarchyClassifier():
         p = {}
         
         # Find the probability of each X being a member of each branch
-        my_p = my_clf.get_proba(X)
+        my_p = my_clf.predict_proba(X)
         
         # Loop over keys in dictionary
         for branch_label, branch_name in branch_map.iteritems():
@@ -281,11 +281,11 @@ class HierarchyClassifier():
                 
                 # Calling this function for the branch returns probability
                 # X is in each overall class, given it was in the daughter branch
-                sub_p = self.sub_get_proba(X, *clf_hierarchy[branch_label])
+                sub_p = self.sub_predict_proba(X, *clf_hierarchy[branch_label])
                 
                 # Propagate the probability we are in this daughter branch onto
                 # each of the overall class probabilities
-                for key, value in sub_p.iteritems:
+                for key, value in sub_p.iteritems():
                     p[key] = my_p[:,branch_label] * value
                 
             else:
@@ -295,3 +295,4 @@ class HierarchyClassifier():
                 # is equal to classifier's probability output
                 p[branch_value] = my_p[:,branch_label]
         
+        return p
