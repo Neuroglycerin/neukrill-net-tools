@@ -389,7 +389,7 @@ class RandomAugment(object):
         
         # Shape-fixing without resizing
         if 'shape' in processing_settings:
-            if 'dynamic_shapefix' in processing_settings and processing_settings['dynamic_shapefix']:
+            if 'dynamic_shapefix' not in processing_settings or processing_settings['dynamic_shapefix']:
                 # Do a dynamic shapefix where we pan to a random location of those viable
                 pos_x = self.rng.uniform(low=0.0, high=1.0)
                 pos_y = self.rng.uniform(low=0.0, high=1.0)
@@ -417,7 +417,7 @@ class RandomAugment(object):
         
         # Shape-fixing without resizing
         if 'shape' in processing_settings:
-            if 'dynamic_shapefix' in processing_settings and processing_settings['dynamic_shapefix']:
+            if 'dynamic_shapefix' not in processing_settings or processing_settings['dynamic_shapefix']:
                 # Do a dynamic shapefix where we pan to a random location of those viable
                 image = image_processing.dynamic_shape_fix(image, processing_settings['shape'],
                             (pos_x,pos_y))
