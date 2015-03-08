@@ -47,11 +47,29 @@ def propagate_labels_to_leaves(hdic, classes, mode='key->value'):
                     found_index = class_index
                     break
             
-            if found_index is not None and mode=='key->key':
-                hdic2[found_index] = value
+            if mode=='key->key':
+                if found_index is not None:
+                    new_key = found_index
+                else:
+                    new_key = key
+                    
+                if isinstance(value, dict):
+                    # Descend through the dictionary stack
+                    hdic2[new_key] = propagate_labels_to_leaves(value, classes, mode=mode)
+                else:
+                    hdic2[new_key] = value
+            
+            if mode=='key->value':
+                if found_index is not None:
+                    hdic2[key] = found_index
+                    
+                elif isinstance(value, dict):
+                    # Descend through the dictionary stack
+                    hdic2[key] = propagate_labels_to_leaves(value, classes, mode=mode)
                 
-            if found_index is not None and mode=='key->value':
-                hdic2[key] = found_index
+                else:
+                    hdic2[key] = value
+                    
             
         elif mode=='value->value':
             # Check if the value is in the search terms
@@ -60,15 +78,16 @@ def propagate_labels_to_leaves(hdic, classes, mode='key->value'):
                 if value==class_name:
                     found_index = class_index
                     break
+            
             if found_index is not None:
                 hdic2[key] = found_index
-            
-        elif isinstance(value, dict):
-            # Descend through the dictionary stack
-            hdic2[key] = propagate_labels_to_leaves(value, classes, mode=mode)
-            
-        else:
-            hdic2[key] = value
+                
+            elif isinstance(value, dict):
+                # Descend through the dictionary stack
+                hdic2[key] = propagate_labels_to_leaves(value, classes, mode=mode)
+                
+            else:
+                hdic2[key] = value
     
     return hdic2
     
