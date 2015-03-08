@@ -34,13 +34,15 @@ class FlyIterator(object):
     seeding with sampled numbers from the dataset's own rng.
     """
     def __init__(self, dataset, batch_size, num_batches,
-                 final_shape, mode='shuffled_sequential', seed=42):
+                 final_shape, rng, mode='shuffled_sequential'):
         self.dataset = dataset
         self.batch_size = batch_size
         self.num_batches = num_batches
         self.final_shape = final_shape
         # initialise rng
-        self.rng = np.random.RandomState(seed=seed)
+        self.rng = rng
+        # shuffle indices of size equal to number of examples
+        # in dataset
         # indices of size equal to number of examples
         N = self.dataset.get_num_examples()
         self.indices = range(N)
@@ -60,7 +62,7 @@ class FlyIterator(object):
     def next(self):
         # return one batch
         if len(self.indices) >= self.batch_size:
-            batch_indices = [self.indices.pop() for i in range(self.batch_size)]
+            batch_indices = [self.indices.pop(0) for i in range(self.batch_size)]
             # preallocate array
             if len(self.final_shape) == 2: 
                 Xbatch = np.zeros([self.batch_size]+list(self.final_shape)+[1])
@@ -86,7 +88,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
     def __init__(self, transformer, settings_path="settings.json", 
                  run_settings_path="run_settings/alexnet_based.json",
                  training_set_mode="train",
-                 verbose=False, force=False, seed=42):
+                 verbose=False, force=False):
         """
         Loads the images as a list of differently shaped
         numpy arrays and loads the labels as a vector of 
@@ -122,10 +124,9 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         self.y = self.y.astype(np.float32)
         
         # set up the random state
-        self.rng = np.random.RandomState(seed)
+        self.rng = np.random.RandomState(self.settings.r_seed)
         
         # shuffle a list of image indices
-
         self.indices = range(self.N)
         self.rng.shuffle(self.indices)
         
@@ -152,8 +153,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         iterator = FlyIterator(dataset=self, batch_size=batch_size, 
                                 num_batches=num_batches, 
                                 final_shape=self.run_settings["final_shape"],
-                                seed=self.rng.random_integers(low=0, high=256),
-                                mode=mode)
+                                rng=self.rng)
         return iterator
         
     def adjust_to_be_viewed_with():
@@ -166,6 +166,8 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         """
         selection = self.rng.random_integers(0,high=self.N,size=batch_size)
         batch = [self.X[s].ravel() for s in selection]
+        if include_labels:
+            raise NotImplementedError
         return batch
         
     def get_batch_topo(self, batch_size, include_labels=False):
@@ -178,6 +180,8 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         """
         selection = self.rng.random_integers(0,high=self.N,size=batch_size)
         batch = [self.X[s] for s in selection]
+        if include_labels:
+            raise NotImplementedError
         return batch
         
     def get_num_examples(self):
