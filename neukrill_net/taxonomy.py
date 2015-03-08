@@ -93,11 +93,11 @@ taxonomy = {
             "amphipods": {},
             "shrimp_like": {
                 "shrimp-like_other": {},
-                "euphausiids": {
+                "euphausiids_all_ages": {
                     "euphausiids": {},
                     "euphausiids_young": {}
                 },
-                "decapods": {
+                "decapods_all": {
                     "decapods": {},
                     "shrimp_zoea": {},
                     "shrimp_caridean": {},
