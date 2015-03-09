@@ -212,7 +212,10 @@ class HierarchyClassifier():
                 my_y[indices] = branch_counter
                 
                 # Reduce X and y down for child, so it only has relevant data
-                subX = X[indices]
+		if isinstance(X,list):
+                     subX = [X[index] for index in indices]
+		else:
+                     subX = X[indices,:]
                 suby = y[indices]
                 
                 # Request child branch do its own hierarchical training
