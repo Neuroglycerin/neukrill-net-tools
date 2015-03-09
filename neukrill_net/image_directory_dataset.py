@@ -151,7 +151,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         over the dataset over batches, popping off batches from a shuffled 
         list of indices.
         Inputs:
-            - mode: 'sequential' or 'shuffled_sequential'.
+            - mode: 'even_sequential' or 'even_shuffled_sequential'.
             - batch_size: required, size of the minibatches produced.
             - num_batches: supply if you want, the dataset will make as many
         as it can if you don't.
@@ -167,7 +167,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         iterator = FlyIterator(dataset=self, batch_size=batch_size, 
                                 num_batches=num_batches, 
                                 final_shape=self.run_settings["final_shape"],
-                                rng=self.rng)
+                                rng=self.rng, mode=mode)
         return iterator
         
     def adjust_to_be_viewed_with():
