@@ -54,6 +54,7 @@ class HighLevelFeatureBase:
     
     _is_combiner = False
     _needs_fitting = False
+    _cache = None
     
     def __init__(self, preprocessing_func=None, augment_func=None, **kwargs):
         """
@@ -196,6 +197,39 @@ class HighLevelFeatureBase:
         
         # Return the completed arary
         return X
+        
+        
+    def generate_cache(self, images, postprocess=None, squash_for_postproc=False):
+        """
+        Make a cached copy of the transform of each image
+        """
+        X = self.transform(images)
+        if postprocess is not None and squash_for_postproc:
+            s = X.shape
+            X = postprocess(X.reshape( (s[0]*s[1], s[2]) ))
+            X = X.reshape( (s[0], s[1], X.shape[1]) )
+        elif postprocess is not None:
+            X = postprocess(X)
+        self._cache = X
+        return self._cache
+        
+        
+    def load_cache(self):
+        """
+        Return a copy of the current cache
+        """
+        if self._cache is None:
+            raise ValueError('Cache is empty')
+        return self._cache
+        
+        
+    def load_cached_transform(self, image_index, augment_index=0):
+        """
+        Load a pre-computed transformation of a single image
+        """
+        if self._cache is None:
+            raise ValueError('Cache is empty')
+        return self._cache[augment_index, image_index, :]
 
 
 ###############################################################################
