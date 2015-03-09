@@ -26,6 +26,11 @@ def aspectratio(image):
     """The aspect ratio of the image"""
     return image.shape[1] / image.shape[0]
     
+def sideratio(image):
+    """The ratio of sides of the image,
+    rotation invariant (max vs min)"""
+    return max(image.shape) / min(image.shape)
+    
 def mean(image):
     """The mean pixel value"""
     return image.mean()
