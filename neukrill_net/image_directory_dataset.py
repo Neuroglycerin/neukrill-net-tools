@@ -118,11 +118,11 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         # transform labels from strings to integers
         if self.run_settings.get("use_super_classes", False):
             supclass_vecs = {}
-            general_hier = neukrill_net.encoding.get_hierarchy(settings)
+            general_hier = neukrill_net.encoding.get_hierarchy(self.settings)
             n_columns = sum([len(array) for array in general_hier])
             self.y = np.zeros((self.N,n_columns))
             class_dictionary = neukrill_net.encoding.make_class_dictionary(
-                                                settings.classes,hierarchy)
+                                        self.settings.classes,general_hier)
         else:
             self.y = np.zeros((self.N,self.n_classes))
             class_dictionary = {}
