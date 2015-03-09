@@ -16,6 +16,7 @@ import numpy as np
 import cv2
 import sklearn.cluster
 import six
+import skimage
 import skimage.io
 import skimage.util
 import skimage.feature
@@ -429,7 +430,7 @@ class ZernikeMoments(HighLevelFeatureBase):
     """
     Compute Zernike polynomial moments of image (around centre of mass)
     """
-    def __init__(self, radius=32, polynomial=8, **kwargs):
+    def __init__(self, radius=24, polynomial=8, **kwargs):
         """
         Initialise
         """
@@ -441,7 +442,8 @@ class ZernikeMoments(HighLevelFeatureBase):
         
         
     def extract_image(self, image):
-        return mahotas.features.zernike_moments(image, radius=self.radius, degree=self.polynomial)
+        return mahotas.features.zernike_moments(skimage.dtype_limits(image)[1]-image,
+                    radius=self.radius, degree=self.polynomial)
     
     
 class ContourMoments(HighLevelFeatureBase):
