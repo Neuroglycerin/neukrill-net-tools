@@ -36,8 +36,6 @@ class ParallelIterator(neukrill_net.image_directory_dataset.FlyIterator):
                 Xbatch2 = np.zeros([self.batch_size]+list(self.final_shape))
             # iterate over indices, applying the dataset's processing function
             for i,j in enumerate(batch_indices):
-                import pdb
-                pdb.set_trace()
                 Xbatch1[i],Xbatch2[i] = [image.reshape(Xbatch1.shape[1:]) for 
                         image in self.dataset.fn(self.dataset.X[j])]
             # get the batch for y as well

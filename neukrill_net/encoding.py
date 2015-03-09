@@ -1,6 +1,11 @@
-import taxonomy
+import neukrill_net.taxonomy
+import numpy as np
 
-def get_hierarchy():
+def get_hierarchy(settings):
+    """
+    Returns nested list of classes and superclasses,
+    in string format. Required to use get_encoding.
+    """
 
     # Big list with all arrays
     hierarchy = []
@@ -18,7 +23,7 @@ def get_hierarchy():
         classes_prev = classes
         if classes:
             hierarchy.append(classes)
-        layer = taxonomy.TaxonomyLayer(i)
+        layer = neukrill_net.taxonomy.TaxonomyLayer(i)
         classes = []
 
         # Go through superclasses
@@ -28,7 +33,28 @@ def get_hierarchy():
                 classes.append(key)
         i += 1
 
+    # patch the first part of the hierarchy
+    hierarchy[0] = [str(c) for c in settings.classes]
+
     return hierarchy
+
+def make_class_dictionary(classes, hierarchy):
+    """
+    Takes a list of classes and a hierarchy and makes
+    a dictionary that'll map to integers for building
+    target matrices easily.
+    """
+    # init dict
+    class_dictionary = {}
+    # iterate over classes
+    for c in classes:
+        # for each class collapse the nested list supplied
+        # by get encoding and then take out the indices of
+        # all the ones in it
+        class_dictionary[c] = np.where(np.array([element
+                        for lst in get_encoding(c,hierarchy)
+                        for element in lst])==1)[0]
+    return class_dictionary
 
 def get_encoding(class_name, hierarchy):
 
@@ -42,7 +68,7 @@ def get_encoding(class_name, hierarchy):
 
         while True:
             # Find the ancestor of class_name in hier
-            layer = taxonomy.TaxonomyLayer(i)
+            layer = neukrill_net.taxonomy.TaxonomyLayer(i)
             if layer[class_name] in hier:
                 encoding[hier.index(layer[class_name])] = 1
                 break
