@@ -473,8 +473,18 @@ class ContourHistogram(HighLevelFeatureBase):
     """
     Compute normalised histogram of pixel intesities within the contour.
     """
+    def __init__(self, n_bins=25, hist_max=249, **kwargs):
+        """
+        Initialise
+        """
+        # Call superclass
+        HighLevelFeatureBase.__init__(self, **kwargs)
+        
+        self.return_only_hu = n_bins
+        self.hist_max = hist_max
+        
     def extract_image(self, image):
-        return neukrill_net.image_features.get_histogram(image)
+        return neukrill_net.image_features.get_histogram(image, n_bins=256, hist_max=256)
 
 
 ###############################################################################

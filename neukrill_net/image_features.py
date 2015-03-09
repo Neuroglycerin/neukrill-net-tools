@@ -19,7 +19,6 @@ from __future__ import division
 
 import cv2
 import numpy as np
-import time
 
 """
 ####
@@ -223,7 +222,7 @@ Histogram of pixel intensities.
 ####
 """
 
-def get_histogram(image):
+def get_histogram(image, n_bins=256, hist_max=256):
     """
     Returns the histogram of pixel intensities within the image after segmentation.
 
@@ -240,29 +239,28 @@ def get_histogram(image):
     # Find the index of the largest contour
     areas = [cv2.contourArea(c) for c in contours]
     max_index = np.argmax(areas)
-    cnt=contours[max_index]
+    cnt = contours[max_index]
 
     # get bounding box for contour
     x,y,w,h = cv2.boundingRect(cnt)
     
-    size = image.shape 
-
-    mask = np.zeros(size, dtype=np.uint8)
-    cv2.drawContours(mask, [cnt], -1, (255,255,255), thickness = cv2.cv.CV_FILLED)
+    # Initialise the mask
+    mask = np.zeros(image.shape, dtype=np.uint8)
+    # Set the mask
+    cv2.drawContours(mask, [cnt], -1, (255,255,255), thickness=cv2.cv.CV_FILLED)
     
-    result = cv2.bitwise_and(image, image, mask = mask)
-    contourRegion = result[y:y+h,x:x+w]
-
-    # crop mask
+    # Apply the mask to the image
+    # Pixels outside the contour region are now set to be 0
+    masked_image = cv2.bitwise_and(image, image, mask=mask)
+    
+    # Crop to just within the bounding box
+    masked_image = masked_image[y:y+h,x:x+w]
     mask = mask[y:y+h,x:x+w]
-    # no of black pixels in mask
-    no_of_black_pix_mask = np.sum(mask==0)
-
-    #bins = np.arange(256).reshape(256,1)
-    hist_item = cv2.calcHist([contourRegion],[0],None,[256],[0,256])
-    hist_item[0] -= no_of_black_pix_mask
-
-    sumHist = sum(hist_item[:248])
-    hist_item = hist_item/sumHist
-
-    return hist_item
+    
+    # Take the histogram
+    hist, _ = np.histogram(masked_image, bins=n_bins, range=(0,hist_max), normed=True)
+    
+    # Remove the number of black pixels in mask from the histogram
+    hist[0] -= np.sum(mask==0)
+    
+    return hist
