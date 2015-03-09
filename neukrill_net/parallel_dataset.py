@@ -76,5 +76,5 @@ class ParallelDataset(neukrill_net.image_directory_dataset.ListDataset):
         iterator = ParallelIterator(dataset=self, batch_size=batch_size, 
                                 num_batches=num_batches, 
                                 final_shape=self.run_settings["final_shape"],
-                                rng=self.rng)
+                                rng=self.rng, mode=mode)
         return iterator
