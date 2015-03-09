@@ -67,7 +67,7 @@ def get_FAST_keypoints(image, n=500):
     return image, keyPoints, {}
 
 
-def get_ORB_keypoints(image, n=500, **kwargs):
+def get_ORB_keypoints(image, n=500, patchSize=31, **kwargs):
     """
     Detects keypoints using ORB feature detector. Maximum no of keypoints returned is 500.
     input: image
@@ -77,24 +77,23 @@ def get_ORB_keypoints(image, n=500, **kwargs):
     # blur using a Gaussian kernel
     #image = cv2.GaussianBlur(image,(3,3),0)
     #image = cv2.bilateralFilter(image,5,75,75)
-
+    
     keyPoints = []
-    thePatchSize = 31
+    
     # find keypoints; if none found, decrease patchSize
     while ( len(keyPoints) == 0 ):
         # Initiate ORB detector
-        orb = cv2.ORB(nfeatures = n, edgeThreshold = 0, patchSize = thePatchSize)
+        orb = cv2.ORB(nfeatures=n, edgeThreshold=0, patchSize=patchSize)
         keyPoints = orb.detect(image, None)
-        if thePatchSize <= 3:
+        if patchSize <= 3:
             break
-        thePatchSize -= 2
-        
-
+        patchSize -= 2
+    
     # sort by response and return best n keypoints
     # already scored by "scoreType" HARRIS_SCORE?
     keyPoints = sort_keypoints_by_response_and_get_n_best(keyPoints, n)
-
-    return image, keyPoints, {"patchSize" : thePatchSize}
+    
+    return image, keyPoints, {"patchSize" : patchSize}
 
 
 def get_ORB_descriptions(image, keyPoints, patchSize=9, **kwargs):
