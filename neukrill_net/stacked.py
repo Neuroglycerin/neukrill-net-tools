@@ -103,7 +103,7 @@ class StackedClassifier():
         self.hlf = hlf
         self.clf = clf
         self._inner_prop = inner_prop
-        self.random_state
+        self.random_state = random_state
         self._ensure_split = ensure_split
         
         

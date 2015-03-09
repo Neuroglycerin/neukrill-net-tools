@@ -18,6 +18,7 @@ import sklearn.cluster
 import six
 import skimage.io
 import skimage.util
+import skimage.feature
 import mahotas.features
 import neukrill_net.image_features
 from neukrill_net import image_attributes
@@ -229,7 +230,7 @@ class MultiHighLevelFeature(HighLevelFeatureBase):
         """
         Add a new high level feature to the container
         """
-        _childHLFs += [HighLevelOther]
+        self._childHLFs += [HighLevelOther]
         
         
     def fit(self, *args, **kwargs):
