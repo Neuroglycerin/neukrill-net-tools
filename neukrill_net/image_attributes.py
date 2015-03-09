@@ -30,6 +30,14 @@ def mean(image):
     """The mean pixel value"""
     return image.mean()
     
+def median(image):
+    """The median pixel value"""
+    return np.median(image)
+    
+def var(image):
+    """The variance of pixel intensities"""
+    return image.var()
+    
 def std(image):
     """The standard deviation of pixel intensities"""
     return image.std()
