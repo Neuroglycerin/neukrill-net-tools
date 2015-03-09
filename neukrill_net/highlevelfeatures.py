@@ -480,11 +480,12 @@ class ContourHistogram(HighLevelFeatureBase):
         # Call superclass
         HighLevelFeatureBase.__init__(self, **kwargs)
         
-        self.return_only_hu = n_bins
+        self.n_bins = n_bins
         self.hist_max = hist_max
         
     def extract_image(self, image):
-        return neukrill_net.image_features.get_histogram(image, n_bins=256, hist_max=256)
+        return neukrill_net.image_features.get_histogram(image,
+                    n_bins=self.n_bins, hist_max=self.hist_max)
 
 
 ###############################################################################
