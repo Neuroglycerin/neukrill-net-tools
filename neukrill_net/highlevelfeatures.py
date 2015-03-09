@@ -229,7 +229,7 @@ class MultiHighLevelFeature(HighLevelFeatureBase):
         """
         Add a new high level feature to the container
         """
-        _childHLFs += [HighLevelOther]
+        self._childHLFs += [HighLevelOther]
         
         
     def fit(self, *args, **kwargs):
