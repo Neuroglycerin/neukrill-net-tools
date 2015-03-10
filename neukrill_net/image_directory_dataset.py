@@ -35,11 +35,13 @@ class FlyIterator(object):
     seeding with sampled numbers from the dataset's own rng.
     """
     def __init__(self, dataset, batch_size, num_batches,
-                 final_shape, rng, mode='even_shuffled_sequential'):
+                 final_shape, rng, mode='even_shuffled_sequential',
+                 train_or_predict="train"):
         self.dataset = dataset
         self.batch_size = batch_size
         self.num_batches = num_batches
         self.final_shape = final_shape
+        self.train_or_predict = train_or_predict
         # initialise rng
         self.rng = rng
         # shuffle indices of size equal to number of examples
@@ -72,10 +74,16 @@ class FlyIterator(object):
             # iterate over indices, applying the dataset's processing function
             for i,j in enumerate(batch_indices):
                 Xbatch[i] = self.dataset.fn(self.dataset.X[j]).reshape(Xbatch.shape[1:])
-            # get the batch for y as well
-            ybatch = self.dataset.y[batch_indices,:].astype(np.float32)
             Xbatch = Xbatch.astype(np.float32)
-            return Xbatch,ybatch
+            if self.train_or_predict == "train":
+                # get the batch for y as well
+                ybatch = self.dataset.y[batch_indices,:].astype(np.float32)
+                return Xbatch,ybatch
+            elif self.train_or_predict == "test":
+                return Xbatch
+            else:
+                raise ValueError("Invalid option for train_or_predict:"
+                        " {0}".format(self.train_or_predict))
         else:
             raise StopIteration
 
@@ -101,6 +109,8 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         self.run_settings = neukrill_net.utils.load_run_settings(run_settings_path,
                                                                  self.settings,
                                                                  force=force)
+        self.train_or_predict = train_or_predict
+
         if train_or_predict == "train":
             # split train/test/validation
             self.settings.image_fnames["train"] = \
@@ -165,7 +175,8 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         iterator = FlyIterator(dataset=self, batch_size=batch_size, 
                                 num_batches=num_batches, 
                                 final_shape=self.run_settings["final_shape"],
-                                rng=self.rng, mode=mode)
+                                rng=self.rng, mode=mode,
+                                train_or_predict=self.train_or_predict)
         return iterator
         
     def adjust_to_be_viewed_with():
