@@ -98,6 +98,8 @@ class Settings:
         abspaths
         """
         for possible_dir in data_dir_possibilities:
+            # expand out any environment variables in paths
+            possible_dir = os.path.expandvars(possible_dir)
             train_data_dir = os.path.join(possible_dir, 'train')
             test_data_dir = os.path.join(possible_dir, 'test')
             dirs_exist = os.path.exists(train_data_dir) and \
@@ -105,7 +107,6 @@ class Settings:
 
             if dirs_exist:
                 return os.path.abspath(possible_dir)
-
         raise ValueError("Can't find data dir in options: {0}".format(\
                                                             data_dir_possibilities))
 
