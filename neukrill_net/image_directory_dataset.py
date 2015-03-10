@@ -37,11 +37,13 @@ class FlyIterator(object):
     seeding with sampled numbers from the dataset's own rng.
     """
     def __init__(self, dataset, batch_size, num_batches,
-                 final_shape, rng, mode='even_shuffled_sequential'):
+                 final_shape, rng, mode='even_shuffled_sequential',
+                 train_or_predict="train"):
         self.dataset = dataset
         self.batch_size = batch_size
         self.num_batches = num_batches
         self.final_shape = final_shape
+        self.train_or_predict = train_or_predict
         # initialise rng
         self.rng = rng
         # shuffle indices of size equal to number of examples
@@ -74,10 +76,16 @@ class FlyIterator(object):
             # iterate over indices, applying the dataset's processing function
             for i,j in enumerate(batch_indices):
                 Xbatch[i] = self.dataset.fn(self.dataset.X[j]).reshape(Xbatch.shape[1:])
-            # get the batch for y as well
-            ybatch = self.dataset.y[batch_indices,:].astype(np.float32)
             Xbatch = Xbatch.astype(np.float32)
-            return Xbatch,ybatch
+            if self.train_or_predict == "train":
+                # get the batch for y as well
+                ybatch = self.dataset.y[batch_indices,:].astype(np.float32)
+                return Xbatch,ybatch
+            elif self.train_or_predict == "test":
+                return Xbatch
+            else:
+                raise ValueError("Invalid option for train_or_predict:"
+                        " {0}".format(self.train_or_predict))
         else:
             raise StopIteration
 
@@ -90,7 +98,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
     """
     def __init__(self, transformer, settings_path="settings.json", 
                  run_settings_path="run_settings/alexnet_based.json",
-                 training_set_mode="train",
+                 training_set_mode="train", train_or_predict="train",
                  verbose=False, force=False, prepreprocessing=None):
         """
         Loads the images as a list of differently shaped
@@ -103,17 +111,44 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         self.run_settings = neukrill_net.utils.load_run_settings(run_settings_path,
                                                                  self.settings,
                                                                  force=force)
-        # split train/test/validation
-        self.settings.image_fnames["train"] = \
-                neukrill_net.utils.train_test_split(
-                        self.settings.image_fnames, 
-                        training_set_mode, 
-                        train_split=self.run_settings["train_split"])
-        #load the data
-        self.X, labels = neukrill_net.utils.load_rawdata(
-                        self.settings.image_fnames,
-                        classes=self.settings.classes,
-                        verbose=verbose)
+        self.train_or_predict = train_or_predict
+
+        if train_or_predict == "train":
+            # split train/test/validation
+            self.settings.image_fnames["train"] = \
+                    neukrill_net.utils.train_test_split(
+                            self.settings.image_fnames, 
+                            training_set_mode, 
+                            train_split=self.run_settings["train_split"])
+            #load the data
+            self.X, labels = neukrill_net.utils.load_rawdata(
+                            self.settings.image_fnames,
+                            classes=self.settings.classes,
+                            verbose=verbose)
+            self.N = len(self.X)
+            self.n_classes = len(self.settings.classes)
+
+            if self.run_settings.get("use_super_classes", False):
+                supclass_vecs = {}
+                general_hier = neukrill_net.encoding.get_hierarchy(self.settings)
+                n_columns = sum([len(array) for array in general_hier])
+                self.y = np.zeros((self.N,n_columns))
+                class_dictionary = neukrill_net.encoding.make_class_dictionary(
+                                            self.settings.classes,general_hier)
+            else:
+                self.y = np.zeros((self.N,self.n_classes))
+                class_dictionary = {}
+                for i,c in enumerate(self.settings.classes):
+                    class_dictionary[c] = i
+            for i,j in enumerate(map(lambda c: class_dictionary[c],labels)):
+                self.y[i,j] = 1
+            self.y = self.y.astype(np.float32)
+
+        elif train_or_predict == "test":
+            self.X, self.names = neukrill_net.utils.load_rawdata(
+                            self.settings.image_fnames,
+                            verbose=verbose)
+
         self.N = len(self.X)
         
         if prepreprocessing is not None:
@@ -124,29 +159,9 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         
         # count the classes
         self.n_classes = len(self.settings.classes)
-        # transform labels from strings to integers
-        if self.run_settings.get("use_super_classes", False):
-            supclass_vecs = {}
-            general_hier = neukrill_net.encoding.get_hierarchy(self.settings)
-            n_columns = sum([len(array) for array in general_hier])
-            self.y = np.zeros((self.N,n_columns))
-            class_dictionary = neukrill_net.encoding.make_class_dictionary(
-                                        self.settings.classes,general_hier)
-        else:
-            self.y = np.zeros((self.N,self.n_classes))
-            class_dictionary = {}
-            for i,c in enumerate(self.settings.classes):
-                class_dictionary[c] = i
-        for i,j in enumerate(map(lambda c: class_dictionary[c],labels)):
-            self.y[i,j] = 1
-        self.y = self.y.astype(np.float32)
         
         # set up the random state
         self.rng = np.random.RandomState(self.settings.random_seed)
-        
-        # shuffle a list of image indices
-        self.indices = range(self.N)
-        self.rng.shuffle(self.indices)
         
     def iterator(self, mode=None, batch_size=None, num_batches=None, rng=None,
                         data_specs=None, return_tuple=False):
@@ -171,7 +186,8 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         iterator = FlyIterator(dataset=self, batch_size=batch_size, 
                                 num_batches=num_batches, 
                                 final_shape=self.run_settings["final_shape"],
-                                rng=self.rng, mode=mode)
+                                rng=self.rng, mode=mode,
+                                train_or_predict=self.train_or_predict)
         return iterator
         
     def adjust_to_be_viewed_with():
