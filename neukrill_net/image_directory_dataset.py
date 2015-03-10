@@ -142,7 +142,6 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         elif train_or_predict == "test":
             self.X, self.names = neukrill_net.utils.load_rawdata(
                             self.settings.image_fnames,
-                            classes=self.settings.classes,
                             verbose=verbose)
 
         self.N = len(self.X)
