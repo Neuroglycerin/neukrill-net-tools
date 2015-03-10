@@ -124,6 +124,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
                             classes=self.settings.classes,
                             verbose=verbose)
             self.N = len(self.X)
+            self.n_classes = len(self.settings.classes)
 
             if self.run_settings.get("use_super_classes", False):
                 supclass_vecs = {}
