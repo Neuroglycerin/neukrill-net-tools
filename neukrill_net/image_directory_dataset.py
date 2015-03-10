@@ -123,6 +123,8 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
                             self.settings.image_fnames,
                             classes=self.settings.classes,
                             verbose=verbose)
+            self.N = len(self.X)
+
             if self.run_settings.get("use_super_classes", False):
                 supclass_vecs = {}
                 general_hier = neukrill_net.encoding.get_hierarchy(self.settings)
