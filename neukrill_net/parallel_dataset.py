@@ -105,26 +105,33 @@ class PassthroughDataset(neukrill_net.image_directory_dataset.ListDataset):
     Dataset that can supply arbitrary vectors as well as the Conv2D
     spaces required by the convolutional layers.
     """
-    def __init__(self, *args, **keyargs):
+    def __init__(self, transformer, settings_path="settings.json", 
+                 run_settings_path="run_settings/alexnet_based.json",
+                 training_set_mode="train",
+                 verbose=False, force=False, cached=None):
         # runs inherited initialisation, but pulls out the
         # supplied cached array for iteration
-        self.cached = sklearn.externals.joblib.load(keyargs['cached']).squeeze()
+        self.cached = sklearn.externals.joblib.load(cached).squeeze()
         # following SHOULD BE FIXED TO LOAD FROM RUN SETTINGS
         train_split = 0.8
         train_index = int(train_split*self.cached.shape[0])
         test_split = (1-train_split)/2
         test_index = int((train_split+test_split)*self.cached.shape[0])
         # split based on training set mode
-        if keyargs['training_set_mode'] == 'train':
+        if training_set_mode == 'train':
             self.cached = self.cached[:train_index,:] 
-        elif keyargs['training_set_mode'] == 'validation':
+        elif training_set_mode == 'validation':
             self.cached = self.cached[train_index:test_index,:]
-        elif keyargs['training_set_mode'] == 'test':
+        elif training_set_mode == 'test':
             self.cached = self.cached[test_index:,:]
         else:
             raise ValueError
         # may have to remove cached before handing it in...
-        super(self.__class__,self).__init__(*args,**keyargs)
+        super(self.__class__,self).__init__(self, transformer, 
+                 settings_path=settings_path, 
+                 run_settings_path=run_settings_path,
+                 training_set_mode=training_set_mode,
+                 verbose=verbose, force=force)
 
     def iterator(self, mode=None, batch_size=None, num_batches=None, rng=None,
                         data_specs=None, return_tuple=False):
