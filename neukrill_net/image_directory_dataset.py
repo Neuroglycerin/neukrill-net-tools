@@ -21,6 +21,8 @@ import numpy as np
 import pylearn2.datasets.dataset 
 import neukrill_net.utils
 import neukrill_net.encoding
+import neukrill_net.image_processing
+import skimage.util
 
 # don't have to think too hard about how to write this:
 # https://stackoverflow.com/questions/19151/build-a-basic-python-iterator
@@ -89,7 +91,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
     def __init__(self, transformer, settings_path="settings.json", 
                  run_settings_path="run_settings/alexnet_based.json",
                  training_set_mode="train",
-                 verbose=False, force=False):
+                 verbose=False, force=False, prepreprocessing=None):
         """
         Loads the images as a list of differently shaped
         numpy arrays and loads the labels as a vector of 
@@ -113,6 +115,13 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
                         classes=self.settings.classes,
                         verbose=verbose)
         self.N = len(self.X)
+        
+        if prepreprocessing is not None:
+            self.X = [neukrill_net.image_processing.resize_image(skimage.util.img_as_float(image),
+                                    prepreprocessing['resize'],
+                                    order=prepreprocessing['resize_order'])
+                                    for image in self.X]
+        
         # count the classes
         self.n_classes = len(self.settings.classes)
         # transform labels from strings to integers

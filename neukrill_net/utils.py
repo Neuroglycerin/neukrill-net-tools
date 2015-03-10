@@ -16,7 +16,7 @@ import warnings
 import neukrill_net.image_processing as image_processing
 import neukrill_net.constants as constants
 import neukrill_net.taxonomy
-import neukrill_net.encoding 
+import neukrill_net.encoding
 
 class Settings:
     """
@@ -458,7 +458,7 @@ def format_yaml(run_settings,settings):
     # sub in the following things for default: settings_path, run_settings_path,
     # final_shape, n_classes, save_path
     hier = neukrill_net.encoding.get_hierarchy(settings)
-    hier_group_sizes = {"n_classes_{0}".format(i+1) : n for i, n 
+    hier_group_sizes = {"n_classes_{0}".format(i+1) : n for i, n
                         in enumerate([len(el) for el in hier])}
     run_settings.update(hier_group_sizes)
     run_settings["n_classes"] = len(settings.classes)
