@@ -22,6 +22,7 @@ import pylearn2.datasets.dataset
 import neukrill_net.utils
 import neukrill_net.encoding
 import neukrill_net.image_processing
+import skimage.util
 
 # don't have to think too hard about how to write this:
 # https://stackoverflow.com/questions/19151/build-a-basic-python-iterator
@@ -116,7 +117,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         self.N = len(self.X)
         
         if prepreprocessing is not None:
-            self.X = [neukrill_net.image_processing.resize_image(image,
+            self.X = [neukrill_net.image_processing.resize_image(skimage.util.img_as_float(image),
                                     prepreprocessing['resize'],
                                     order=prepreprocessing['resize_order'])
                                     for image in self.X]
