@@ -142,10 +142,6 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         # set up the random state
         self.rng = np.random.RandomState(self.settings.random_seed)
         
-        # shuffle a list of image indices
-        self.indices = range(self.N)
-        self.rng.shuffle(self.indices)
-        
     def iterator(self, mode=None, batch_size=None, num_batches=None, rng=None,
                         data_specs=None, return_tuple=False):
         """
