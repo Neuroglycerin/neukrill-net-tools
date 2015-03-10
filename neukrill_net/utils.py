@@ -45,7 +45,7 @@ class Settings:
 
         # check user defined classes if absent set it
         self.classes = self.user_input.get('classes',
-                                            sorted(constants.classes))
+                                            constants.classes)
 
         # a way to encode the superclasses if we need to but don't want to complete
         # just now as it is very monotonous to copy everything
