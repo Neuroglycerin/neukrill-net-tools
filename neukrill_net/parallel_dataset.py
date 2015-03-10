@@ -126,8 +126,9 @@ class PassthroughDataset(neukrill_net.image_directory_dataset.ListDataset):
             self.cached = self.cached[test_index:,:]
         else:
             raise ValueError
+        self.cached = self.cached.astype(np.float32)
         # may have to remove cached before handing it in...
-        super(self.__class__,self).__init__(self, transformer, 
+        super(self.__class__,self).__init__(transformer=transformer, 
                  settings_path=settings_path, 
                  run_settings_path=run_settings_path,
                  training_set_mode=training_set_mode,
@@ -157,4 +158,5 @@ class PassthroughDataset(neukrill_net.image_directory_dataset.ListDataset):
                                 num_batches=num_batches, 
                                 final_shape=self.run_settings["final_shape"],
                                 rng=self.rng, mode=mode)
+        return iterator
 
