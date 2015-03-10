@@ -39,11 +39,15 @@ class ParallelIterator(neukrill_net.image_directory_dataset.FlyIterator):
             for i,j in enumerate(batch_indices):
                 Xbatch1[i],Xbatch2[i] = [image.reshape(Xbatch1.shape[1:]) for 
                         image in self.dataset.fn(self.dataset.X[j])]
-            # get the batch for y as well
-            ybatch = self.dataset.y[batch_indices,:].astype(np.float32)
             Xbatch1 = Xbatch1.astype(np.float32)
             Xbatch2 = Xbatch2.astype(np.float32)
-            return Xbatch1,Xbatch2,ybatch
+            # get the batch for y as well
+            if self.train_or_predict == "train":
+                ybatch = self.dataset.y[batch_indices,:].astype(np.float32)
+                return Xbatch1,Xbatch2,ybatch
+            # or don't
+            elif self.train_or_predict == 'test':
+                return Xbatch1,Xbatch2
         else:
             raise StopIteration
 
@@ -75,7 +79,8 @@ class ParallelDataset(neukrill_net.image_directory_dataset.ListDataset):
         iterator = ParallelIterator(dataset=self, batch_size=batch_size, 
                                 num_batches=num_batches, 
                                 final_shape=self.run_settings["final_shape"],
-                                rng=self.rng, mode=mode)
+                                rng=self.rng, mode=mode, 
+                                train_or_predict=self.train_or_predict)
         return iterator
 
 class PassthroughIterator(neukrill_net.image_directory_dataset.FlyIterator):
