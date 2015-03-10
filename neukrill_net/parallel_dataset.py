@@ -15,6 +15,7 @@ __email__ = "gavingray1729@gmail.com"
 
 
 import numpy as np
+import sklearn.externals
 
 import neukrill_net.image_directory_dataset
 
@@ -66,7 +67,7 @@ class ParallelDataset(neukrill_net.image_directory_dataset.ListDataset):
             - data_specs: not used, as above
             - return_tuple: not used, as above
         Outputs:
-            - instance of FlyIterator, see above.
+            - instance of ParallelIterator, see above.
         """
         if not num_batches:
             # guess that we want to use all of them
@@ -76,3 +77,77 @@ class ParallelDataset(neukrill_net.image_directory_dataset.ListDataset):
                                 final_shape=self.run_settings["final_shape"],
                                 rng=self.rng, mode=mode)
         return iterator
+
+class PassthroughIterator(neukrill_net.image_directory_dataset.FlyIterator):
+    def next(self):
+        # return one batch
+        if len(self.indices) >= self.batch_size:
+            batch_indices = [self.indices.pop(0) for i in range(self.batch_size)]
+            # preallocate array
+            if len(self.final_shape) == 2: 
+                Xbatch = np.zeros([self.batch_size]+list(self.final_shape)+[1])
+            elif len(self.final_shape) == 3:
+                Xbatch = np.zeros([self.batch_size]+list(self.final_shape))
+            # iterate over indices, applying the dataset's processing function
+            for i,j in enumerate(batch_indices):
+                Xbatch[i] = self.dataset.fn(self.dataset.X[j]).reshape(Xbatch.shape[1:])
+            # get the batch for y as well
+            ybatch = self.dataset.y[batch_indices,:].astype(np.float32)
+            Xbatch = Xbatch.astype(np.float32)
+            # get the vector batch
+            vbatch = self.dataset.cached[batch_indices,:]
+            return Xbatch,vbatch,ybatch
+        else:
+            raise StopIteration
+
+class PassthroughDataset(neukrill_net.image_directory_dataset.ListDataset):
+    """
+    Dataset that can supply arbitrary vectors as well as the Conv2D
+    spaces required by the convolutional layers.
+    """
+    def __init__(self, *args, **keyargs):
+        # runs inherited initialisation, but pulls out the
+        # supplied cached array for iteration
+        self.cached = sklearn.externals.joblib.load(keyargs['cached']).squeeze()
+        # following SHOULD BE FIXED TO LOAD FROM RUN SETTINGS
+        train_split = 0.8
+        train_index = int(train_split*self.cached.shape[0])
+        test_split = (1-train_split)/2
+        test_index = int((train_split+test_split)*self.cached.shape[0])
+        # split based on training set mode
+        if keyargs['training_set_mode'] == 'train':
+            self.cached = self.cached[:train_index,:] 
+        elif keyargs['training_set_mode'] == 'validation':
+            self.cached = self.cached[train_index:test_index,:]
+        elif keyargs['training_set_mode'] == 'test':
+            self.cached = self.cached[test_index:,:]
+        else:
+            raise ValueError
+        # may have to remove cached before handing it in...
+        super(self.__class__,self).__init__(*args,**keyargs)
+
+    def iterator(self, mode=None, batch_size=None, num_batches=None, rng=None,
+                        data_specs=None, return_tuple=False):
+        """
+        Returns iterator object with standard Pythonic interface; iterates
+        over the dataset over batches, popping off batches from a shuffled 
+        list of indices.
+        Inputs:
+            - mode: 'sequential' or 'shuffled_sequential'.
+            - batch_size: required, size of the minibatches produced.
+            - num_batches: supply if you want, the dataset will make as many
+        as it can if you don't.
+            - rng: not used, as above.
+            - data_specs: not used, as above
+            - return_tuple: not used, as above
+        Outputs:
+            - instance of FlyIterator, see above.
+        """
+        if not num_batches:
+            # guess that we want to use all of them
+            num_batches = int(len(self.X)/batch_size)
+        iterator = PassthroughIterator(dataset=self, batch_size=batch_size, 
+                                num_batches=num_batches, 
+                                final_shape=self.run_settings["final_shape"],
+                                rng=self.rng, mode=mode)
+
