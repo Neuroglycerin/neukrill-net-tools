@@ -88,7 +88,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
     """
     def __init__(self, transformer, settings_path="settings.json", 
                  run_settings_path="run_settings/alexnet_based.json",
-                 training_set_mode="train",
+                 training_set_mode="train", train_or_predict="train",
                  verbose=False, force=False):
         """
         Loads the images as a list of differently shaped
@@ -101,36 +101,43 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         self.run_settings = neukrill_net.utils.load_run_settings(run_settings_path,
                                                                  self.settings,
                                                                  force=force)
-        # split train/test/validation
-        self.settings.image_fnames["train"] = \
-                neukrill_net.utils.train_test_split(
-                        self.settings.image_fnames, 
-                        training_set_mode, 
-                        train_split=self.run_settings["train_split"])
-        #load the data
-        self.X, labels = neukrill_net.utils.load_rawdata(
-                        self.settings.image_fnames,
-                        classes=self.settings.classes,
-                        verbose=verbose)
+        if train_or_predict == "train":
+            # split train/test/validation
+            self.settings.image_fnames["train"] = \
+                    neukrill_net.utils.train_test_split(
+                            self.settings.image_fnames, 
+                            training_set_mode, 
+                            train_split=self.run_settings["train_split"])
+            #load the data
+            self.X, labels = neukrill_net.utils.load_rawdata(
+                            self.settings.image_fnames,
+                            classes=self.settings.classes,
+                            verbose=verbose)
+            if self.run_settings.get("use_super_classes", False):
+                supclass_vecs = {}
+                general_hier = neukrill_net.encoding.get_hierarchy(self.settings)
+                n_columns = sum([len(array) for array in general_hier])
+                self.y = np.zeros((self.N,n_columns))
+                class_dictionary = neukrill_net.encoding.make_class_dictionary(
+                                            self.settings.classes,general_hier)
+            else:
+                self.y = np.zeros((self.N,self.n_classes))
+                class_dictionary = {}
+                for i,c in enumerate(self.settings.classes):
+                    class_dictionary[c] = i
+            for i,j in enumerate(map(lambda c: class_dictionary[c],labels)):
+                self.y[i,j] = 1
+            self.y = self.y.astype(np.float32)
+
+        elif train_or_predict == "test":
+            self.X, self.names = neukrill_net.utils.load_rawdata(
+                            self.settings.image_fnames,
+                            classes=self.settings.classes,
+                            verbose=verbose)
+
         self.N = len(self.X)
         # count the classes
         self.n_classes = len(self.settings.classes)
-        # transform labels from strings to integers
-        if self.run_settings.get("use_super_classes", False):
-            supclass_vecs = {}
-            general_hier = neukrill_net.encoding.get_hierarchy(self.settings)
-            n_columns = sum([len(array) for array in general_hier])
-            self.y = np.zeros((self.N,n_columns))
-            class_dictionary = neukrill_net.encoding.make_class_dictionary(
-                                        self.settings.classes,general_hier)
-        else:
-            self.y = np.zeros((self.N,self.n_classes))
-            class_dictionary = {}
-            for i,c in enumerate(self.settings.classes):
-                class_dictionary[c] = i
-        for i,j in enumerate(map(lambda c: class_dictionary[c],labels)):
-            self.y[i,j] = 1
-        self.y = self.y.astype(np.float32)
         
         # set up the random state
         self.rng = np.random.RandomState(self.settings.random_seed)
