@@ -4,6 +4,8 @@ Misc utilities for plotting easily in the notebook,
 often using Holoviews.
 """
 
+import holoviews as hl
+
 def model_weights(model):
     """
     Takes a model and returns the weights as a grid
@@ -22,7 +24,7 @@ def model_weights(model):
             heatmaps += hl.HeatMap(w)
     return heatmaps
 
-def monitor_channels(model, *channels, x_axis="example"):
+def monitor_channels(model, channels, x_axis="example"):
     """
     Takes a model and some strings indicating the channels
     to print and returns a grid of curves plotting the 
