@@ -64,10 +64,8 @@ class FlyIterator(object):
         
         # prepare first batch
         self.batch_indices = [self.indices.pop(0) for i in range(self.batch_size)]
-        # initialise multiprocessing pool
-        self.pool = multiprocessing.Pool(n_jobs)
         # start the first batch computing
-        self.result = self.pool.map_async(self.dataset.fn,
+        self.result = self.dataset.pool.map_async(self.dataset.fn,
                             [self.dataset.X[i] for i in self.batch_indices])
 
         # initialise flag variable for final iteration
@@ -83,11 +81,11 @@ class FlyIterator(object):
 
         # allocate array
         if len(self.final_shape) == 2: 
-            Xbatch = np.array(self.result.get(timeout=1.0)).reshape(
+            Xbatch = np.array(self.result.get(timeout=10.0)).reshape(
                         self.batch_size, self.final_shape[0],
                                          self.final_shape[1], 1)
         elif len(self.final_shape) == 3:
-            Xbatch = np.array(self.result.get(timeout=1.0))
+            Xbatch = np.array(self.result.get(timeout=10.0))
 
         Xbatch = Xbatch.astype(np.float32)
         if self.train_or_predict == "train":
@@ -97,7 +95,7 @@ class FlyIterator(object):
         if len(self.indices) >= self.batch_size:
             self.batch_indices = [self.indices.pop(0) 
                                 for i in range(self.batch_size)]
-            self.result = self.pool.map_async(self.dataset.fn,
+            self.result = self.dataset.pool.map_async(self.dataset.fn,
                         [self.dataset.X[i] for i in self.batch_indices])
         else:
             self.final_iteration += 1
@@ -135,7 +133,8 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
                                                                  self.settings,
                                                                  force=force)
         self.train_or_predict = train_or_predict
-        self.n_jobs = n_jobs
+        # initialise pool
+        self.pool = multiprocessing.Pool(n_jobs)
 
         if train_or_predict == "train":
             # split train/test/validation
@@ -211,8 +210,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
                                 num_batches=num_batches, 
                                 final_shape=self.run_settings["final_shape"],
                                 rng=self.rng, mode=mode,
-                                train_or_predict=self.train_or_predict,
-                                n_jobs=self.n_jobs)
+                                train_or_predict=self.train_or_predict)
         return iterator
         
     def adjust_to_be_viewed_with():
