@@ -47,7 +47,7 @@ def monitor_channels(model, channels, x_axis="example"):
         else:
             raise ValueError("Invalid choice for x_axis: {0}".format(x_axis))
         if not curves:
-            curves = hl.Curve(zip(x,channel.value_record))
+            curves = hl.Curve(zip(x,channel.val_record))
         else:
-            curves += hl.Curve(zip(x,channel.value_record))
+            curves += hl.Curve(zip(x,channel.val_record))
     return curves
