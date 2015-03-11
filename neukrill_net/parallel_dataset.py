@@ -25,31 +25,44 @@ class ParallelIterator(neukrill_net.image_directory_dataset.FlyIterator):
     images being returned by the processing function.
     """
     def next(self):
-        # return one batch
-        if len(self.indices) >= self.batch_size:
-            batch_indices = [self.indices.pop(0) for i in range(self.batch_size)]
-            # preallocate array
-            if len(self.final_shape) == 2: 
-                Xbatch1 = np.zeros([self.batch_size]+list(self.final_shape)+[1])
-                Xbatch2 = np.zeros([self.batch_size]+list(self.final_shape)+[1])
-            elif len(self.final_shape) == 3:
-                Xbatch1 = np.zeros([self.batch_size]+list(self.final_shape))
-                Xbatch2 = np.zeros([self.batch_size]+list(self.final_shape))
-            # iterate over indices, applying the dataset's processing function
-            for i,j in enumerate(batch_indices):
-                Xbatch1[i],Xbatch2[i] = [image.reshape(Xbatch1.shape[1:]) for 
-                        image in self.dataset.fn(self.dataset.X[j])]
-            Xbatch1 = Xbatch1.astype(np.float32)
-            Xbatch2 = Xbatch2.astype(np.float32)
-            # get the batch for y as well
-            if self.train_or_predict == "train":
-                ybatch = self.dataset.y[batch_indices,:].astype(np.float32)
-                return Xbatch1,Xbatch2,ybatch
-            # or don't
-            elif self.train_or_predict == 'test':
-                return Xbatch1,Xbatch2
-        else:
+        # check if we reached the end yet
+        if self.final_iteration:
             raise StopIteration
+
+        # allocate array
+        if len(self.final_shape) == 2: 
+            Xbatch1,Xbatch2 = [np.array(batch).reshape(
+                self.batch_size, self.final_shape[0], self.final_shape[1], 1) 
+            for batch in zip(*self.result.get(timeout=10.0))]
+        elif len(self.final_shape) == 3:
+            Xbatch1,Xbatch2 = [np.array(batch)
+            for batch in zip(*self.result.get(timeout=10.0))]
+        # make sure they're float32
+        Xbatch1 = Xbatch1.astype(np.float32)
+        Xbatch2 = Xbatch2.astype(np.float32)
+
+        # get y if we're training
+        if self.train_or_predict == "train":
+            ybatch = self.dataset.y[self.batch_indices,:].astype(np.float32)
+
+        # start processing next batch
+        if len(self.indices) >= self.batch_size:
+            self.batch_indices = [self.indices.pop(0) 
+                                for i in range(self.batch_size)]
+            self.result = self.dataset.pool.map_async(self.dataset.fn,
+                        [self.dataset.X[i] for i in self.batch_indices])
+        else:
+            self.final_iteration += 1
+
+        # if training return X and y, otherwise
+        # we're testing so return just X
+        if self.train_or_predict == "train":
+            return Xbatch,ybatch
+        elif self.train_or_predict == "test":
+            return Xbatch
+        else:
+            raise ValueError("Invalid option for train_or_predict:"
+                    " {0}".format(self.train_or_predict))
 
 class ParallelDataset(neukrill_net.image_directory_dataset.ListDataset):
     """
