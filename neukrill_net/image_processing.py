@@ -239,6 +239,7 @@ def pad_to_square(image):
     
     return padded_image
 
+
 def resize_image(image, size, order=0.75):
     """
     resize images to a pixel*pixel defined in a tuple
@@ -344,6 +345,32 @@ def rotate_image(image, angle, resizable=True):
     rotated_image = img_as_dtype(rotated_image, original_dtype)
     
     return rotated_image
+
+
+def rotate_nearest90_image(image, angle):
+    """
+    Losslessly rotates images by matrix rotation.
+    input: image
+           angle - rotation angle in degrees in counter-clockwise direction
+    output: rotated_image - a new, transformed image.
+            The datatype of the output will always match the input.
+            remaining_angle - the remaining angle you should rotate by
+    """
+    
+    # Lossless cardinal rotation
+    # Make sure we have a positive number of rotations
+    angle = angle % 360
+    
+    # Find nearest multiple of 90
+    num_rots = np.round(angle/90)
+    
+    # Remainder may be negative
+    remaining_angle = angle - 90*num_rots
+    
+    # Rotate by 90 the correct number of times
+    rotated_image = np.rot90(image, num_rots)
+    
+    return rotated_image, remaining_angle
 
 
 def shear_image(image, shear):

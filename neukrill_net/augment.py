@@ -383,6 +383,9 @@ class RandomAugment(object):
         #####################################################
         # Pre-augmentation processing
         
+        # Rotate to nearest 90 degrees & update the angle to rotate by
+        image, aug_dic['rot_angle'] = image_processing.rotate_nearest90_image(image, aug_dic['rot_angle'])
+        
         # Ensure image is square now if we are going to resize
         if 'resize' in processing_settings:
             image = image_processing.pad_to_square(image)
@@ -487,6 +490,11 @@ class ParallelRandomAugment(RandomAugment):
         
         # Assign preprocessing options to attributes
         self.preproc_list = preproc_list
+        
+        for i in range(len(self.preproc_list)):
+            # Let 'shapefix' and 'shape' be aliases of the same property
+            if 'shapefix' in self.preproc_list[i]:
+                self.preproc_list[i]['shape'] = self.preproc_list[i]['shapefix']
         
         # Call superclass
         RandomAugment.__init__(self, **kwargs)
