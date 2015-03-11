@@ -98,25 +98,44 @@ class ParallelDataset(neukrill_net.image_directory_dataset.ListDataset):
 
 class PassthroughIterator(neukrill_net.image_directory_dataset.FlyIterator):
     def next(self):
-        # return one batch
-        if len(self.indices) >= self.batch_size:
-            batch_indices = [self.indices.pop(0) for i in range(self.batch_size)]
-            # preallocate array
-            if len(self.final_shape) == 2: 
-                Xbatch = np.zeros([self.batch_size]+list(self.final_shape)+[1])
-            elif len(self.final_shape) == 3:
-                Xbatch = np.zeros([self.batch_size]+list(self.final_shape))
-            # iterate over indices, applying the dataset's processing function
-            for i,j in enumerate(batch_indices):
-                Xbatch[i] = self.dataset.fn(self.dataset.X[j]).reshape(Xbatch.shape[1:])
-            # get the batch for y as well
-            ybatch = self.dataset.y[batch_indices,:].astype(np.float32)
-            Xbatch = Xbatch.astype(np.float32)
-            # get the vector batch
-            vbatch = self.dataset.cached[batch_indices,:]
-            return Xbatch,vbatch,ybatch
-        else:
+        # check if we reached the end yet
+        if self.final_iteration:
             raise StopIteration
+
+        # allocate array
+        if len(self.final_shape) == 2: 
+            Xbatch = np.array(self.result.get(timeout=10.0)).reshape(
+                        self.batch_size, self.final_shape[0],
+                                         self.final_shape[1], 1)
+        elif len(self.final_shape) == 3:
+            Xbatch = np.array(self.result.get(timeout=10.0))
+        # make sure it's float32
+        Xbatch = Xbatch.astype(np.float32)
+
+        if self.train_or_predict == "train":
+            # get the batch for y as well
+            ybatch = self.dataset.y[self.batch_indices,:].astype(np.float32)
+        # index array for vbatch
+        vbatch = self.dataset.cached[self.batch_indices,:]
+        
+        # start processing next batch
+        if len(self.indices) >= self.batch_size:
+            self.batch_indices = [self.indices.pop(0) 
+                                for i in range(self.batch_size)]
+            self.result = self.dataset.pool.map_async(self.dataset.fn,
+                        [self.dataset.X[i] for i in self.batch_indices])
+        else:
+            self.final_iteration += 1
+
+        if self.train_or_predict == "train":
+            # get the batch for y as well
+            return Xbatch,vbatch,ybatch
+        elif self.train_or_predict == "test":
+            return Xbatch,vbatch
+        else:
+            raise ValueError("Invalid option for train_or_predict:"
+                    " {0}".format(self.train_or_predict))
+
 
 class PassthroughDataset(neukrill_net.image_directory_dataset.ListDataset):
     """
