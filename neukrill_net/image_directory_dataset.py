@@ -23,6 +23,7 @@ import neukrill_net.utils
 import neukrill_net.encoding
 import neukrill_net.image_processing
 import skimage.util
+import multiprocessing
 
 # don't have to think too hard about how to write this:
 # https://stackoverflow.com/questions/19151/build-a-basic-python-iterator
@@ -38,7 +39,7 @@ class FlyIterator(object):
     """
     def __init__(self, dataset, batch_size, num_batches,
                  final_shape, rng, mode='even_shuffled_sequential',
-                 train_or_predict="train"):
+                 train_or_predict="train", n_jobs=1):
         self.dataset = dataset
         self.batch_size = batch_size
         self.num_batches = num_batches
@@ -61,33 +62,54 @@ class FlyIterator(object):
         # this is also required
         self.num_examples = batch_size*num_batches
         
+        # prepare first batch
+        self.batch_indices = [self.indices.pop(0) for i in range(self.batch_size)]
+        # initialise multiprocessing pool
+        self.pool = multiprocessing.Pool(n_jobs)
+        # start the first batch computing
+        self.result = self.pool.map_async(self.dataset.fn,
+                            [self.dataset.X[i] for i in self.batch_indices])
+
+        # initialise flag variable for final iteration
+        self.final_iteration = 0
+        
     def __iter__(self):
         return self
     
     def next(self):
-        # return one batch
-        if len(self.indices) >= self.batch_size:
-            batch_indices = [self.indices.pop(0) for i in range(self.batch_size)]
-            # preallocate array
-            if len(self.final_shape) == 2: 
-                Xbatch = np.zeros([self.batch_size]+list(self.final_shape)+[1])
-            elif len(self.final_shape) == 3:
-                Xbatch = np.zeros([self.batch_size]+list(self.final_shape))
-            # iterate over indices, applying the dataset's processing function
-            for i,j in enumerate(batch_indices):
-                Xbatch[i] = self.dataset.fn(self.dataset.X[j]).reshape(Xbatch.shape[1:])
-            Xbatch = Xbatch.astype(np.float32)
-            if self.train_or_predict == "train":
-                # get the batch for y as well
-                ybatch = self.dataset.y[batch_indices,:].astype(np.float32)
-                return Xbatch,ybatch
-            elif self.train_or_predict == "test":
-                return Xbatch
-            else:
-                raise ValueError("Invalid option for train_or_predict:"
-                        " {0}".format(self.train_or_predict))
-        else:
+        # check if we reached the end yet
+        if self.final_iteration:
             raise StopIteration
+
+        # allocate array
+        if len(self.final_shape) == 2: 
+            Xbatch = np.array(self.result.get(timeout=1.0)).reshape(
+                        self.batch_size, self.final_shape[0],
+                                         self.final_shape[1], 1)
+        elif len(self.final_shape) == 3:
+            Xbatch = np.array(self.result.get(timeout=1.0))
+
+        Xbatch = Xbatch.astype(np.float32)
+        if self.train_or_predict == "train":
+            # get the batch for y as well
+            ybatch = self.dataset.y[self.batch_indices,:].astype(np.float32)
+        # start processing next batch
+        if len(self.indices) >= self.batch_size:
+            self.batch_indices = [self.indices.pop(0) 
+                                for i in range(self.batch_size)]
+            self.result = self.pool.map_async(self.dataset.fn,
+                        [self.dataset.X[i] for i in self.batch_indices])
+        else:
+            self.final_iteration += 1
+
+        if self.train_or_predict == "train":
+            # get the batch for y as well
+            return Xbatch,ybatch
+        elif self.train_or_predict == "test":
+            return Xbatch
+        else:
+            raise ValueError("Invalid option for train_or_predict:"
+                    " {0}".format(self.train_or_predict))
 
 
 class ListDataset(pylearn2.datasets.dataset.Dataset):
@@ -99,7 +121,8 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
     def __init__(self, transformer, settings_path="settings.json", 
                  run_settings_path="run_settings/alexnet_based.json",
                  training_set_mode="train", train_or_predict="train",
-                 verbose=False, force=False, prepreprocessing=None):
+                 verbose=False, force=False, prepreprocessing=None,
+                 n_jobs=1):
         """
         Loads the images as a list of differently shaped
         numpy arrays and loads the labels as a vector of 
@@ -112,6 +135,7 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
                                                                  self.settings,
                                                                  force=force)
         self.train_or_predict = train_or_predict
+        self.n_jobs = n_jobs
 
         if train_or_predict == "train":
             # split train/test/validation
@@ -187,7 +211,8 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
                                 num_batches=num_batches, 
                                 final_shape=self.run_settings["final_shape"],
                                 rng=self.rng, mode=mode,
-                                train_or_predict=self.train_or_predict)
+                                train_or_predict=self.train_or_predict,
+                                n_jobs=self.n_jobs)
         return iterator
         
     def adjust_to_be_viewed_with():
