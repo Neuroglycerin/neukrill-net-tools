@@ -57,9 +57,9 @@ class ParallelIterator(neukrill_net.image_directory_dataset.FlyIterator):
         # if training return X and y, otherwise
         # we're testing so return just X
         if self.train_or_predict == "train":
-            return Xbatch,ybatch
+            return Xbatch1,Xbatch2,ybatch
         elif self.train_or_predict == "test":
-            return Xbatch
+            return Xbatch1,Xbatch2
         else:
             raise ValueError("Invalid option for train_or_predict:"
                     " {0}".format(self.train_or_predict))
@@ -127,11 +127,19 @@ class PassthroughDataset(neukrill_net.image_directory_dataset.ListDataset):
                  run_settings_path="run_settings/alexnet_based.json",
                  training_set_mode="train",
                  verbose=False, force=False, cached=None):
+
+        # may have to remove cached before handing it in...
+        # ...no errors yet
+        super(self.__class__,self).__init__(transformer=transformer, 
+                 settings_path=settings_path, 
+                 run_settings_path=run_settings_path,
+                 training_set_mode=training_set_mode,
+                 verbose=verbose, force=force)
         # runs inherited initialisation, but pulls out the
         # supplied cached array for iteration
         self.cached = sklearn.externals.joblib.load(cached).squeeze()
-        # following SHOULD BE FIXED TO LOAD FROM RUN SETTINGS
-        train_split = 0.8
+        # get the right split from run settings
+        train_split = self.run_settings['train_split']
         train_index = int(train_split*self.cached.shape[0])
         test_split = (1-train_split)/2
         test_index = int((train_split+test_split)*self.cached.shape[0])
@@ -145,12 +153,6 @@ class PassthroughDataset(neukrill_net.image_directory_dataset.ListDataset):
         else:
             raise ValueError
         self.cached = self.cached.astype(np.float32)
-        # may have to remove cached before handing it in...
-        super(self.__class__,self).__init__(transformer=transformer, 
-                 settings_path=settings_path, 
-                 run_settings_path=run_settings_path,
-                 training_set_mode=training_set_mode,
-                 verbose=verbose, force=force)
 
     def iterator(self, mode=None, batch_size=None, num_batches=None, rng=None,
                         data_specs=None, return_tuple=False):
