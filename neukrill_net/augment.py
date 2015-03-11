@@ -383,6 +383,9 @@ class RandomAugment(object):
         #####################################################
         # Pre-augmentation processing
         
+        if 'invert' in processing_settings and processing_settings['invert']:
+            image = image_processing.invert_image(image)
+        
         # Rotate to nearest 90 degrees & update the angle to rotate by
         image, aug_dic['rot_angle'] = image_processing.rotate_nearest90_image(image, aug_dic['rot_angle'])
         

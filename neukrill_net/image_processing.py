@@ -194,6 +194,18 @@ def custom_transform_nice_units(image, scale=None, rotation=None, shear=None,
             translation=translation, order=order)
 
 
+def invert_image(image):
+    """
+    Inverts the colours of a greyscale image
+    """
+    # First, use skimage to check what value white should be
+    whiteVal = skimage.dtype_limits(image)[1]
+    # Invert the image
+    image = whiteVal - image
+    
+    return image
+    
+
 def pad_to_square(image):
     """
     Pads an image with white so height and width are the same
