@@ -86,11 +86,13 @@ class FlyIterator(object):
                                          self.final_shape[1], 1)
         elif len(self.final_shape) == 3:
             Xbatch = np.array(self.result.get(timeout=10.0))
-
+        # make sure it's float32
         Xbatch = Xbatch.astype(np.float32)
+
         if self.train_or_predict == "train":
             # get the batch for y as well
             ybatch = self.dataset.y[self.batch_indices,:].astype(np.float32)
+        
         # start processing next batch
         if len(self.indices) >= self.batch_size:
             self.batch_indices = [self.indices.pop(0) 
