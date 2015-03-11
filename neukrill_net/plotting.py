@@ -32,7 +32,7 @@ def monitor_channels(model, channels, x_axis="example"):
     batch, epoch or time.
     """
     curves = None
-    for c in channels:
+    for c in sorted(channels):
         channel = model.monitor.channels[c]
         # holoviews demands capitalisation...
         c = c[0].upper() + c[1:]
