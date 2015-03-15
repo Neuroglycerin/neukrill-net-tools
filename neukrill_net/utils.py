@@ -360,21 +360,16 @@ def write_predictions(out_fname, p, names, classes):
             writes a gzip compressed csv file to `out_fname`.gz on disk
     """
 
+    # check filename
+    if out_fname.split(".")[-1] != "gz":
+        out_fname = out_fname + ".gz"
+
     # Write the probabilites as a CSV
-    with open(out_fname, 'w') as csv_out:
+    with gzip.open(out_fname, 'wb') as csv_out:
         out_writer = csv.writer(csv_out, delimiter=',')
         out_writer.writerow(['image'] + list(classes))
         for index in range(len(names)):
             out_writer.writerow([names[index]] + list(p[index,]))
-
-    # Compress with gzip
-    with open(out_fname, 'rb') as f_in:
-        f_out = gzip.open(out_fname + '.gz', 'wb')
-        f_out.writelines(f_in)
-        f_out.close()
-
-    # Delete the uncompressed CSV
-    os.unlink(out_fname)
 
 def load_run_settings(run_settings_path, settings,
         settings_path="settings.json", verbose=False, force=False):
