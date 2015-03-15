@@ -41,6 +41,13 @@ def augmentation_wrapper(units='float64', **augment_settings):
         raise ValueError('Unrecognised output units: {}'.format(
                             augment_settings['units']))
     
+    # Inversion
+    if 'invert' in augment_settings and augment_settings['invert']:
+        invert = lambda images: [image_processing.invert_image(image)
+                                    for image in images]
+    else:
+        invert = lambda images: images
+    
     # Shape-fixing without resizing
     if 'shape' in augment_settings:
         # 
@@ -164,7 +171,9 @@ def augmentation_wrapper(units='float64', **augment_settings):
                                                         rotate(
                                                             landscapise(
                                                                 unitconvert(
-                                                                    [ image ]
+                                                                    invert(
+                                                                        [ image ]
+                                                                    )
                                                                 )
                                                             )
                                                         )
