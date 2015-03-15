@@ -651,7 +651,7 @@ def confusion_matrix_from_proba(y_true, y_pred, labels=None):
     return M
 
 
-def normalise_cache_range(X_train, X_test):
+def normalise_cache_range(X_train, X_test=None):
     """
     Normalises cache across dimensions 0 and 1 so they fall
     into [-1,+1] range. Normalises train and test using the
@@ -663,21 +663,27 @@ def normalise_cache_range(X_train, X_test):
     X_max = np.amax(np.absolute(X_train.reshape((X_train.shape[0]*X_train.shape[1],X_train.shape[2]))),0)
     # Normalise both arrays
     X_train = X_train / X_max
-    X_test  = X_test / X_max
+    if X_test is not None:
+        X_test  = X_test / X_max
     
     return X_train, X_test
 
 
-def save_normalised_cache(train_pkl, test_pkl):
+def save_normalised_cache(train_pkl, test_pkl=None):
     # Load the existing raw data
     X_train = sklearn.externals.joblib.load(train_pkl)
-    X_test  = sklearn.externals.joblib.load(test_pkl)
+    if test_pkl is None:
+        X_test = None
+    else:
+        X_test  = sklearn.externals.joblib.load(test_pkl)
     # Normalise them both
     X_train, X_test = normalise_cache_range(X_train, X_test)
     # Update names of pickle files
     train_pkl = train_pkl[:-4] + '_ranged' + train_pkl[-4:]
-    test_pkl  = test_pkl[:-4] + '_ranged' + test_pkl[-4:]
+    if test_pkl is not None:
+        test_pkl  = test_pkl[:-4] + '_ranged' + test_pkl[-4:]
     # Save to disk
     sklearn.externals.joblib.dump(X_train, train_pkl)
-    sklearn.externals.joblib.dump(X_test, test_pkl)
+    if test_pkl is not None:
+        sklearn.externals.joblib.dump(X_test, test_pkl)
     
