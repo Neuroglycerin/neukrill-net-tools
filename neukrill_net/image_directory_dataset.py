@@ -137,6 +137,8 @@ class ListDataset(pylearn2.datasets.dataset.Dataset):
         self.train_or_predict = train_or_predict
         # initialise pool
         self.pool = multiprocessing.Pool(n_jobs)
+        #import pdb
+        #pdb.set_trace()
 
         if train_or_predict == "train":
             # split train/test/validation
