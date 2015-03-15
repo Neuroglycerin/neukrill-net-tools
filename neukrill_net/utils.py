@@ -649,3 +649,35 @@ def confusion_matrix_from_proba(y_true, y_pred, labels=None):
         li = (y_true == i)
         M[i,:] = np.mean(y_pred[li,:],0)
     return M
+
+
+def normalise_cache_range(X_train, X_test):
+    """
+    Normalises cache across dimensions 0 and 1 so they fall
+    into [-1,+1] range. Normalises train and test using the
+    train data range only.
+    Expected input has dimension 0 and 1 as augmentation and image index.
+    Each dimension 2 is a different feature.
+    """
+    # Get the dim0 and dim1 absolute maxima
+    X_max = np.amax(np.absolute(X_train.reshape((X_train.shape[0]*X_train.shape[1],X_train.shape[2]))),0)
+    # Normalise both arrays
+    X_train = X_train / X_max
+    X_test  = X_test / X_max
+    
+    return X_train, X_test
+
+
+def save_normalised_cache(train_pkl, test_pkl):
+    # Load the existing raw data
+    X_train = sklearn.externals.joblib.load(train_pkl)
+    X_test  = sklearn.externals.joblib.load(test_pkl)
+    # Normalise them both
+    X_train, X_test = normalise_cache_range(X_train, X_test)
+    # Update names of pickle files
+    train_pkl = train_pkl[:-4] + '_ranged' + train_pkl[-4:]
+    test_pkl  = test_pkl[:-4] + '_ranged' + test_pkl[-4:]
+    # Save to disk
+    sklearn.externals.joblib.dump(X_train, train_pkl)
+    sklearn.externals.joblib.dump(X_test, test_pkl)
+    
