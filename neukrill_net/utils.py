@@ -561,3 +561,26 @@ def confusion_matrix_from_proba(y_true, y_pred, labels=None):
         li = (y_true == i)
         M[i,:] = np.mean(y_pred[li,:],0)
     return M
+
+def dataset_from_yaml(proxied,
+        training_set_mode='test', verbose=False):
+    """
+    Parses YAML files to pull out a dataset (used primarily for 
+    loading the holdout set with the correct settings).
+    """
+    import pylearn2.config.yaml_parse
+
+    # load the data
+    if verbose:
+        print("Loading data...")
+
+    # pull out proxied dataset
+    proxdata = proxied.keywords['dataset']
+    # force loading of dataset and switch to test dataset
+    proxdata.keywords['force'] = True
+    proxdata.keywords['training_set_mode'] = training_set_mode
+    proxdata.keywords['verbose'] = verbose
+    # then instantiate the dataset
+    dataset = pylearn2.config.yaml_parse._instantiate(proxdata)
+
+    return dataset

@@ -18,7 +18,6 @@ import neukrill_net.augment
 import pylearn2.datasets
 import numpy as np
 import sys
-import encoding as enc
 
 from pylearn2.datasets.dataset import Dataset
 import functools
@@ -88,11 +87,6 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                 self.run_settings["final_shape"][1],1))
             image_index = 0
             # load the images in image_fpaths, iterating and keeping track of class
-            if self.run_settings.get("use_super_classes", False):
-                # create dictionary to cache superclass vectors
-                supclass_vecs = {}
-                # get the general hierarchy
-                general_hier = enc.get_hierarchy()
             for class_label in self.settings.classes:
                 for image_path in self.settings.image_fnames[
                                                     train_or_predict][class_label]:
@@ -101,24 +95,13 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                     # apply processing function (get back multiple images)
                     images = processing(image)
                     # for each image store a class label
-                    if self.run_settings.get("use_super_classes", False):
-                        # check if superclass vector for this class label
-                        # already generated, if not generate
-                        if not supclass_vecs.has_key(class_label):
-                            # get superclass hierarchy for class label
-                            supclass_hier = enc.get_encoding(class_label, general_hier)
-                            # collapse to a list of 1/0 values
-                            supclass_vecs[class_label] = \
-                                [el for grp in supclass_hier for el in grp]
-                        y += [supclass_vecs[class_label]]*len(images)
-                    else:
-                        y += [class_label]*len(images)
+                    y += [class_label]*len(images)
                     # then broadcast each of these images into the empty X array
                     for image in images:
                         X[image_index,:,:,0] = image
                         image_index += 1
             # if we're normalising
-            if processing_settings.get("normalise", False):
+            if processing_settings.get("normalise",0):
                 if verbose:
                     print("Applying normalisation: {0}".format(
                         processing_settings["normalise"]["global_or_pixel"]))
@@ -127,25 +110,18 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                                             self.run_settings, verbose=verbose)
             # make sure y is an array
             y = np.array(y)
-            print(y.shape)
-            if self.run_settings.get("use_super_classes", False):
-                # using superclasses so y already contains target vectors
-                super(self.__class__,self).__init__(topo_view=X,y=y)
-            else:
-                # not using superclasses so map label strings to integers
-                # count the y labels
-                N_y_labels = len(list(set(y)))
-                # build dictionary to encode labels numerically
-                class_dictionary = {}
-                for i,c in enumerate(self.settings.classes):
-                    class_dictionary[c] = i
-                # map to integers
-                y = np.array(map(lambda c: class_dictionary[c], y))
-                # make it 2D column vector
-                y = y[np.newaxis].T
-                # now run inherited initialisation
-                super(self.__class__,self).__init__(topo_view=X,y=y,y_labels=N_y_labels)
-                
+            # count the y labels
+            N_y_labels = len(list(set(y)))
+            # build dictionary to encode labels numerically
+            class_dictionary = {}
+            for i,c in enumerate(self.settings.classes):
+                class_dictionary[c] = i
+            # map to integers
+            y = np.array(map(lambda c: class_dictionary[c], y))
+            # make it 2D column vector
+            y = y[np.newaxis].T
+            # now run inherited initialisation
+            super(self.__class__,self).__init__(topo_view=X,y=y,y_labels=N_y_labels)
 
         elif train_or_predict == "test":
             # test is just a big list of image paths
