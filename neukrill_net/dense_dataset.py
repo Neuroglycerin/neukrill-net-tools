@@ -51,7 +51,7 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
     """
     def __init__(self,settings_path="settings.json",
             run_settings="run_settings/default.json",training_set_mode="train",
-            train_or_predict="train", verbose=False, force=False):
+            train_or_predict="train", verbose=False, force=False, split=1):
         # parse the settings file
         self.settings = neukrill_net.utils.Settings(settings_path)
         # get the run settings
@@ -148,6 +148,10 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                 
 
         elif train_or_predict == "test":
+            # split test paths if we're splitting them
+            self.settings.image_fnames = neukrill_net.utils.test_split(split, 
+                    self.settings.image_fnames)
+
             # test is just a big list of image paths
             # how many?
             self.N_images = sum(1 for image_path in 
@@ -159,13 +163,15 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
             # more boilerplate code, but it's going to be easier than making a
             # function that can deal with the above as well
             # initialise array
+            #import pdb
+            #pdb.set_trace()
             X = np.zeros((self.N_images,self.run_settings["final_shape"][0],
                 self.run_settings["final_shape"][1],1))
             image_index = 0
             if verbose:
-                print("Loading this many images:..........................")
+                print("Loading this many images:...........................")
                 # get a list of 50 image_paths to watch out for
-                stepsize = len(self.settings.image_fnames[train_or_predict]/50)
+                stepsize = int(len(self.settings.image_fnames[train_or_predict])/50)
                 progress_paths = [impath for i,impath in 
                         enumerate(self.settings.image_fnames[train_or_predict]) 
                         if i%stepsize == 0 ]
@@ -174,6 +180,7 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                 if verbose:
                     if image_path in progress_paths: 
                         sys.stdout.write(".")
+                        sys.stdout.flush()
                         # if it's the last one we better stick a newline on
                         if image_path == progress_paths[-1]:
                             sys.stdout.write(".\n")
