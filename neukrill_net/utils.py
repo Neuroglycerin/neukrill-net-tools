@@ -545,7 +545,6 @@ def train_test_split(image_fnames, training_set_mode, train_split=0.8, classes=N
 
     return split_fnames
 
-
 def train_test_split_bool(image_fnames, training_set_mode, train_split=0.8, classes=None):
     """
     Perform a stratified split of the image paths stored in a
@@ -623,6 +622,30 @@ def train_test_split_bool(image_fnames, training_set_mode, train_split=0.8, clas
 
     return split_bool
 
+def test_split(split, image_fnames):
+    """
+    Takes a dictionary of image_fnames and splits the test paths,
+    reducing the size of the test set so that it can fit into 
+    memory more easily:
+    Input:
+        split - tuple of (split index, number of splits) so
+    for example (0,8) would be the first of 8 splits
+    Output:
+        image_fnames - dictionary after split has been applied
+    """
+    N = float(len(image_fnames['test']))
+    # find index to start slicing
+    start = int((N/split[1])*split[0])
+    # find index to stop slicing
+    stop = int((N/split[1])*(split[0]+1))
+
+    # do the slice
+    image_fnames['test'] = image_fnames['test'][start:stop]
+
+    # check we didn't get an empty slice
+    assert len(image_fnames['test']) > 0
+
+    return image_fnames
 
 def confusion_matrix_from_proba(y_true, y_pred, labels=None):
     """
