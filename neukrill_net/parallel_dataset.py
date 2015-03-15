@@ -18,6 +18,7 @@ import numpy as np
 import sklearn.externals
 
 import neukrill_net.image_directory_dataset
+import neukrill_net.utils
 
 class ParallelIterator(neukrill_net.image_directory_dataset.FlyIterator):
     """
@@ -145,34 +146,48 @@ class PassthroughDataset(neukrill_net.image_directory_dataset.ListDataset):
     def __init__(self, transformer, settings_path="settings.json", 
                  run_settings_path="run_settings/alexnet_based.json",
                  training_set_mode="train",
-                 verbose=False, force=False, cached=None):
-
+                 verbose=False, force=False, prepreprocessing=None,
+                 cached=None):
+        
+        # runs inherited initialisation, but pulls out the
+        # supplied cached array for iteration
+        self.cached = sklearn.externals.joblib.load(cached).squeeze()
+        
+        # load settings
+        # We don't save to self because super will do that
+        settings = neukrill_net.utils.Settings(settings_path)
+        run_settings = neukrill_net.utils.load_run_settings(run_settings_path,
+                                                             settings,
+                                                             force=force)
+        
+        # get the right split from run settings
+        li = neukrill_net.utils.train_test_split_bool(settings.image_fnames,
+                                    training_set_mode,
+                                    train_split=run_settings['train_split'],
+                                    classes=settings.classes)
+        
+        print '-----------'
+        print training_set_mode
+        print len(li)
+        print sum(li)
+        print '-----------'
+        
+        # Use boolean indexing
+        self.cached = self.cached[li,:] 
+        
+        # Make sure our array has the correct 
+        self.cached = self.cached.astype(np.float32)
+        
         # may have to remove cached before handing it in...
         # ...no errors yet
         super(self.__class__,self).__init__(transformer=transformer, 
                  settings_path=settings_path, 
                  run_settings_path=run_settings_path,
                  training_set_mode=training_set_mode,
-                 verbose=verbose, force=force)
-        # runs inherited initialisation, but pulls out the
-        # supplied cached array for iteration
-        self.cached = sklearn.externals.joblib.load(cached).squeeze()
-        # get the right split from run settings
-        train_split = self.run_settings['train_split']
-        train_index = int(train_split*self.cached.shape[0])
-        test_split = (1-train_split)/2
-        test_index = int((train_split+test_split)*self.cached.shape[0])
-        # split based on training set mode
-        if training_set_mode == 'train':
-            self.cached = self.cached[:train_index,:] 
-        elif training_set_mode == 'validation':
-            self.cached = self.cached[train_index:test_index,:]
-        elif training_set_mode == 'test':
-            self.cached = self.cached[test_index:,:]
-        else:
-            raise ValueError
-        self.cached = self.cached.astype(np.float32)
-
+                 verbose=verbose, force=force,
+                 prepreprocessing=prepreprocessing)
+        
+        
     def iterator(self, mode=None, batch_size=None, num_batches=None, rng=None,
                         data_specs=None, return_tuple=False):
         """

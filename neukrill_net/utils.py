@@ -12,6 +12,7 @@ import numpy as np
 import skimage
 import random
 import warnings
+import sklearn.externals
 
 import neukrill_net.image_processing as image_processing
 import neukrill_net.constants as constants
@@ -371,6 +372,7 @@ def write_predictions(out_fname, p, names, classes):
         for index in range(len(names)):
             out_writer.writerow([names[index]] + list(p[index,]))
 
+
 def load_run_settings(run_settings_path, settings,
         settings_path="settings.json", verbose=False, force=False):
     """
@@ -426,6 +428,7 @@ def load_run_settings(run_settings_path, settings,
 
     return run_settings
 
+
 def save_run_settings(run_settings):
     """
     Takes a run_settings dictionary and saves it back where it was loaded from,
@@ -440,6 +443,7 @@ def save_run_settings(run_settings):
         json.dump(run_settings, f, separators=(',',':'), indent=4,
                                                     sort_keys=True)
     return None
+
 
 def format_yaml(run_settings,settings):
     """
@@ -481,7 +485,8 @@ def format_yaml(run_settings,settings):
                       "with Pylearn2 on its own, so may be useful.")
     return yaml_string
 
-def train_test_split(image_fnames, training_set_mode, train_split=0.8):
+
+def train_test_split(image_fnames, training_set_mode, train_split=0.8, classes=None):
     """
     Perform a stratified split of the image paths stored in a
     image_fnames dictionary supplied.
@@ -502,7 +507,11 @@ def train_test_split(image_fnames, training_set_mode, train_split=0.8):
     split_fnames = {}
     # assuming train split is some float between 0 and 1, and assign that
     # proportion to train and half of the remaining to test and validation
-    for class_label in image_fnames["train"].keys():
+    if classes is None:
+        #raise Warning('You should declare the class names explicitly')
+        classes = image_fnames["train"].keys()
+        
+    for class_label in classes:
         # find where the break should be
         train_break = int(train_split*len(
             image_fnames["train"][class_label]))
@@ -535,6 +544,85 @@ def train_test_split(image_fnames, training_set_mode, train_split=0.8):
         assert len(split_fnames[class_label]) > 0
 
     return split_fnames
+
+
+def train_test_split_bool(image_fnames, training_set_mode, train_split=0.8, classes=None):
+    """
+    Perform a stratified split of the image paths stored in a
+    image_fnames dictionary supplied.
+    Inputs:
+        -image_fnames: dictionary of image classes as keys and image paths
+    as values.
+        -training_set_mode: either "train", "validation" or "test". Will
+    split into each based on this.
+        -train_split: proportion to split into "train"; remainder split
+    equally into "test" and "validation".
+    
+    Output:
+    ** Returns a boolean of whether each image path in the flattened list
+    is included in the split.
+    """
+    # stratified split of the image paths for train, validation and test
+    # iterate over classes, removing some proportion of the elements, in a
+    # deterministic way
+    test_split = train_split + (1-train_split)/2
+    # initialise new variable to store split
+    split_bool = np.array([], dtype=bool)
+    # assuming train split is some float between 0 and 1, and assign that
+    # proportion to train and half of the remaining to test and validation
+    if classes is None:
+        #raise Warning('You should declare the class names explicitly')
+        classes = image_fnames["train"].keys()
+        
+    for class_label in classes:
+        # find where the break should be
+        train_break = int(train_split*len(
+            image_fnames["train"][class_label]))
+
+        test_break = int(test_split*len(
+            image_fnames["train"][class_label]))
+        
+        len_train = train_break
+        len_validation = test_break - train_break
+        len_test = len(image_fnames["train"][class_label]) - test_break
+        
+        if training_set_mode == "train":
+            # then everything up to train_break is what we want
+            class_split_bool = np.concatenate( (
+                                                np.ones(len_train, dtype=bool),
+                                                np.zeros(len_validation, dtype=bool),
+                                                np.zeros(len_test, dtype=bool)
+                                                )  )
+            
+        elif training_set_mode == "validation":
+            # then we want the _first_ half of everything after train_break
+            class_split_bool = np.concatenate( (
+                                                np.zeros(len_train, dtype=bool),
+                                                np.ones(len_validation, dtype=bool),
+                                                np.zeros(len_test, dtype=bool)
+                                                )  )
+            
+        elif training_set_mode == "test":
+            # then we want everything after test_break
+            class_split_bool = np.concatenate( (
+                                                np.zeros(len_train, dtype=bool),
+                                                np.zeros(len_validation, dtype=bool),
+                                                np.ones(len_test, dtype=bool)
+                                                )  )
+            
+        else:
+            raise ValueError("Invalid option for training set mode.")
+        
+        # Check length matches what we expect
+        assert len(class_split_bool) == len(image_fnames["train"][class_label])
+        # then check it's not empty
+        assert sum(class_split_bool) > 0
+        
+        # Add the class to the full array
+        split_bool = np.concatenate((split_bool, class_split_bool))
+
+    return split_bool
+
 
 def confusion_matrix_from_proba(y_true, y_pred, labels=None):
     """
@@ -579,3 +667,39 @@ def dataset_from_yaml(proxied,
     dataset = pylearn2.config.yaml_parse._instantiate(proxdata)
 
     return dataset
+
+def normalise_cache_range(X_train, X_test=None):
+    """
+    Normalises cache across dimensions 0 and 1 so they fall
+    into [-1,+1] range. Normalises train and test using the
+    train data range only.
+    Expected input has dimension 0 and 1 as augmentation and image index.
+    Each dimension 2 is a different feature.
+    """
+    # Get the dim0 and dim1 absolute maxima
+    X_max = np.amax(np.absolute(X_train.reshape((X_train.shape[0]*X_train.shape[1],X_train.shape[2]))),0)
+    # Normalise both arrays
+    X_train = X_train / X_max
+    if X_test is not None:
+        X_test  = X_test / X_max
+    
+    return X_train, X_test
+
+
+def save_normalised_cache(train_pkl, test_pkl=None):
+    # Load the existing raw data
+    X_train = sklearn.externals.joblib.load(train_pkl)
+    if test_pkl is None:
+        X_test = None
+    else:
+        X_test  = sklearn.externals.joblib.load(test_pkl)
+    # Normalise them both
+    X_train, X_test = normalise_cache_range(X_train, X_test)
+    # Update names of pickle files
+    train_pkl = train_pkl[:-4] + '_ranged' + train_pkl[-4:]
+    if test_pkl is not None:
+        test_pkl  = test_pkl[:-4] + '_ranged' + test_pkl[-4:]
+    # Save to disk
+    sklearn.externals.joblib.dump(X_train, train_pkl)
+    if test_pkl is not None:
+        sklearn.externals.joblib.dump(X_test, test_pkl)
