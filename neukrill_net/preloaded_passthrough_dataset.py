@@ -185,12 +185,6 @@ class PreloadedPassthroughDataset(neukrill_net.image_directory_dataset.ListDatas
                 self.run_settings["final_shape"][1],self.run_settings["augmentation_factor"]))
             image_index = 0
             
-            if self.run_settings.get("use_super_classes", False):
-                # create dictionary to cache superclass vectors
-                supclass_vecs = {}
-                # get the general hierarchy
-                general_hier = enc.get_hierarchy()
-            
             for image_index, image in enumerate(X_raw):
                 # apply processing function (get back multiple images)
                 images = processing(image)
