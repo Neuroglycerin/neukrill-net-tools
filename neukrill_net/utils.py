@@ -361,21 +361,16 @@ def write_predictions(out_fname, p, names, classes):
             writes a gzip compressed csv file to `out_fname`.gz on disk
     """
 
+    # check filename
+    if out_fname.split(".")[-1] != "gz":
+        out_fname = out_fname + ".gz"
+
     # Write the probabilites as a CSV
-    with open(out_fname, 'w') as csv_out:
+    with gzip.open(out_fname, 'wb') as csv_out:
         out_writer = csv.writer(csv_out, delimiter=',')
         out_writer.writerow(['image'] + list(classes))
         for index in range(len(names)):
             out_writer.writerow([names[index]] + list(p[index,]))
-
-    # Compress with gzip
-    with open(out_fname, 'rb') as f_in:
-        f_out = gzip.open(out_fname + '.gz', 'wb')
-        f_out.writelines(f_in)
-        f_out.close()
-
-    # Delete the uncompressed CSV
-    os.unlink(out_fname)
 
 
 def load_run_settings(run_settings_path, settings,
@@ -650,6 +645,28 @@ def confusion_matrix_from_proba(y_true, y_pred, labels=None):
         M[i,:] = np.mean(y_pred[li,:],0)
     return M
 
+def dataset_from_yaml(proxied,
+        training_set_mode='test', verbose=False):
+    """
+    Parses YAML files to pull out a dataset (used primarily for 
+    loading the holdout set with the correct settings).
+    """
+    import pylearn2.config.yaml_parse
+
+    # load the data
+    if verbose:
+        print("Loading data...")
+
+    # pull out proxied dataset
+    proxdata = proxied.keywords['dataset']
+    # force loading of dataset and switch to test dataset
+    proxdata.keywords['force'] = True
+    proxdata.keywords['training_set_mode'] = training_set_mode
+    proxdata.keywords['verbose'] = verbose
+    # then instantiate the dataset
+    dataset = pylearn2.config.yaml_parse._instantiate(proxdata)
+
+    return dataset
 
 def normalise_cache_range(X_train, X_test=None):
     """
@@ -686,4 +703,3 @@ def save_normalised_cache(train_pkl, test_pkl=None):
     sklearn.externals.joblib.dump(X_train, train_pkl)
     if test_pkl is not None:
         sklearn.externals.joblib.dump(X_test, test_pkl)
-    
