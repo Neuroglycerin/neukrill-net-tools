@@ -733,7 +733,7 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         X = self.scaler.transform(X)
         # Fit the classifier
         if self.verbosity:
-            print "Training classifier
+            print "Training classifier"
         self.classifier.fit(X, y)
         # Note the number of classes for later
         self.num_classes = len(np.unique(y))
