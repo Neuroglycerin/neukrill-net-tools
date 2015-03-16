@@ -360,6 +360,9 @@ def write_predictions(out_fname, p, names, classes):
     output: None
             writes a gzip compressed csv file to `out_fname`.gz on disk
     """
+    
+    if len(names)!=p.shape[0]:
+        print "Oh no! looks like the names don't match the predictions!"
 
     # check filename
     if out_fname.split(".")[-1] != "gz":

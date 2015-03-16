@@ -16,6 +16,7 @@ import numpy as np
 import cv2
 import sklearn.cluster
 import six
+import copy
 import skimage
 import skimage.io
 import skimage.util
@@ -654,7 +655,7 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         
         self.detector = detector
         self.describer = describer
-        self.classifier = classifier
+        self.classifier = copy.deepcopy(classifier)
         self.return_num_kp = return_num_kp
         self.summary_method = summary_method
         
