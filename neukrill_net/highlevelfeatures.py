@@ -24,7 +24,7 @@ import skimage.feature
 import mahotas.features
 import neukrill_net.image_features
 from neukrill_net import image_attributes
-import multiprocessing
+
 
 def loadimage(obj):
     """
@@ -646,7 +646,7 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
     _needs_fitting = True
     num_classes = 0
     
-    def __init__(self, detector, describer, classifier, return_num_kp=True, summary_method='mean', n_jobs=0, verbosity=0, **kwargs):
+    def __init__(self, detector, describer, classifier, return_num_kp=True, summary_method='mean', verbosity=0, **kwargs):
         """
         Initialise the keypoint evidence tree
         """
@@ -654,7 +654,6 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         HighLevelFeatureBase.__init__(self, **kwargs)
         
         self.verbosity = verbosity
-        self.n_jobs = n_jobs
         
         self.detector = detector
         self.describer = describer
@@ -676,32 +675,6 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         return self.describer(a,b,**c)
         
         
-    def augmented_dnd(self,image):
-        
-        descriptions = None
-        # Load the image if necessary
-        image = loadimage(image)
-        # Augment the image, giving a list of copies
-        augmented_list = self.augment_image(image)
-        # Loop over all the augmented copies
-        for augment_index, augmented_image in enumerate(augmented_list):
-            # Have to preprocess the augmented image
-            augmented_image = self.preprocess_image(augmented_image)
-            # Extract keypoint descriptions and put them into the array
-            my_descriptions = self.detect_and_describe(augmented_image)
-            if my_descriptions==[] or my_descriptions.size==0:
-                # do nothing
-                continue
-            elif descriptions is None:
-                # Initialise with right shape
-                descriptions = my_descriptions
-            else:
-                # Add to matrix
-                descriptions = np.concatenate((descriptions,my_descriptions))
-        
-        return descriptions
-        
-        
     def describe_stack(self, images, y):
         """
         Describe all the keypoints in all the listed images
@@ -710,23 +683,32 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
                                 sized (total_num_keypoints, description_len)
         """
         # Initialise
-        if self.n_jobs:
-            pool = multiprocessing.Pool(self.n_jobs)
-            descriptions = pool.map(self.augmented_dnd, images)
-        else:
-            descriptions = map(self.augmented_dnd, images)
-        
+        descriptions = None
         y_full = []
-        descriptions_full = []
-        
-        for image_index, my_descriptions in enumerate(descriptions):
-            if my_descriptions is not None:
-                descriptions_full += [my_descriptions]
+        # Loop over list of images
+        for image_index,image in enumerate(images):
+            # Load the image if necessary
+            image = loadimage(image)
+            # Augment the image, giving a list of copies
+            augmented_list = self.augment_image(image)
+            # Loop over all the augmented copies
+            for augment_index, augmented_image in enumerate(augmented_list):
+                # Have to preprocess the augmented image
+                augmented_image = self.preprocess_image(augmented_image)
+                # Extract keypoint descriptions and put them into the array
+                my_descriptions = self.detect_and_describe(augmented_image)
+                if my_descriptions==[] or my_descriptions.size==0:
+                    # do nothing
+                    continue
+                elif descriptions is None:
+                    # Initialise with right shape
+                    descriptions = my_descriptions
+                else:
+                    # Add to matrix
+                    descriptions = np.concatenate((descriptions,my_descriptions))
+                # Add to y
                 y_full += [y[image_index]] * my_descriptions.shape[0]
-        
-        descriptions_full = np.vstack(descriptions_full)
-        y_full = np.array(y_full)
-        
+                
         return descriptions, y_full
         
         
@@ -756,7 +738,7 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         # Note the number of classes for later
         self.num_classes = len(np.unique(y))
         if self.verbosity:
-            print "Done with fitting keypoint ensemble"
+            "Done with fitting keypoint ensemble"
         
     def extract_image(self, image):
         """
