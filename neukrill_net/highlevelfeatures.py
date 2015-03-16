@@ -712,9 +712,9 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         # Initialise
         if self.n_jobs:
             pool = multiprocessing.Pool(self.n_jobs)
-            descriptions = pool.map(images)
+            descriptions = pool.map(self.augmented_dnd, images)
         else:
-            descriptions = map(images)
+            descriptions = map(self.augmented_dnd, images)
         
         y_full = []
         descriptions_full = []
