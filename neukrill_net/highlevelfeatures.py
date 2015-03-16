@@ -646,7 +646,7 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
     _needs_fitting = True
     num_classes = 0
     
-    def __init__(self, detector, describer, classifier, return_num_kp=True, summary_method='mean', verbosity=0 **kwargs):
+    def __init__(self, detector, describer, classifier, return_num_kp=True, summary_method='mean', verbosity=0, **kwargs):
         """
         Initialise the keypoint evidence tree
         """
