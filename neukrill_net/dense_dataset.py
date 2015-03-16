@@ -127,7 +127,6 @@ class DensePNGDataset(pylearn2.datasets.DenseDesignMatrix):
                                             self.run_settings, verbose=verbose)
             # make sure y is an array
             y = np.array(y)
-            print(y.shape)
             if self.run_settings.get("use_super_classes", False):
                 # using superclasses so y already contains target vectors
                 super(self.__class__,self).__init__(topo_view=X,y=y)
