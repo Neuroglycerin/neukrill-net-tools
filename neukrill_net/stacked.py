@@ -136,12 +136,23 @@ class StackedClassifier():
         return self.clf.fit(XF, y_outer)
         
         
-    def transform(self, X):
+    def transform(self, X, y=None):
         """
         Transform X through inner and then outer classifier layers
         """
+        XF = self.hlf.transform(X)
         # Might need to reshape here first...
-        return self.clf.transform(self.hlf.transform(X))
+        if XF.ndim == 2:
+            return self.clf.transform(XF)
+        elif XF.ndim == 3:
+            # Resize if we have [num_aug, num_samples, num_features] shape
+            sh = XF.shape
+            XF = np.reshape(XF, (XF.shape[0]*XF.shape[1], XF.shape[2]) )
+            X2 = self.clf.transform(XF)
+            X2 = np.reshape(X2, (sh[0], sh[1], X2.shape[1]) )
+            return X2
+        else:
+            raise ValueError
         
         
     def fit_transform(self, X, y):
@@ -156,7 +167,18 @@ class StackedClassifier():
         """
         Get probabilites from classifier
         """
-        return self.clf.predict_proba(self.hlf.transform(X))
+        XF = self.hlf.transform(X)
+        if XF.ndim == 2:
+            return self.clf.predict_proba(XF)
+        elif XF.ndim == 3:
+            # Resize if we have [num_aug, num_samples, num_features] shape
+            sh = XF.shape
+            XF = np.reshape(XF, (sh[0]*sh[1], sh[2]) )
+            p = self.clf.predict_proba(XF)
+            p = np.reshape(p, (sh[0], sh[1], p.shape[1]) )
+            return p
+        else:
+            raise ValueError
 
 
 class HierarchyClassifier():
