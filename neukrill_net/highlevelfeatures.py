@@ -646,12 +646,14 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
     _needs_fitting = True
     num_classes = 0
     
-    def __init__(self, detector, describer, classifier, return_num_kp=True, summary_method='mean', **kwargs):
+    def __init__(self, detector, describer, classifier, return_num_kp=True, summary_method='mean', verbosity=0, **kwargs):
         """
         Initialise the keypoint evidence tree
         """
         # Call superclass
         HighLevelFeatureBase.__init__(self, **kwargs)
+        
+        self.verbosity = verbosity
         
         self.detector = detector
         self.describer = describer
@@ -718,16 +720,25 @@ class KeypointEnsembleClassifier(HighLevelFeatureBase):
         Output: None
         """
         # Get keypoint descriptions for all the training data
+        if self.verbosity:
+            print "Detecting and describing the images"
         X, y = self.describe_stack(images, y)
         # Fit scaler against this distribution of keypoint descriptions
+        if self.verbosity:
+            print "Fitting scaler"
         self.scaler.fit(X)
         # Scale
+        if self.verbosity:
+            print "Rescaling"
         X = self.scaler.transform(X)
         # Fit the classifier
+        if self.verbosity:
+            print "Training classifier"
         self.classifier.fit(X, y)
         # Note the number of classes for later
         self.num_classes = len(np.unique(y))
-        
+        if self.verbosity:
+            "Done with fitting keypoint ensemble"
         
     def extract_image(self, image):
         """
