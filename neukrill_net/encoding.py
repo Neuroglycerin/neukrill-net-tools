@@ -1,7 +1,7 @@
-import neukrill_net.taxonomy
+import taxonomy
 import numpy as np
 
-def get_hierarchy(settings):
+def get_hierarchy(settings=None):
     """
     Returns nested list of classes and superclasses,
     in string format. Required to use get_encoding.
@@ -23,7 +23,7 @@ def get_hierarchy(settings):
         classes_prev = classes
         if classes:
             hierarchy.append(classes)
-        layer = neukrill_net.taxonomy.TaxonomyLayer(i)
+        layer = taxonomy.TaxonomyLayer(i)
         classes = []
 
         # Go through superclasses
@@ -33,8 +33,7 @@ def get_hierarchy(settings):
                 classes.append(key)
         i += 1
 
-    # patch the first part of the hierarchy
-    hierarchy[0] = [str(c) for c in settings.classes]
+    hierarchy[0] = [str(c) for c in sorted(list(taxonomy.TaxonomyLayer(0)))]
 
     return hierarchy
 
@@ -68,7 +67,7 @@ def get_encoding(class_name, hierarchy):
 
         while True:
             # Find the ancestor of class_name in hier
-            layer = neukrill_net.taxonomy.TaxonomyLayer(i)
+            layer = taxonomy.TaxonomyLayer(i)
             if layer[class_name] in hier:
                 encoding[hier.index(layer[class_name])] = 1
                 break
