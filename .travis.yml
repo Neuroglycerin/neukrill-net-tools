@@ -1,22 +1,183 @@
+###############################################################################
 language: python
+
+###############################################################################
+# Cache data which has to be downloaded on every build.
+# This is just for Travis and doesn't do anything on Shippable.
+cache:
+  directories:
+    # Cache files downloaded by pip
+    - $HOME/.cache/pip
+    # Cache our miniconda download.
+    # Cautionary note: if a new version of Python is released and added to
+    # conda and you want to test on the new version, your cached copy will be
+    # out of date and you'll need to wipe the cache. Details are here
+    # https://docs.travis-ci.com/user/caching/#Clearing-Caches
+    # but if this sounds like too much hassle, you can just comment out this
+    # line to stop caching.
+    - $HOME/Downloads
+    - $HOME/miniconda
+
+###############################################################################
 python:
     - "2.7"
-before_install: 
-    - sudo apt-get install build-essential
-    - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-    - chmod +x miniconda.sh
-    - bash ./miniconda.sh -b -p "$HOME/miniconda";
-    - export PATH="$HOME/miniconda/bin:$PATH";
-      hash -r;
-    - conda update --yes conda
-    - conda create --yes -n condaenv python=$TRAVIS_PYTHON_VERSION
-    - git clone https://github.com/Itseez/opencv.git
-    - mkdir opencv-build
-    - cd opencv-build/
-    - cmake -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_DOCS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_opencv_java=OFF -DBUILD_JASPER=ON -DWITH_JASPER=ON -DBUILD_ZLIB=ON -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DWITH_OPENEXR=OFF -DBUILD_PNG=ON -DWITH_PNG=ON -DWITH_TIFF=ON -DBUILD_TIFF=ON -DWITH_WEBP=OFF -DWITH_JPEG=ON -DBUILD_JPEG=ON ../opencv
-    - sudo make install
-    - cd ..
+
+###############################################################################
+# Setup the environment before installing
+before_install:
+  # Remember the directory where our repository to test is located
+  - REPOPATH="$(pwd)" && pwd
+  # ---------------------------------------------------------------------------
+  # Check which versions of numpy and scipy we are using, then remove these
+  # lines from requirements.txt
+  - if [ -f requirements.txt ]; then
+      NUMPY_REQUIREMENT="$(grep '^numpy\([!<>=~ ]\|$\)' requirements.txt)";
+      echo "NumPy requirement is '$NUMPY_REQUIREMENT'";
+      SCIPY_REQUIREMENT="$(grep '^scipy\([!<>=~ ]\|$\)' requirements.txt)";
+      echo "SciPy requirement is '$SCIPY_REQUIREMENT'";
+    fi;
+  # ---------------------------------------------------------------------------
+  # Update the package list
+  - travis_retry sudo apt-get update
+  - travis_retry sudo apt-get install build-essential
+  # Install numpy/scipy dependencies with apt-get. We want ATLAS and LAPACK.
+  - if [[ "$NUMPY_REQUIREMENT" != "" ]] || [[ "$SCIPY_REQUIREMENT" != "" ]]; then
+      travis_retry sudo apt-get install -y libatlas-dev libatlas-base-dev;
+    fi;
+    if [[ "$SCIPY_REQUIREMENT" != "" ]]; then
+      travis_retry sudo apt-get install -y liblapack-dev;
+    fi;
+  # ---------------------------------------------------------------------------
+  # The following is based on Minicoda's how-to Travis page
+  # http://conda.pydata.org/docs/travis.html
+  # ---------------------------------------------------------------------------
+  # Download miniconda. Only do this if the cached file isn't present.
+  - mkdir -p $HOME/Downloads;
+    if [ ! -f $HOME/Downloads/miniconda.sh ]; then
+      travis_retry wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O "$HOME/Downloads/miniconda.sh";
+    fi;
+  # Install miniconda to the home directory, if it isn't there already.
+  - if [ ! -d "$HOME/miniconda/bin" ]; then
+      if [ -d "$HOME/miniconda" ]; then rm -r "$HOME/miniconda"; fi;
+      bash $HOME/Downloads/miniconda.sh -b -p "$HOME/miniconda";
+    fi;
+  - ls -alh "$HOME/miniconda";
+  # Add conda to the path and automatically say yes to any check from conda
+  - export PATH="$HOME/miniconda/bin:$PATH";
+    hash -r;
+    conda config --set always_yes yes --set changeps1 no
+  # Remove test environment from conda, if it's still there from last time
+  - conda remove -n testenv --all || echo "No 'testenv' environment to remove";
+  # Update conda
+  - travis_retry conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+  - conda list
+  #
+  # Create the conda environment with pip, numpy and scipy installed (if they
+  # are in requirements.txt)
+  - conda create -q -n testenv python=$TRAVIS_PYTHON_VERSION
+  # Activate the test environment
+  - source activate testenv
+  #
+  # Install OpenCV
+  - git clone https://github.com/Itseez/opencv.git
+  - mkdir opencv-build;
+    cd opencv-build;
+    cmake -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_DOCS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_opencv_java=OFF -DBUILD_JASPER=ON -DWITH_JASPER=ON -DBUILD_ZLIB=ON -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DWITH_OPENEXR=OFF -DBUILD_PNG=ON -DWITH_PNG=ON -DWITH_TIFF=ON -DBUILD_TIFF=ON -DWITH_WEBP=OFF -DWITH_JPEG=ON -DBUILD_JPEG=ON ../opencv;
+  - sudo make install
+  - cd "$REPOPATH";
+
+###############################################################################
 install:
-    - conda install --yes -n condaenv --file requirements.txt
-    - source activate condaenv
-script: py.test
+  # Install dependencies
+  - conda install -n testenv --file requirements.txt
+
+###############################################################################
+before_script:
+  # Double-check we are still in the right directory
+  - pwd
+  # Check what python packages we have installed
+  - conda info -a
+  - which python
+  - python --version
+  - conda env export > environment.yml && cat environment.yml
+  - pip freeze
+  # ---------------------------------------------------------------------------
+  # Remove any cached results files from previous build, if present
+  - rm -f testresults.xml;
+    rm -f coverage.xml;
+    rm -f .coverage;
+  # ---------------------------------------------------------------------------
+  # Set up folders for test results on Shippable
+  - if [ "$SHIPPABLE" = "true" ]; then
+      rm -fr shippable;
+      mkdir -p shippable/testresults;
+      mkdir -p shippable/codecoverage;
+    fi;
+
+###############################################################################
+script:
+  - python --version;
+    if [[ "$NUMPY_REQUIREMENT" != "" ]]; then
+      python -c "import numpy; print('numpy %s' % numpy.__version__)";
+    fi;
+    if [[ "$SCIPY_REQUIREMENT" != "" ]]; then
+      python -c "import scipy; print('scipy %s' % scipy.__version__)";
+    fi;
+  # ---------------------------------------------------------------------------
+  - py.test --cov=package_name --cov-report term --cov-report xml --cov-config .coveragerc --junitxml=testresults.xml
+
+###############################################################################
+after_script:
+  # Show where we ended up
+  - pwd
+  # Go back to the repository directory, just in case
+  # Show what results files there are
+  - cd ${REPOPATH} && ls -alh;
+  # ---------------------------------------------------------------------------
+  # Move results and coverage files into appropriate places
+  - if [ "$SHIPPABLE" = "true" ] && [ -f testresults.xml ]; then
+      mv testresults.xml shippable/testresults/;
+    fi;
+    if [ "$SHIPPABLE" = "true" ] && [ -f coverage.xml ]; then
+      cp coverage.xml shippable/codecoverage/;
+    fi;
+
+###############################################################################
+after_success:
+  # Only run coveralls on Travis. When running on a public Travis-CI, the
+  # repo token is automatically inferred, but to run coveralls on Shippable
+  # the repo token needs to be specified in a .coveralls.yml or as an
+  # environment variable COVERALLS_REPO_TOKEN. This should be kept hidden
+  # from public viewing, either by encrypting the token or running on a
+  # private build.
+  # We ignore coveralls failures because the coveralls server is not 100%
+  # reliable and we don't want the CI to report a failure just because the
+  # coverage report wasn't published.
+  - if [ "$TRAVIS" = "true" ] && [ "$SHIPPABLE" != "true" ]; then
+      pip install coveralls;
+      travis_retry coveralls || echo "Coveralls push failed";
+      pip install codecov;
+      travis_retry codecov || echo "Codecov push failed";
+    fi;
+
+###############################################################################
+# Steps to take before archiving on Shippable (does nothing on Travis)
+before_archive:
+  # Have shippable archive the environment.yml artifact by putting it in
+  # the REPO/shippable folder. This is available to download as a tar file for
+  # each build.
+  # Since this build was successful, you can share it for users to install from
+  # with the command `conda env create -f environment.yml` and know they have
+  # a working build.
+  # If you want to save this file on Travis, you will need to turn on the
+  # artifacts addon (or do something else with it). See here for details
+  # https://docs.travis-ci.com/user/uploading-artifacts/
+  - if [ "$SHIPPABLE" = "true" ] && [ -f environment.yml ]; then
+      cp environment.yml shippable/;
+    fi;
+
+###############################################################################
+# Enable archiving of artifacts on Shippable (does nothing on Travis)
+archive: true
