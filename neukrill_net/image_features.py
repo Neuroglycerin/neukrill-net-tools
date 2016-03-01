@@ -73,10 +73,6 @@ def get_ORB_keypoints(image, n=500, patchSize=31, **kwargs):
            n - max number of returned keypoints (default 500)
     output: list of ORB keypoints
     """
-    # blur using a Gaussian kernel
-    #image = cv2.GaussianBlur(image,(3,3),0)
-    #image = cv2.bilateralFilter(image,5,75,75)
-    
     keyPoints = []
     
     # find keypoints; if none found, decrease patchSize
@@ -207,7 +203,7 @@ def get_shape_HuMoments(moments):
     """
     huMoments = cv2.HuMoments(moments).flatten()
     
-    # take log as this is better for classification
+    # take log as this is better for classification (http://stackoverflow.com/a/14501412/1792932)
     huMoments = -np.sign(huMoments) * np.log10(np.abs(huMoments))
 
     # remove last moment as it is dependent on reflection
